@@ -6,7 +6,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -226,6 +226,7 @@ var BADGES = [
   {id:'diver', icon:'layers', name:'Deep diver', desc:'Read 5 Go deeper notes.', have:function(){ return refsOpened('deep'); }, need:5},
   {id:'agent', icon:'mission', name:'Field agent', desc:'Finish five field missions.', have:function(){ return countKind('mission'); }, need:5},
   {id:'ace', icon:'star', name:'Mission ace', desc:'Earn three stars on five field missions.', have:function(){ return NODES.filter(function(n){ return n.kind==='mission' && starsOf(n.id)===3; }).length; }, need:5},
+  {id:'blitz', icon:'bolt', name:'Quick draw', desc:'Score 150 points in one Blitz round.', have:function(){ return (S.blitz&&S.blitz.best)||0; }, need:150},
   {id:'chests', icon:'chest', name:'Treasure hunter', desc:'Open 5 chests.', have:function(){ return Object.keys(S.chest).length; }, need:5},
   {id:'goal5', icon:'target', name:'Goal getter', desc:'Meet your daily goal on five different days.', have:function(){ return S.goalDays.length; }, need:5},
   {id:'xp500', icon:'bolt', name:'Five hundred', desc:'Earn 500 practice XP.', have:function(){ return S.xp; }, need:500},
@@ -250,7 +251,7 @@ function go(v){ view=v; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
-  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView})[view.name]();
+  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView})[view.name]();
   armGuard();
   showPending();
 }
@@ -262,6 +263,7 @@ function backInApp(){
   var m=$('.modal');
   if(m){ var x=$('#noteX',m)||$('#stay',m)||$('#celeDone',m); if(x) x.click(); else if(m.parentNode) m.parentNode.removeChild(m); return; }
   var n=view.name;
+  if(n==='blitz'){ var bq=$('#quit'); if(bq) bq.click(); else go({name:'review'}); return; }
   if(n==='lesson'||n==='task'||n==='kase'||n==='question'||n==='gate'){ var q=$('#quit'); if(q) q.click(); else leave(); return; }
   if(n==='onboard'||n==='place') return; // setup and placement are not interrupted by Back
   go({name:n==='sheet'?'sheets':'learn'});
@@ -768,10 +770,12 @@ function reviewView(){
       +Object.keys(by).sort().map(function(k){ var s=SBY[k]; return '<div class="rrow" data-lv="'+s.level+'"><span class="sn">'+s.n+'</span><span class="sb"><b>'+esc(s.title)+'</b></span><span class="sx">'+by[k]+'</span></div>'; }).join('')+'</div>';
   }
   h+=dueSection();
+  h+=blitzCard();
   h+='<p class="fine">Wiped so far: '+(S.cleared||0)+'.</p></div>';
   setPage(h,'review');
   var g=$('#go'); if(g) g.onclick=function(){ startReview(); };
   var dg=$('#dueGo'); if(dg) dg.onclick=startDue;
+  var bg=$('#blitzGo'); if(bg) bg.onclick=blitzStart;
 }
 
 /* ================= YOU ================= */
@@ -1450,5 +1454,6 @@ document.addEventListener('keydown',function(e){
 
 /*GAME*/
 /*MISSIONS*/
+/*BLITZ*/
 render();
 })();

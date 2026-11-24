@@ -505,6 +505,39 @@ async function quest(){
   if(screen()!=='done') throw new Error('finishing a mission should show the done screen');
   const facts=$$('.fact').map(f=>f.textContent).join(' | '); if(!/\+38XP/.test(facts)||!/3 of 3Stars/.test(facts)||!/\+9Sparks/.test(facts)) throw new Error('mission reward facts wrong: '+facts);
   log('missions ok: 24 missions, 5 bosses, meters, keys, quit prompt, reward '+facts);
+
+  // ---- blitz: a timed round that counts as spaced review
+  const playBlitz=async(right,stopAfter)=>{
+    let n=0;
+    for(let g=0;g<14&&!$('.center.done');g++){
+      const stem=$('.stem').textContent, cands=MCQ[stem]; if(!cands) throw new Error('unknown blitz question: '+stem);
+      const shown=$$('[data-b]').map(o=>o.querySelector('span:last-child').textContent).sort().join('|');
+      const q=cands.find(c=>c.options.map(o=>o.t).sort().join('|')===shown); if(!q) throw new Error('blitz options mismatch');
+      const keyText=q.options.find(o=>o.k===q.key).t, opts=$$('[data-b]');
+      const good=opts.find(o=>o.querySelector('span:last-child').textContent===keyText), bad=opts.find(o=>o!==good);
+      await click(right?good:bad); n++;
+      if(!$('.opt.right')) throw new Error('blitz should mark the right answer');
+      if(stopAfter&&n>=stopAfter) return n;
+      await sleep(right?420:1150);
+    }
+    return n;
+  };
+  await toLearn(); await click('[data-tab="review"]'); if(!$('#blitzGo')) throw new Error('no Blitz card on the Review tab');
+  await click('#blitzGo'); if(!$('#blTime')) throw new Error('Blitz did not start with a timer');
+  const qn=+/of (\d+)/.exec($('.kicker').textContent)[1]; if(qn<5) throw new Error('only '+qn+' Blitz questions');
+  await playBlitz(true); if(!$('.center.done')) throw new Error('a full Blitz round should end on its results');
+  const pts=$$('.fact').map(f=>f.textContent).join(' '); if(!/(\d+)Points/.test(pts)||!/\+(\d+)XP/.test(pts)||!/\+(\d+)Sparks/.test(pts)) throw new Error('Blitz results facts: '+pts);
+  const score1=+/(\d+)Points/.exec(pts)[1]; if(score1<10*qn) throw new Error('a perfect round should score at least '+(10*qn)+', got '+score1);
+  if(!$('h1.bigt').textContent.includes('New best')) throw new Error('the first round should set a best');
+  await click('#again'); await playBlitz(false);
+  const lose=$$('.fact').map(f=>f.textContent).join(' '); if(!/^0Points/.test($$('.fact')[0].textContent)) throw new Error('a round of misses should score zero: '+lose);
+  if(!$('.blmiss')) throw new Error('missed questions should be listed to remember');
+  await click('#blBack'); if(!$('.revbig')) throw new Error('misses in Blitz should leave smudges on the review list');
+  await click('#blitzGo'); await click('.opt[data-b]'); await sleep(450); window.__skew+=100000; await sleep(260);
+  if(!$('.center.done')) throw new Error('the round should end when time runs out');
+  await click('#blBack'); await click('#blitzGo'); await playBlitz(true); if(!/used up/.test($('.center.done').textContent)) throw new Error('the fourth round of the day should say the paid rounds are used up');
+  await click('#blBack'); if(!new RegExp('Your best: '+score1).test($('.blitzc').textContent)) throw new Error('the best score should be shown on the Review tab: '+$('.blitzc').textContent);
+  log('blitz ok: '+qn+' questions, perfect '+score1+' points, misses leave smudges, time-out, daily cap');
   log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf
