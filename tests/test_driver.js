@@ -270,7 +270,7 @@ async function gameChecks(){
   // streak freeze: miss one day, then meet the goal
   await click('[data-tab="learn"]'); const flame0=+$('.stat.flame b').textContent;
   if(flame0<1) throw new Error('no streak to protect');
-  window.__skew+=DAY; await toLearn(); if(+$('.stat.flame b').textContent!==flame0) throw new Error('a freeze in hand should protect the streak display');
+  window.__skew+=DAY; await toLearn(); if(+$('.stat.flame b').textContent!==flame0) throw new Error('a freeze in hand should protect the streak display'); if(!$('.frozc')) throw new Error('the home screen should say a freeze is protecting the streak'); if(!$('#blitzHome')) throw new Error('the home screen should offer a Blitz round');
   await click('[data-tab="sheets"]'); await click('#libGo');
   const notes=$$('[data-note].ref').filter(b=>!b.classList.contains('on')).slice(0,18);
   for(const b of notes){ await click(b); await click('#noteDone'); }

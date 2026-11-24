@@ -679,6 +679,9 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
+.frozc{display:flex;gap:12px;align-items:flex-start;background:var(--l1s);border-color:var(--l1)} .frozc .i{flex:none;width:26px;height:26px;color:var(--l1i)} .frozc p{font-size:15.5px}
+.blitzt{display:grid;gap:10px}
+
 /* ================= diagrams and motion ================= */
 :root{--c0:#0070C0;--c1:#70AD47;--c2:#FFC000;--c3:#C00000;--c4:#595959;--c5:#7A3E9D}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--c0:#4DA6EC;--c1:#8CCB5E;--c2:#FFC000;--c3:#FF6B6B;--c4:#BDBDBD;--c5:#C79CE0} }
@@ -1408,7 +1411,7 @@ function learnView(){
   h+='<div class="hero-m"><div class="meter" role="progressbar" aria-label="Steps done in the course" aria-valuemin="0" aria-valuemax="'+all+'" aria-valuenow="'+tot+'"><i style="width:'+Math.round(tot/all*100)+'%"></i></div><span>'+tot+' of '+all+' steps</span></div></section>';
   // side
   h+='<aside class="side">';
-  h+=questsCard();
+  h+=questsCard()+freezeNote()+blitzTeaser();
   h+='<section class="card goalc"><div>'+ring(gp,76,9,Math.round(gp)+'%')+'</div><div><h2>Daily goal</h2><p class="num">'+(xpT>=S.goal?'Met: '+xpT+' XP today':xpT+' of '+S.goal+' XP today')+'</p><p class="sub">'+(streakNow()?streakNow()+(streakNow()===1?' day':' days')+' streak':'Meet it to start a streak')+'</p></div></section>';
   var wk='';
   for(var d=6; d>=0; d--){ var dk=dayAgo(d), met=(S.xpByDay[dk]||0)>=S.goal, on=(S.xpByDay[dk]||0)>0; wk+='<span class="day'+(met?' met':on?' some':'')+(d===0?' today':'')+'" title="'+dk+'"></span>'; }
@@ -1441,6 +1444,7 @@ function learnView(){
   $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; });
   var dgo=$('#dueGo'); if(dgo) dgo.onclick=startDue;
   var pg=$('#placeGo'); if(pg) pg.onclick=function(){ go({name:'place'}); };
+  var bh=$('#blitzHome'); if(bh) bh.onclick=blitzStart;
   var dq=$('#dqChest'); if(dq) dq.onclick=function(){ S.chest['dq-'+today()]=today(); openChest(20, 8, 'Daily');  learnView(); };
 }
 
@@ -2851,6 +2855,14 @@ function blitzCard(){
   var b=blitzDay(), left=Math.max(0,3-b.runsDay);
   return '<section class="card blitzc"><div class="revc-h">'+ic('bolt')+'<h2>Blitz</h2></div><p class="sub">'+BLITZ_N+' questions, '+BLITZ_SECS+' seconds. Right answers in a row multiply your points. Your best: <b>'+(b.best||0)+'</b>'+(b.bestCombo?' · best combo x'+b.bestCombo:'')+'.</p>'
     +'<button class="btn" id="blitzGo">'+ic('bolt')+'Start Blitz</button><p class="fine">'+(left?left+(left===1?' round':' rounds')+' left today that pay XP and Sparks. Right answers still count as review.':'Today\'s paid rounds are done. Play on for your best score and for review.')+'</p></section>';
+}
+function freezeNote(){
+  if(!frozenToday()) return '';
+  return '<section class="card frozc">'+ic('ice')+'<p><b>A streak freeze has your back.</b> You missed yesterday. Meet your daily goal today and your streak of '+S.streak.n+' carries on.</p></section>';
+}
+function blitzTeaser(){
+  var b=blitzDay();
+  return '<section class="card blitzt"><div class="revc-h">'+ic('bolt')+'<h2>Blitz</h2></div><p class="sub">Ten questions, ninety seconds, a combo to build.'+(b.best?' Your best: '+b.best+'.':'')+'</p><button class="btn ghost" id="blitzHome">Play a round</button></section>';
 }
 function blitzStart(){
   var pool=blitzPool();

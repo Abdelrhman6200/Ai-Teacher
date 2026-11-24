@@ -18,6 +18,14 @@ function blitzCard(){
   return '<section class="card blitzc"><div class="revc-h">'+ic('bolt')+'<h2>Blitz</h2></div><p class="sub">'+BLITZ_N+' questions, '+BLITZ_SECS+' seconds. Right answers in a row multiply your points. Your best: <b>'+(b.best||0)+'</b>'+(b.bestCombo?' · best combo x'+b.bestCombo:'')+'.</p>'
     +'<button class="btn" id="blitzGo">'+ic('bolt')+'Start Blitz</button><p class="fine">'+(left?left+(left===1?' round':' rounds')+' left today that pay XP and Sparks. Right answers still count as review.':'Today\'s paid rounds are done. Play on for your best score and for review.')+'</p></section>';
 }
+function freezeNote(){
+  if(!frozenToday()) return '';
+  return '<section class="card frozc">'+ic('ice')+'<p><b>A streak freeze has your back.</b> You missed yesterday. Meet your daily goal today and your streak of '+S.streak.n+' carries on.</p></section>';
+}
+function blitzTeaser(){
+  var b=blitzDay();
+  return '<section class="card blitzt"><div class="revc-h">'+ic('bolt')+'<h2>Blitz</h2></div><p class="sub">Ten questions, ninety seconds, a combo to build.'+(b.best?' Your best: '+b.best+'.':'')+'</p><button class="btn ghost" id="blitzHome">Play a round</button></section>';
+}
 function blitzStart(){
   var pool=blitzPool();
   if(pool.length<5) return toast('Finish a few steps first. Blitz uses questions from your sessions.');

@@ -327,7 +327,7 @@ function learnView(){
   h+='<div class="hero-m"><div class="meter" role="progressbar" aria-label="Steps done in the course" aria-valuemin="0" aria-valuemax="'+all+'" aria-valuenow="'+tot+'"><i style="width:'+Math.round(tot/all*100)+'%"></i></div><span>'+tot+' of '+all+' steps</span></div></section>';
   // side
   h+='<aside class="side">';
-  h+=questsCard();
+  h+=questsCard()+freezeNote()+blitzTeaser();
   h+='<section class="card goalc"><div>'+ring(gp,76,9,Math.round(gp)+'%')+'</div><div><h2>Daily goal</h2><p class="num">'+(xpT>=S.goal?'Met: '+xpT+' XP today':xpT+' of '+S.goal+' XP today')+'</p><p class="sub">'+(streakNow()?streakNow()+(streakNow()===1?' day':' days')+' streak':'Meet it to start a streak')+'</p></div></section>';
   var wk='';
   for(var d=6; d>=0; d--){ var dk=dayAgo(d), met=(S.xpByDay[dk]||0)>=S.goal, on=(S.xpByDay[dk]||0)>0; wk+='<span class="day'+(met?' met':on?' some':'')+(d===0?' today':'')+'" title="'+dk+'"></span>'; }
@@ -360,6 +360,7 @@ function learnView(){
   $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; });
   var dgo=$('#dueGo'); if(dgo) dgo.onclick=startDue;
   var pg=$('#placeGo'); if(pg) pg.onclick=function(){ go({name:'place'}); };
+  var bh=$('#blitzHome'); if(bh) bh.onclick=blitzStart;
   var dq=$('#dqChest'); if(dq) dq.onclick=function(){ S.chest['dq-'+today()]=today(); openChest(20, 8, 'Daily');  learnView(); };
 }
 
