@@ -463,3 +463,56 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .libs{display:grid;gap:8px;margin-top:6px}
 .libs h2{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:18px}
 .libs .sn{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--lv);color:var(--on-lv);font-size:14px;flex:none}
+
+/* ---------- the journey: phases, chests, trail, daily quests ---------- */
+@keyframes zbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes zwalkin{from{transform:translateY(-96px);opacity:0}60%{opacity:1}to{transform:none;opacity:1}}
+@keyframes mtwalk{from{transform:translateX(var(--walk))}to{transform:none}}
+@keyframes chestWiggle{0%,60%,100%{transform:none}15%{transform:rotate(-7deg)}30%{transform:rotate(7deg)}45%{transform:rotate(-3deg)}}
+.qh{margin:8px 0 -8px}
+.pstrip{display:flex;align-items:center;padding:10px 14px 6px;border-radius:14px;background:var(--surface);border:1px solid var(--line);width:100%}
+.pp{display:grid;justify-items:center;gap:3px;flex:none}
+.pp i{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--bg);border:2px solid var(--line-2);color:var(--ink-3)}
+.pp i .i{width:17px;height:17px}
+.pp b{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.pp.done i{background:var(--lv);border-color:var(--lv);color:var(--on-lv)} .pp.done b{color:var(--lv-ink)}
+.pp.cur i{background:var(--surface);border-color:var(--lv);color:var(--lv-ink);animation:pulseRing 1.6s infinite} .pp.cur b{color:var(--ink)}
+.pl{flex:1;height:3px;border-radius:2px;background:var(--line);margin:0 4px 16px} .pl.on{background:var(--lv)}
+.phase{display:grid;gap:10px;padding:12px;border-radius:18px;border:1.5px solid var(--line);background:var(--surface)}
+.phase.cur{border-color:var(--lv);box-shadow:0 0 0 3px var(--lv-soft)}
+.phase.done{background:var(--lv-soft)}
+.ph-h{display:flex;align-items:center;gap:10px}
+.ph-i{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--lv);color:var(--on-lv);flex:none}
+.ph-t{display:grid;flex:1;min-width:0} .ph-t b{font-family:var(--font-display);font-weight:800;font-size:19px;line-height:1.1} .ph-t small{color:var(--ink-2);font-size:13px}
+.ph-p{font-weight:800;font-size:13px;color:var(--ink-3);white-space:nowrap}
+.chest{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:800;color:var(--ink-3);padding:5px 10px;border-radius:99px;border:1.5px dashed var(--line-2);background:var(--surface);white-space:nowrap}
+.chest .i{width:17px;height:17px}
+.chest.opened{border-style:solid;border-color:var(--good);color:var(--good);background:var(--good-bg)}
+.chest.ready{border:0;background:var(--gold);color:#262626;animation:chestWiggle 1.6s infinite}
+.phase .step:last-child{padding-bottom:0}
+.zwalk{position:absolute;right:10px;top:-34px;z-index:2;pointer-events:none;animation:zbob 2.2s ease-in-out infinite}
+.zwalk.walk{animation:zwalkin .9s cubic-bezier(.2,.8,.2,1),zbob 2.2s ease-in-out .9s infinite}
+.zwalk .zed,.zwalk svg{width:46px;height:auto;display:block}
+.mtrail{display:flex;gap:8px;align-items:flex-end;padding-top:36px}
+.mt-g{display:grid;gap:4px;min-width:0}
+.mt-g small{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.mt-r{display:flex;gap:3px;justify-content:space-between}
+.mt-d{position:relative;flex:1;max-width:16px;min-width:5px;height:10px;border-radius:5px;background:rgb(255 255 255 / .75);border:1.5px solid var(--lv)}
+:root[data-theme="dark"] .mt-d{background:rgb(255 255 255 / .08)}
+.mt-d.done{background:var(--lv)} .mt-d.gold{background:var(--gold);border-color:var(--gold)}
+.mt-d.cur{background:var(--surface);transform:scale(1.3);box-shadow:0 0 0 3px var(--lv-soft)}
+.mt-z{position:absolute;bottom:13px;left:50%;margin-left:-17px;pointer-events:none;animation:zbob 2.2s ease-in-out infinite}
+.mt-z.walk{animation:mtwalk 1.1s cubic-bezier(.2,.8,.2,1),zbob 2.2s ease-in-out 1.1s infinite}
+.mt-z .zed,.mt-z svg{width:34px;height:auto;display:block}
+.sn.here{background:none;width:46px;height:46px}
+.sn.here .zed,.sn.here svg{width:44px;height:auto}
+.qlist{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.qlist li{display:flex;gap:10px;align-items:center;font-size:15px}
+.qlist b{font-weight:700} .qlist small{display:block;color:var(--ink-3);font-size:12.5px;line-height:1.3}
+.qi{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:2px solid var(--line-2);color:#fff}
+.qi .i{width:14px;height:14px}
+.qlist li.on .qi{background:var(--good);border-color:var(--good)}
+.questc .btn{justify-self:start}
+.pclear{display:flex;gap:10px;align-items:center;text-align:start;padding:11px 13px;border-radius:12px;background:var(--l3s);border:1.5px solid var(--gold);width:100%;max-width:560px;font-size:15px}
+.pclear .i{width:28px;height:28px;color:var(--l3i);flex:none}
+.done .pstrip,.pin .pstrip{max-width:560px}

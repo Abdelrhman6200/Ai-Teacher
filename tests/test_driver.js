@@ -269,6 +269,87 @@ async function journey(){
   log('exercise real task ok: '+$('.rt .quote').textContent);
 }
 
+async function quest(){
+  // ---- the source-built step: every session, every card cites its own shelf
+  const NEWK=['swim','rings','delta','matrix','ladder','timeline']; const seenK={};
+  let cards=0, qs=0;
+  for(const s of D.sessions){
+    const nd=s.nodes.find(n=>n.k==='L3'); if(!nd) throw new Error('no From the sources step in '+s.id);
+    if(nd.kind!=='field') throw new Error('wrong kind '+s.id);
+    const urls=new Set((s.refs||[]).map(r=>r.u));
+    const t=nd.items.filter(i=>i.type==='teach'), m=nd.items.filter(i=>i.type==='mcq');
+    if(t.length<3||t.length>6) throw new Error(s.id+' cards '+t.length); if(m.length!==4) throw new Error(s.id+' questions '+m.length);
+    if(nd.items[0].type!=='teach') throw new Error(s.id+' should open with a card');
+    let hasDg=false;
+    for(const c of t){
+      const src=(c.blocks||[]).filter(b=>b.t==='src'); if(!src.length) throw new Error(s.id+' card without a source: '+c.title);
+      for(const b of src) if(!urls.has(b.url)) throw new Error(s.id+' cites a page not on its shelf: '+b.url);
+      for(const b of (c.blocks||[])) if(b.t==='diagram'){ hasDg=true; seenK[b.kind]=(seenK[b.kind]||0)+1; }
+    }
+    if(!hasDg) throw new Error(s.id+' has no diagram in its sources step');
+    cards+=t.length; qs+=m.length;
+    if(!s.refs||s.refs.length<7) throw new Error(s.id+' shelf too thin');
+  }
+  for(const k of NEWK) if(!seenK[k]) throw new Error('no diagram of kind '+k);
+  log('sources ok: '+cards+' cards, '+qs+' questions; diagrams '+JSON.stringify(seenK));
+
+  // ---- every new diagram type draws
+  for(const k of NEWK){
+    const f=findTeach((i,n,s)=>n.k==='L3'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind===k));
+    await openNodeById(f.node.id); await advanceUntil(()=>screen()==='teach'&&$('h1.bigt').textContent===f.item.title);
+    const fig=$('.dg.dg-'+k); if(!fig) throw new Error('diagram '+k+' did not draw');
+    const parts={swim:'.dgs-msg',rings:'.dgr',delta:'.dgd',matrix:'.dg-mx td',ladder:'.dgl-bar',timeline:'.dg-tl li'}[k];
+    if(!fig.querySelector(parts)) throw new Error('diagram '+k+' has no '+parts);
+    await click('#quit'); if($('.modal')) await click('#quitok'); await toLearn();
+  }
+  log('new diagrams draw: '+NEWK.join(', '));
+
+  // ---- home: the trail and the daily quests
+  await toLearn();
+  if($$('.mtrail .mt-g').length!==5) throw new Error('trail groups '+$$('.mtrail .mt-g').length);
+  if($$('.mtrail .mt-d').length!==24) throw new Error('trail dots '+$$('.mtrail .mt-d').length);
+  if($$('.mtrail .mt-z').length!==1) throw new Error('trail needs exactly one Zed');
+  if($$('.questc li').length!==3||$$('.questc li.on').length) throw new Error('daily quests should start empty');
+  log('home ok: trail of 24 stops with one Zed, 3 daily quests');
+
+  // ---- a session is a quest in four phases
+  await toSession('s01');
+  const ph=$$('.phase').map(p=>p.getAttribute('data-ph')); if(ph.join()!=='learn,apply,prove,use') throw new Error('phases '+ph.join());
+  if(!$('.pstrip')) throw new Error('no phase strip'); if($$('.zwalk').length!==1) throw new Error('Zed should stand on the next step');
+  if($('.chest.ready')) throw new Error('a chest is ready before any step is done');
+  const learnIds=['s01-PR','s01-L1','s01-L2','s01-L3','s01-W'];
+  for(let i=0;i<learnIds.length;i++){ await toSession('s01'); await playNode(NODE[learnIds[i]],false); }
+  if(!$('.pclear')) throw new Error('finishing the Learn phase should show a ribbon'); if(!$('.pstrip .pp.done')) throw new Error('strip does not show Learn done');
+  log('phase cleared ribbon: '+$('.pclear').textContent.slice(0,70));
+  await click('#back'); const cb=$('.chest.ready[data-chest="s01-learn"]'); if(!cb) throw new Error('no chest after the Learn phase');
+  const x0=xpNow(); await click(cb); await sleep(5); const x1=xpNow(); if(x1-x0!==10) throw new Error('chest paid '+(x1-x0));
+  if($('.chest.ready[data-chest="s01-learn"]')||!$('.phase[data-ph="learn"] .chest.opened')) throw new Error('chest did not close after opening');
+  log('chest +10 XP, opened once');
+
+  // ---- daily quests fill as you work
+  if($$('.questc li.on').length) { /* the home card is not on this screen */ }
+  await toLearn(); if(!document.querySelector('.questc')) await toLearn(); let on=$$('.questc li.on').length; if(on!==1) throw new Error('after a step, 1 quest should be done, got '+on);
+  await toSession('s01'); await playNode(NODE['s01-P1'],false); await toLearn(); if(!document.querySelector('.questc')) await toLearn(); on=$$('.questc li.on').length; if(on!==2) throw new Error('after practice, 2 quests, got '+on);
+  await toSession('s01'); const link=$('[data-ref]'); link.addEventListener('click',e=>e.preventDefault()); const r0=xpNow(); await click(link); await sleep(5);
+  if(xpNow()-r0!==2) throw new Error('opening a reference paid '+(xpNow()-r0)); const r1=xpNow(); await click(link); await sleep(5); if(xpNow()!==r1) throw new Error('second open paid XP');
+  await toLearn(); if(!document.querySelector('.questc')) await toLearn(); if($$('.questc li.on').length!==3) throw new Error('all three quests should be done'); const dq=$('#dqChest'); if(!dq) throw new Error('no daily chest');
+  const q0=xpNow(); await click(dq); await sleep(5); if(xpNow()-q0!==20) throw new Error('daily chest paid '+(xpNow()-q0));
+  if($('#dqChest')||!/Chest opened today/.test($('.questc').textContent)) throw new Error('daily chest did not close');
+  log('daily quests: 3 of 3, chest +20 XP');
+
+  // ---- the reference library
+  await click('[data-tab="sheets"]'); await click('#libGo'); const all=$$('[data-ref]').length; if(all<150) throw new Error('library lists '+all);
+  await click('[data-lk="deep"]'); const deep=$$('[data-ref]').length; if(!(deep>0&&deep<all)) throw new Error('kind filter broke: '+deep+' of '+all);
+  await click('[data-lk="all"]'); await click('[data-ll="5"]'); const l5=$$('[data-ref]').length; if(!(l5>0&&l5<all)) throw new Error('level filter broke');
+  await click('[data-ll="0"]'); setv($('#lq'),'prompt caching'); await sleep(5); const hit=$$('[data-ref]').length; if(!(hit>0&&hit<all)) throw new Error('search broke: '+hit);
+  const sheetHit=(()=>{ return true; })();
+  log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', search "prompt caching" '+hit);
+
+  // ---- a source step plays through like any other, and the sheet carries the shelf
+  await toSession('s02'); await playNode(NODE['s02-L3'],false); if(!$('.center.done')) throw new Error('source step did not finish'); log('source step played through: s02-L3');
+  await toLearn(); await click('[data-tab="sheets"]'); await click('[data-sheet="s09"]'); if(!$('.shelf[open]')) throw new Error('study sheet has no open shelf');
+}
+
 let pvOn=false;
 async function extras(){
   // quit modal
@@ -416,6 +497,13 @@ scenes.shelf=async()=>{ await preview(); await toSession('s17'); const d=$('.she
 scenes.library=async()=>{ await click('[data-tab="sheets"]'); await click('#libGo'); };
 scenes.library_f=async()=>{ await scenes.library(); await click('[data-lk="deep"]'); await click('[data-ll="4"]'); $$('[data-ref]').forEach(a=>a.addEventListener('click',e=>e.preventDefault())); await click($$('[data-ref]')[0]); };
 
+
+// ---- the journey layer
+scenes.quest=async()=>{ await playFirst('s01',5,false); };
+scenes.quest_chest=async()=>{ await playFirst('s01',5,false); window.scrollTo(0,420); };
+scenes.phase_done=async()=>{ await playFirst('s01',4,false); await click(nodeBtn('s01-W')); await playLesson(false); };
+scenes.trail=async()=>{ await playFirst('s01',12,false); window.__skew+=DAY; await playFirst('s02',6,false); await click('[data-tab="learn"]'); };
+
 scenes.duetest=async()=>{
   await playFirst('s01',12,true); window.__skew+=2*DAY; await click('[data-tab="learn"]');
   const h2=$('.duec2 h2'); if(!h2) throw new Error('no due card'); const n0=parseInt(h2.textContent,10); log('due before: '+n0);
@@ -436,6 +524,7 @@ try{
   if(scene==='full') await full();
   else if(scene==='extras') await extras();
   else if(scene==='onboard') await journey();
+  else if(scene==='quest') await quest();
   else if(/^fld_s\d\d_\d+$/.test(scene)){ const [,sid,ix]=/^fld_(s\d\d)_(\d+)$/.exec(scene); const nd=SESS[sid].nodes.find(n=>n.k==='L3'); const cards=nd.items.filter(i=>i.type==='teach'); const title=cards[+ix].title; await openNodeById(nd.id); await advanceUntil(()=>screen()==='teach'&&$('h1.bigt').textContent===title); await sleep(60); document.getAnimations().forEach(a=>{ try{ if(a.effect.getComputedTiming().iterations!==Infinity) a.finish(); }catch(e){} }); window.scrollTo(0,0); await sleep(60); }
   else if(scenes[scene]){ await scenes[scene](); if(!/^(due|you2|sheetdg)/.test(scene)) window.scrollTo(0,0); await sleep(60); document.getAnimations().forEach(a=>{ try{ if(a.effect.getComputedTiming().iterations!==Infinity) a.finish(); }catch(e){} }); await sleep(30); log('scene '+scene+' screen='+screen()); }
   else if(scene==='smoke'){

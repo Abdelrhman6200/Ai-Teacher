@@ -38,6 +38,7 @@ Q[15] = [
  ('docs', P + 'test-and-evaluate/strengthen-guardrails/reduce-prompt-leak', 'Reduce prompt leak', 'Keep instructions private when you must.'),
  ('docs', P + 'test-and-evaluate/strengthen-guardrails/increase-consistency', 'Increase output consistency', 'Make results repeatable enough to grade.'),
  ('docs', P + 'build-with-claude/token-counting', 'Token counting', 'Estimate cost before you send.'),
+ ('docs', P + 'about-claude/pricing', 'Pricing', 'The per-million-token prices behind every cost note.'),
  ('docs', C + 'costs', 'Manage costs effectively', 'Caps and habits that keep spend predictable.'),
  ('deep', A + 'engineering/demystifying-evals-for-ai-agents', 'Demystifying evals for AI agents', 'Graders, trials and how to grow a suite from real failures.'),
  ('deep', A + 'research/statistical-approach-to-model-evals', 'A statistical approach to model evaluations', 'Why 20 cases need error bars, and how to compare two models fairly.'),
@@ -83,6 +84,7 @@ Q[18] = [
  ('docs', P + 'agents-and-tools/tool-use/troubleshooting-tool-use', 'Troubleshooting tool use', 'When Claude picks the wrong tool.'),
  ('deep', A + 'engineering/writing-tools-for-agents', 'Writing effective tools for AI agents', 'Evaluate tools with real tasks, then rewrite descriptions.'),
  ('deep', A + 'engineering/advanced-tool-use', 'Introducing advanced tool use', 'Tool search and programmatic calling for large tool sets.'),
+ ('deep', A + 'research/april-23-postmortem', 'An update on Claude Code quality reports', 'A lower default effort made users feel the tool was less capable. Measure before you move a default.'),
  ('deep', A + 'engineering/claude-think-tool', 'The "think" tool', 'A scratchpad that helps in long tool chains.'),
  ('try', P + 'agents-and-tools/tool-use/build-a-tool-using-agent', 'Tutorial: build a tool-using agent', 'Practice tool design end to end.'),
 ]
@@ -97,6 +99,7 @@ Q[19] = [
  ('deep', A + 'engineering/demystifying-evals-for-ai-agents', 'Demystifying evals for AI agents', 'Held-out sets, graders and turning failures into tests.'),
  ('deep', A + 'engineering/infrastructure-noise', 'Infrastructure noise in agentic coding evals', 'Why the same model scores differently on different setups.'),
  ('deep', A + 'research/statistical-approach-to-model-evals', 'A statistical approach to model evaluations', 'Error bars for honest comparisons.'),
+ ('deep', A + 'research/april-23-postmortem', 'An update on Claude Code quality reports', 'A prompt change that weeks of testing missed. A broader suite found a 3 percent drop.'),
  ('deep', A + 'engineering/a-postmortem-of-three-recent-issues', 'A postmortem of three recent issues', 'How quality problems hid until users noticed.'),
  ('try', C + 'plugin-evals', 'Test plugins with evals', 'A suite for something you built.'),
 ]
@@ -145,6 +148,7 @@ Q[22] = [
  ('docs', C + 'zero-data-retention', 'Zero data retention', 'What it covers and what it does not.'),
  ('docs', H + '13364135', 'Use Claude Cowork safely', 'What a desktop agent can reach.'),
  ('deep', A + 'engineering/claude-code-sandboxing', 'Making Claude Code safer with sandboxing', 'Isolation that cut permission prompts and held up.'),
+ ('deep', A + 'research/claude-code-auto-mode', 'How we built Claude Code auto mode', 'Users accept 93 percent of prompts. Classifiers review what Claude reads and does.'),
  ('deep', A + 'research/prompt-injection-defenses', 'Mitigating prompt injections in browser use', 'Defences, measured as an attack success rate.'),
  ('deep', A + 'research/trustworthy-agents', 'Trustworthy agents in practice', 'Defence in depth across the whole system.'),
  ('deep', A + 'news/our-framework-for-developing-safe-and-trustworthy-agents', 'Our framework for safe and trustworthy agents', 'Human control, transparency and security as principles.'),
@@ -155,6 +159,8 @@ Q[23] = [
  ('docs', P + 'build-with-claude/prompt-caching', 'Prompt caching', 'The biggest free win for a shared prefix.'),
  ('docs', P + 'test-and-evaluate/strengthen-guardrails/reduce-latency', 'Reducing latency', 'Levers for speed, in order of effort.'),
  ('docs', P + 'build-with-claude/fast-mode', 'Fast mode', 'Pay more for speed when it matters.'),
+ ('docs', P + 'api/rate-limits', 'Rate limits', 'Per-minute limits, cache-aware input counting, ramp limits and the monthly spend cap.'),
+ ('docs', P + 'api/errors', 'Errors', 'Every status code, the request id and the advice for long requests.'),
  ('docs', P + 'about-claude/pricing', 'Pricing', 'The inputs of your cost model.'),
  ('docs', P + 'build-with-claude/token-counting', 'Token counting', 'Predict spend before you send.'),
  ('docs', P + 'about-claude/models/migration-guide', 'Upgrade between model versions', 'A checklist before you switch.'),
@@ -177,5 +183,6 @@ Q[24] = [
  ('deep', A + 'research/april-23-postmortem', 'An update on Claude Code quality reports', 'What happened, what was fixed, what changes.'),
  ('deep', A + 'research/measuring-agent-autonomy', 'Measuring AI agent autonomy in practice', 'Use real numbers when you teach adoption.'),
  ('deep', A + 'research/trustworthy-agents', 'Trustworthy agents in practice', 'Your closing checklist for any system you ship.'),
+ ('deep', A + 'research/AI-assistance-coding-skills', 'How AI assistance impacts the formation of coding skills', 'A randomised trial: AI use lowered comprehension unless it was used to build understanding. Read it before you teach.'),
  ('try', C + 'code-review', 'Code Review', 'Add a reviewer to a real pull request.'),
 ]

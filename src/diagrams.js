@@ -42,7 +42,7 @@ function dgHTML(b){
   } else if(k==='quad'){
     h+='<div class="dg-quadw"><span class="dg-ax dg-axy">'+esc(b.y||'')+'</span><div class="dg-qgrid">'+b.cells.map(function(c,i){ return '<div class="dg-cell q'+i+'" style="--i:'+i+'"><b>'+esc(c.h)+'</b>'+(c.s?'<span>'+esc(c.s)+'</span>':'')+'</div>'; }).join('')+'</div><span class="dg-ax dg-axx">'+esc(b.x||'')+'</span></div>';
   } else if(k==='swim'){
-    var L=b.lanes, n=L.length, W=320, pad=n===2?64:44, gap=(W-2*pad)/(n-1), top=46, step=42, H=top+b.msgs.length*step+10;
+    var L=b.lanes, n=L.length, W=320, pad=n===2?64:52, gap=(W-2*pad)/(n-1), top=46, step=42, H=top+b.msgs.length*step+10;
     h+='<svg class="dg-swim" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(b.title||'Sequence')+'">';
     L.forEach(function(name,i){ var x=pad+i*gap; h+='<g class="dgs-lane"><line x1="'+x+'" y1="34" x2="'+x+'" y2="'+(H-4)+'"/><rect x="'+(x-46)+'" y="6" width="92" height="26" rx="13"/><text x="'+x+'" y="23" text-anchor="middle">'+esc(name)+'</text></g>'; });
     b.msgs.forEach(function(m,i){

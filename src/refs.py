@@ -26,7 +26,7 @@ def validate(Q):
     errs = []
     if sorted(Q) != list(range(1, 25)): errs.append('missing sessions: %s' % sorted(set(range(1, 25)) - set(Q)))
     for n, rows in sorted(Q.items()):
-        if not 7 <= len(rows) <= 14: errs.append('S%d: %d references (want 7 to 14)' % (n, len(rows)))
+        if not 7 <= len(rows) <= 16: errs.append('S%d: %d references (want 7 to 16)' % (n, len(rows)))
         seen = set()
         kinds = set()
         for e in rows:

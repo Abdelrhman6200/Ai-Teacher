@@ -1,0 +1,43 @@
+"""From the sources, session 23."""
+P = 'https://platform.claude.com/docs/en/'
+A = 'https://www.anthropic.com/'
+Q = {}
+
+Q[23] = dict(steps=[
+ dict(title='Free wins first, trade-offs second',
+      paras=['The cost levers come in a sensible order. The free ones change nothing about quality: cache the shared prefix, which reads at 5 percent of the base input price on Opus 5.5, keep prompts and outputs tight, and put work that can wait on the Batch API at half price. The paid-for ones need an eval first: a smaller model, or fast mode, which trades price for speed.',
+             'Anthropic\'s latency guide adds the cheapest perceived-speed trick. Streaming lets the model start sending its answer before it is complete, so users see output as it arrives.'],
+      viz=dict(kind='ladder', title='Cost and latency levers, in our order', axis='Take the lower rungs first. Test before you climb.', mark=4,
+               steps=[dict(h='Fast mode', s='Pays more for speed, where speed matters'), dict(h='A smaller model', s='Only after an eval shows it holds'), dict(h='Batch what can wait', s='Half price, asynchronous'), dict(h='Tighten prompt and output', s='Fewer tokens to read and write'), dict(h='Cache the shared prefix', s='Reads cost 5 percent of base on Opus 5.5')]),
+      src=[('Prompt caching', P + 'build-with-claude/prompt-caching'), ('Batch processing', P + 'build-with-claude/batch-processing'), ('Reducing latency', P + 'test-and-evaluate/strengthen-guardrails/reduce-latency')]),
+ ('Which technique does Anthropic\'s latency guide give for improving perceived speed without changing the model or the prompt?',
+  ['Streaming, so users see output as it arrives', 'Raising max_tokens to a very large value', 'Adding many more examples to the prompt', 'Retrying every request twice to be safe'],
+  'Streaming does not make the model faster. It makes waiting feel shorter, and it is also the recommended route for long requests.'),
+ dict(title='A 429 tells you what to do next',
+      paras=['Rate limits are measured per model class in requests, input tokens and output tokens per minute. Exceed any and you get a 429 that says which. When the response has a retry-after header, wait that many seconds before retrying. A sharp jump in usage can also trigger a 429 even under your limits, through a ramp limit, and a burst of requests within a few seconds can count as one.',
+             'Caching helps here too. Default input limits count only uncached input tokens, so tokens read from cache do not count. With a 2,000,000 per-minute limit and an 80 percent cache hit rate, you could process about 10,000,000 input tokens a minute. A monthly spend cap behaves differently: requests return 429 with no retry-after, until 00:00 UTC on the first of next month.'],
+      stats=[('10M', 'input tokens a minute from a 2M limit at an 80% cache hit rate')],
+      viz=dict(kind='delta', title='Input throughput on a 2,000,000 per minute limit', rows=[dict(h='Effective input tokens per minute', **{'from': '2M'}, to='10M', s='With an 80 percent cache hit rate. Cache reads do not count against the limit.')]),
+      src=('Rate limits', P + 'api/rate-limits')),
+ ('A 429 response includes a retry-after header. What do the rate-limit docs say to do?',
+  ['Wait that many seconds, then retry the request', 'Retry immediately, in a loop, until it works', 'Switch to a larger model to avoid the limit', 'Treat it as a bug somewhere in your own code'],
+  'Back off by the amount the server asks. A hot retry loop turns a short throttle into a long outage.'),
+ dict(title='Errors are structured, so handle them by kind',
+      paras=['The API returns errors as JSON with a type and message and always a request id, also in the request-id header. Include it when you contact support. The codes group naturally: 400, 404, 409 and 413 are problems with the request, 401, 402 and 403 are problems with access or billing, and 429 is about pace.',
+             'For long requests, over about 10 minutes, use streaming or the Batch API, and avoid a large max_tokens without streaming. The SDKs raise typed exceptions, so a 404 becomes a NotFoundError you can catch on its own.'],
+      viz=dict(kind='tree', title='Read the status code first', root='An API error',
+               kids=[dict(h='Fix the request', s='400, 404, 409 and 413: do not just retry'), dict(h='Fix access or billing', s='401, 402 and 403: a retry will not help'), dict(h='Slow down', s='429: wait, then retry within a limit')]),
+      src=('Errors', P + 'api/errors')),
+ ('You contact support about one failed request. Which identifier do the error docs say to include?',
+  ['The request id from the header or the error body', 'Your API key, so that they can find your account', 'Only the name of the model that you called', 'A screenshot of your whole Console dashboard'],
+  'A request id lets Anthropic find that exact call. Log it alongside every failure.'),
+ dict(title='A cost change is a quality change until you measure it',
+      paras=['Claude Code\'s default effort began as high. Users said it sometimes thought so long that the interface seemed frozen, with high latency and token use. Anthropic\'s internal evals showed medium gave slightly lower intelligence with significantly less latency, so medium became the default.',
+             'Soon after, users reported Claude Code felt less intelligent. A saving that looked free in the evals was felt by users as a quality loss. The postmortem\'s remedies are the habits for your own migrations: broader evals, soak periods and gradual rollouts for any change that could trade off against quality.'],
+      viz=dict(kind='compare', title='The default effort decision', leftTone='bad', rightTone='neutral',
+               left=dict(h='High by default', items=['Best answers on hard tasks', 'Occasional very long thinking', 'The interface seemed frozen']), right=dict(h='Medium by default', items=['Slightly lower intelligence in evals', 'Significantly less latency', 'Users still reported it felt less capable'])),
+      src=('An update on Claude Code quality reports', A + 'research/april-23-postmortem')),
+ ('Claude Code moved its default effort from high to medium to cut latency. What did Anthropic\'s postmortem report happened next?',
+  ['Users reported it felt less intelligent afterwards', 'Nothing happened: users preferred the faster default', 'Costs rose sharply, because medium thinks longer', 'The change was never shipped to any users at all'],
+  'Treat every default, price or speed change as a quality change, and measure it before it reaches everyone.'),
+])

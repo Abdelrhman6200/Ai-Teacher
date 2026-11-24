@@ -1,0 +1,43 @@
+"""From the sources, session 21."""
+C = 'https://code.claude.com/docs/en/'
+A = 'https://www.anthropic.com/'
+Q = {}
+
+Q[21] = dict(steps=[
+ dict(title='Tools can eat your window before the work starts',
+      paras=['Anthropic names two ways MCP gets expensive at scale. Most clients load every tool definition into context up front. And intermediate results pass through the model: a meeting transcript fetched from one service and attached in another flows through the context twice.',
+             'Their fix is to present MCP servers as code on a filesystem. The agent reads only the definitions it needs, filters data in code, such as the rows it wants from a 10,000-row sheet, and runs loops and conditions in one step. Intermediate results stay in the execution environment unless the agent logs them, which also keeps data you do not want the model to see out of its context.'],
+      stats=[('98.7%', 'fewer tokens in their example: 150,000 down to 2,000')],
+      viz=dict(kind='delta', title='Tokens used for a multi-tool task', rows=[dict(h='Definitions and results in context', **{'from': '150,000'}, to='2,000', s='Load tools on demand and filter in code')]),
+      src=('Code execution with MCP', A + 'engineering/code-execution-with-mcp')),
+ ('In Anthropic\'s code-execution-with-MCP example, what happened to token use?',
+  ['It fell from about 150,000 tokens to about 2,000', 'It rose from about 2,000 tokens to about 150,000', 'It stayed the same; only the latency improved', 'It fell from about 150,000 tokens to about 100,000'],
+  'The savings come from not loading every definition and not routing large results through the model.'),
+ dict(title='By default anyone can connect any server',
+      paras=['The managed-MCP page opens with a plain fact: by default, anyone running Claude Code can connect any MCP server. It gives administrators a set of patterns, from disabling MCP entirely to a fixed deployment, to provided servers that sit alongside users\' own, to an approved catalog where users add only what is on the list.',
+             'Two warnings. A managed-mcp.json file can be read by any user on the machine, so keep API keys out of its env blocks and pass per-user credentials another way. And validate with claude mcp list, which should show only the servers you meant to allow.'],
+      viz=dict(kind='matrix', title='Managed MCP patterns', legend=['No', 'Only approved', 'Yes'], cols=['Users add their own', 'Everyone gets a set'],
+               rows=[dict(h='Disable MCP', v=[0, 0]), dict(h='Fixed deployment', v=[0, 2]), dict(h='Provided servers', v=[2, 2]), dict(h='Approved catalog', v=[1, 0])]),
+      src=('Control MCP server access for your organization', C + 'managed-mcp')),
+ ('You want users to add servers only from an approved list, with everything else blocked. Which pattern does the page describe?',
+  ['An approved catalog built with allowedMcpServers', 'Disable MCP with an empty managed-mcp.json file', 'Provided servers, letting users keep their own too', 'Nothing: users can always add any server they like'],
+  'An allowlist turns "anyone can connect anything" into "only what we reviewed".'),
+ dict(title='A plugin runs with your privileges',
+      paras=['The plugin security page is blunt: an installed plugin can execute arbitrary code on your machine with your user privileges. Hooks and monitors run as shell commands, a mod runs JavaScript inside Claude Code, a stdio MCP server runs as a process, and a plugin\'s bin directory goes on the shell PATH. Skills, commands and agents enter context as instructions.',
+             'So review before you install. Run claude plugin marketplace list to see where each marketplace came from. Claude Code refuses a marketplace that uses an official-sounding name but is sourced outside github.com/anthropics, and administrators can allowlist or blocklist sources and force-enable plugins through managed settings.'],
+      viz=dict(kind='tree', title='What an installed plugin can carry', root='A plugin you install',
+               kids=[dict(h='Runs code on your machine', s='Hooks, monitors, a bin directory on PATH, stdio MCP servers'), dict(h='Runs inside Claude Code', s='A mod runs JavaScript with your permissions'), dict(h='Steers Claude', s='Skills, commands and agents enter context as instructions')]),
+      src=('Plugin security and trust', C + 'plugins/security')),
+ ('Which command does the plugin security page give for seeing where each marketplace was added from?',
+  ['claude plugin marketplace list', 'claude plugin trust --show', 'claude doctor --plugins', 'claude mcp list --all'],
+  'Source first, then contents. A plugin\'s name tells you nothing about who wrote it.'),
+ dict(title='Open standards make what you build portable',
+      paras=['MCP was created at Anthropic as an open standard for connecting AI applications to data and tools, with servers that expose data and clients that use it. Anthropic has since donated it to the Linux Foundation\'s new Agentic AI Foundation, co-founded with Block and OpenAI. It has also published Agent Skills as an open standard for cross-platform portability.',
+             'The practical lesson for your plugin and server is to build to the standard and not to one product, and to keep scopes narrow, because portable code carries its permissions with it.'],
+      viz=dict(kind='tree', title='Built to a standard', root='Your component',
+               kids=[dict(h='An MCP server', s='Any MCP client can connect to it'), dict(h='An Agent Skill', s='Published as an open standard for portability'), dict(h='A plugin', s='Bundles both, with a version and a way back')]),
+      src=[('Donating MCP to the Agentic AI Foundation', A + 'news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation'), ('Introducing the Model Context Protocol', A + 'news/model-context-protocol')]),
+ ('Where did Anthropic donate the Model Context Protocol?',
+  ['The Linux Foundation\'s Agentic AI Foundation', 'To one cloud provider, which now owns it outright', 'It was retired and replaced by a newer protocol', 'To a web standards body that governs browsers'],
+  'Neutral governance is what lets competing tools build to the same standard.'),
+])

@@ -6,7 +6,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -216,6 +216,7 @@ var BADGES = [
   {id:'session', icon:'layers', name:'Session complete', desc:'Finish every step of one session.', have:function(){ return SESSIONS.filter(sessComplete).length; }, need:1},
   {id:'explorer', icon:'search', name:'Explorer', desc:'Open 10 reference links.', have:function(){ return refsOpened(); }, need:10},
   {id:'diver', icon:'layers', name:'Deep diver', desc:'Open 5 Go deeper articles.', have:function(){ return refsOpened('deep'); }, need:5},
+  {id:'chests', icon:'chest', name:'Treasure hunter', desc:'Open 5 chests.', have:function(){ return Object.keys(S.chest).length; }, need:5},
   {id:'goal5', icon:'target', name:'Goal getter', desc:'Meet your daily goal on five different days.', have:function(){ return S.goalDays.length; }, need:5},
   {id:'xp500', icon:'bolt', name:'Five hundred', desc:'Earn 500 practice XP.', have:function(){ return S.xp; }, need:500},
   {id:'xp2500', icon:'bolt', name:'Twenty-five hundred', desc:'Earn 2,500 practice XP.', have:function(){ return S.xp; }, need:2500},
@@ -269,9 +270,11 @@ function learnView(){
     h+='<div class="hero-t"><span class="eyebrow">'+(tot?'Up next':'Start here')+' · Level '+s.level+', session '+s.n+'</span><h1>'+esc(s.title)+'</h1><p>Step '+pos+' of '+ns0.length+' · '+(nx.kind==='gate'?'Level gate: '+esc(nx.title):esc(nx.title)+' · about '+estMin(nx)+' min')+'</p></div>'
       +'<button class="btn big" id="cont">'+(tot?'Continue':'Start')+ic('arrow')+'</button>';
   } else h+='<div class="hero-t"><span class="eyebrow">'+(S.startAt>1?'Course complete from your start':'Course complete')+'</span><h1>'+(S.startAt>1?'Everything from here is done':'Every step is done')+'</h1><p>'+(S.startAt>1?'The sessions you skipped stay open if you want them. Or review your weak spots.':'Review your weak spots or reread a study sheet.')+'</p></div>';
+  h+=miniTrail();
   h+='<div class="hero-m"><div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="'+all+'" aria-valuenow="'+tot+'"><i style="width:'+Math.round(tot/all*100)+'%"></i></div><span>'+tot+' of '+all+' steps</span></div></section>';
   // side
   h+='<aside class="side">';
+  h+=questsCard();
   h+='<section class="card goalc"><div>'+ring(gp,76,9,Math.round(gp)+'%')+'</div><div><h2>Daily goal</h2><p class="num">'+(xpT>=S.goal?'Met: '+xpT+' XP today':xpT+' of '+S.goal+' XP today')+'</p><p class="sub">'+(streakNow()?streakNow()+(streakNow()===1?' day':' days')+' streak':'Meet it to start a streak')+'</p></div></section>';
   var wk='';
   for(var d=6; d>=0; d--){ var dk=dayAgo(d), met=(S.xpByDay[dk]||0)>=S.goal, on=(S.xpByDay[dk]||0)>0; wk+='<span class="day'+(met?' met':on?' some':'')+(d===0?' today':'')+'" title="'+dk+'"></span>'; }
@@ -292,7 +295,7 @@ function learnView(){
       var p=sessProg(s), open=sessOpen(s), comp=sessComplete(s), ns=sessNodes(s.id);
       var segs=ns.map(function(n){ var st=isDone(n.id)?(starsOf(n.id)===3?' gold':' on'):''; return '<i class="seg'+st+'"></i>'; }).join('');
       h+='<button class="scard'+(comp?' comp':'')+(open?'':' locked')+'" data-sess="'+s.id+'" aria-label="Session '+s.n+': '+esc(s.title)+', '+(open?p.done+' of '+p.total+' steps done':'locked')+'">'
-        +'<span class="sn">'+(comp?ic('check'):(open?s.n:ic('lock')))+'</span><span class="sb"><b>'+esc(s.title)+'</b><span class="sd">'+esc(s.deliverable)+'</span><span class="segs">'+segs+'</span></span>'
+        +'<span class="sn'+(nx&&nx.sid===s.id?' here':'')+'">'+(comp?ic('check'):(nx&&nx.sid===s.id?zed(lv.n,'wink',40):(open?s.n:ic('lock'))))+'</span><span class="sb"><b>'+esc(s.title)+'</b><span class="sd">'+esc(s.deliverable)+'</span><span class="segs">'+segs+'</span></span>'
         +'<span class="sx">'+(open?(comp?(S.mast[s.id]&&S.mast[s.id].passed?'Mastered':'Done'):(s.n<S.startAt&&!p.done?'Skipped':p.done+'/'+p.total)):'Locked')+'</span></button>';
     });
     h+='</div><div class="gaterow'+(levelDone(lv)?' done':'')+'"><span class="gi">'+ic('gate')+'</span><span><b>Gate: '+esc(lv.gate.title)+'</b><span class="sd">'+(levelDone(lv)?'Handed in to your instructor':'Graded by your instructor. Opens when every step of session '+SBY[lv.gate.session].n+' is done.')+'</span></span></div></section>';
@@ -304,6 +307,7 @@ function learnView(){
   $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; });
   var dgo=$('#dueGo'); if(dgo) dgo.onclick=startDue;
   var pg=$('#placeGo'); if(pg) pg.onclick=function(){ go({name:'place'}); };
+  var dq=$('#dqChest'); if(dq) dq.onclick=function(){ S.chest['dq-'+today()]=today(); addXP(20); var nb=checkBadges(); save(); toast('Chest opened: +20 XP'+(nb.length?' · Badge: '+nb[0].name:'')); learnView(); };
 }
 
 /* ================= ONBOARDING, PLACEMENT AND THE SESSION CLOSE ================= */
@@ -463,6 +467,7 @@ function bindRefs(){
     a.addEventListener('click', function(){
       var u=a.getAttribute('data-ref'); if(S.read[u]) return;
       S.read[u]=today(); markAct('refs'); addXP(2); var nb=checkBadges(); save();
+      var xe=document.querySelector('.stat.xp b'); if(xe) xe.textContent=S.xp; var fe=document.querySelector('.stat.flame b'); if(fe) fe.textContent=streakNow();
       a.classList.add('on'); var rs=a.querySelector('.rs'); if(rs) rs.innerHTML=ic('check')+'Opened';
       $$('[data-shelfc]').forEach(function(c){ var s=SBY[c.getAttribute('data-shelfc')]; c.textContent=s.refs.length+' links · '+s.refs.filter(function(r){ return S.read[r.u]; }).length+' opened'; });
       toast('+2 XP for opening a reference'+(nb.length?' · Badge: '+nb[0].name:''));
@@ -493,6 +498,65 @@ function libraryView(){
   bindRefs();
 }
 
+/* ================= THE JOURNEY: phases, chests, the trail and daily quests ================= */
+IC.chest='<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M4 11V9a3 3 0 013-3h10a3 3 0 013 3v2M12 11v4M10 15h4"/>';
+var PHASES=[
+  {id:'learn', name:'Learn', tag:'Take it in', icon:'learn', bonus:10, kinds:['warmup','pretest','learn','field','demo']},
+  {id:'apply', name:'Apply', tag:'Try it yourself', icon:'pen', bonus:10, kinds:['apply','practice']},
+  {id:'prove', name:'Prove', tag:'Show you have it', icon:'medal', bonus:15, kinds:['recall','master']},
+  {id:'use', name:'Use', tag:'Make it yours', icon:'flag', bonus:20, kinds:['task','case','question','checkpoint','gate']}
+];
+function phaseNodes(sid, ph){ return sessNodes(sid).filter(function(n){ return ph.kinds.indexOf(n.kind)>=0; }); }
+function phaseProg(sid, ph){ var ns=phaseNodes(sid,ph), d=ns.filter(function(n){ return isDone(n.id); }).length; return {done:d, total:ns.length}; }
+function phaseFull(sid, ph){ var p=phaseProg(sid,ph); return p.total>0 && p.done===p.total; }
+function curPhase(sid){ for(var i=0;i<PHASES.length;i++){ var p=phaseProg(sid,PHASES[i]); if(p.total && p.done<p.total) return PHASES[i]; } return null; }
+function chestKey(sid, ph){ return sid+'-'+ph.id; }
+function phaseStrip(s){
+  var cur=curPhase(s.id), h='<div class="pstrip" role="img" aria-label="Journey: '+PHASES.map(function(ph){ return ph.name+(phaseFull(s.id,ph)?' done':cur&&cur.id===ph.id?' now':''); }).join(', ')+'">';
+  PHASES.forEach(function(ph, i){
+    var st=phaseFull(s.id,ph)?'done':(cur&&cur.id===ph.id)?'cur':'';
+    h+=(i?'<span class="pl'+(st==='done'||st==='cur'?' on':'')+'"></span>':'')+'<span class="pp '+st+'"><i>'+ic(st==='done'?'check':ph.icon)+'</i><b>'+ph.name+'</b></span>';
+  });
+  return h+'</div>';
+}
+function phaseNote(n){
+  // shown on a done screen: where you are, and a ribbon when this step cleared its phase
+  var s=SBY[n.sid]; if(!s||n.id==='review') return '';
+  var ph=PHASES.filter(function(p){ return p.kinds.indexOf(n.kind)>=0; })[0], ribbon='';
+  if(ph && phaseFull(s.id,ph) && !S.chest[chestKey(s.id,ph)]) ribbon='<p class="pclear">'+ic('chest')+'<span><b>'+ph.name+' phase cleared.</b> A chest worth '+ph.bonus+' XP is waiting on the session page.</span></p>';
+  return phaseStrip(s)+ribbon;
+}
+function actToday(){ return S.act[today()]||{steps:0, practice:0, refs:0}; }
+var QUESTS=[['steps','Finish a step','Any new step counts.'],['practice','Win a practice step','Practice, recall, apply, warm-up, mastery or a review round.'],['refs','Open a reference','One page from the shelf of any session.']];
+function questsCard(){
+  var a=actToday(), key='dq-'+today(), claimed=S.chest[key], n=QUESTS.filter(function(q){ return (a[q[0]]||0)>=1; }).length;
+  return '<section class="card questc"><div class="revc-h">'+ic('chest')+'<h2>Today\'s quests</h2></div><ul class="qlist">'
+    +QUESTS.map(function(q){ var on=(a[q[0]]||0)>=1; return '<li class="'+(on?'on':'')+'"><span class="qi">'+(on?ic('check'):'')+'</span><span><b>'+q[1]+'</b><small>'+q[2]+'</small></span></li>'; }).join('')+'</ul>'
+    +(n===3?(claimed?'<p class="sub">Chest opened today. Come back tomorrow for three more.</p>':'<button class="btn" id="dqChest">'+ic('chest')+'Open chest +20 XP</button>'):'<p class="sub">'+n+' of 3 done. Finish all three to open a chest.</p>')+'</section>';
+}
+function miniTrail(){
+  var nx=nextNode(), cur=nx?SBY[nx.sid].n:0, done=SESSIONS.filter(sessComplete).length, from=S.zedAt||cur;
+  var h='<div class="mtrail" role="img" aria-label="Your trail: '+done+' of '+SESSIONS.length+' sessions complete'+(cur?', now on session '+cur:'')+'">';
+  LEVELS.forEach(function(lv){
+    h+='<div class="mt-g" data-lv="'+lv.n+'" style="flex:'+lv.sessions.length+'"><div class="mt-r">';
+    lv.sessionObjs.forEach(function(s){
+      var comp=sessComplete(s), here=s.n===cur, st=comp?(S.mast[s.id]&&S.mast[s.id].passed?' gold':' done'):here?' cur':sessOpen(s)?' open':'';
+      h+='<span class="mt-d'+st+'">'+(here?'<span class="mt-z'+(from!==cur?' walk':'')+'" style="--walk:'+((from-cur)*13)+'px">'+zed(lv.n,'happy',34)+'</span>':'')+'</span>';
+    });
+    h+='</div><small>L'+lv.n+'</small></div>';
+  });
+  if(S.zedAt!==cur){ S.zedAt=cur; save(); }
+  return h+'</div>';
+}
+function bindChests(rerender){
+  $$('[data-chest]').forEach(function(b){ b.onclick=function(){
+    var key=b.getAttribute('data-chest'); if(S.chest[key]) return;
+    var ph=PHASES.filter(function(p){ return p.id===key.split('-')[1]; })[0];
+    S.chest[key]=today(); addXP(ph.bonus); var nb=checkBadges(); save();
+    toast('Chest opened: +'+ph.bonus+' XP'+(nb.length?' · Badge: '+nb[0].name:'')); rerender();
+  }; });
+}
+
 /* ================= SESSION ================= */
 function sessionView(){
   settleWarm(SBY[view.sid]);
@@ -505,22 +569,30 @@ function sessionView(){
     +((sessComplete(s)||(S.mast[s.id]&&S.mast[s.id].passed))&&!S.today[s.id]?todayCard(s):'')
     +(s.hook?'<section class="hookc" data-lv="'+s.level+'"><span class="eyebrow">The situation</span><h2>'+esc(s.hook.title)+'</h2><p>'+esc(s.hook.text)+'</p></section>':'')
     +'<section class="outs"><h2>By the end you can</h2><ul class="blist">'+s.outcomes.map(function(o,i){ var st=(S.obj[s.id]||[])[i]; return '<li>'+inl(o)+(st?' <span class="ost '+st+'">'+(st==='secure'?'Secure':'Revisit')+'</span>':'')+'</li>'; }).join('')+'</ul></section>'
-    +'<ol class="steps" data-lv="'+s.level+'">';
-  ns.forEach(function(n,i){
-    var dn=isDone(n.id), nxt=firstOpen&&firstOpen.id===n.id, locked=(n.kind==='gate'&&!gateReady(lv)&&!S.preview&&!dn);
-    var st=dn?'done':locked?'lock':nxt?'next':'open';
-    var icon=dn?'check':locked?'lock':n.kind==='gate'?'gate':n.kind;
-    h+='<li class="step '+st+(n.kind==='gate'?' gate':'')+'"><button class="srow" data-node="'+n.id+'" aria-label="'+esc(KIND[n.kind]+': '+n.title+', '+(dn?'done':locked?'locked':'ready'))+'"'+(locked?' aria-disabled="true"':'')+'>'
-      +'<span class="si">'+ic(icon)+'</span><span class="st"><span class="sk">'+KIND[n.kind]+(n.kind==='gate'?'':' · '+estMin(n)+' min')+'</span><b>'+esc(n.title)+'</b><span class="sbl">'+esc(nodeBlurb(n))+'</span></span>'
-      +'<span class="sr2">'+(dn&&STAR_KINDS[n.kind]?starRow(starsOf(n.id)):'')+'<span class="go">'+(dn?'Replay':nxt?'Start':locked?'Locked':'Open')+'</span></span></button></li>';
+    +'<h2 class="sh qh">Your quest</h2>'+phaseStrip(s);
+  var cph=curPhase(s.id), walked=(S.zedNode===(firstOpen&&firstOpen.id));
+  PHASES.forEach(function(ph){
+    var pn=phaseNodes(s.id,ph); if(!pn.length) return;
+    var pp=phaseProg(s.id,ph), full=pp.done===pp.total, ck=chestKey(s.id,ph), claimed=S.chest[ck];
+    h+='<section class="phase'+(full?' done':(cph&&cph.id===ph.id?' cur':''))+'" data-lv="'+s.level+'" data-ph="'+ph.id+'"><header class="ph-h"><span class="ph-i">'+ic(ph.icon)+'</span><span class="ph-t"><b>'+ph.name+'</b><small>'+ph.tag+'</small></span><span class="ph-p">'+pp.done+' of '+pp.total+'</span>'
+      +(full?(claimed?'<span class="chest opened">'+ic('chest')+'Opened</span>':'<button class="chest ready" data-chest="'+ck+'">'+ic('chest')+'Open +'+ph.bonus+' XP</button>'):'<span class="chest">'+ic('chest')+'+'+ph.bonus+' XP</span>')+'</header><ol class="steps" data-lv="'+s.level+'">';
+    pn.forEach(function(n){
+      var dn=isDone(n.id), nxt=firstOpen&&firstOpen.id===n.id, locked=(n.kind==='gate'&&!gateReady(lv)&&!S.preview&&!dn);
+      var st=dn?'done':locked?'lock':nxt?'next':'open';
+      var icon=dn?'check':locked?'lock':n.kind==='gate'?'gate':n.kind;
+      h+='<li class="step '+st+(n.kind==='gate'?' gate':'')+'">'+(nxt?'<span class="zwalk'+(walked?'':' walk')+'" aria-hidden="true">'+zed(s.level,'happy',46)+'</span>':'')+'<button class="srow" data-node="'+n.id+'" aria-label="'+esc(KIND[n.kind]+': '+n.title+', '+(dn?'done':locked?'locked':'ready'))+'"'+(locked?' aria-disabled="true"':'')+'>'
+        +'<span class="si">'+ic(icon)+'</span><span class="st"><span class="sk">'+KIND[n.kind]+(n.kind==='gate'?'':' · '+estMin(n)+' min')+'</span><b>'+esc(n.title)+'</b><span class="sbl">'+esc(nodeBlurb(n))+'</span></span>'
+        +'<span class="sr2">'+(dn&&STAR_KINDS[n.kind]?starRow(starsOf(n.id)):'')+'<span class="go">'+(dn?'Replay':nxt?'Start':locked?'Locked':'Open')+'</span></span></button></li>';
+    });
+    h+='</ol></section>';
   });
-  h+='</ol>';
+  if(firstOpen && S.zedNode!==firstOpen.id){ S.zedNode=firstOpen.id; save(); }
   var nextS=SESSIONS[s.n]||null;
   if(S.today[s.id]) h+=todayCard(s);
   if(sessComplete(s)&&s.bridge&&nextS) h+='<section class="nextc"><span class="eyebrow">Next</span><p>'+esc(s.bridge)+'</p>'+(sessOpen(nextS)?'<button class="btn ghost" id="nextS">Session '+nextS.n+': '+esc(nextS.title)+ic('arrow')+'</button>':'')+'</section>';
   h+=refShelf(s,false)+'</div>';
   setPage(h,'learn',s.level);
-  bindRefs();
+  bindRefs(); bindChests(sessionView);
   var td=$('#todo'); if(td&&!td.disabled) td.onchange=function(){ if(!td.checked) return; S.today[s.id]=today(); addXP(15); toast('+15 XP for using it'); save(); sessionView(); };
   var ns2=$('#nextS'); if(ns2) ns2.onclick=function(){ go({name:'session', sid:nextS.id}); };
   $('#back').onclick=function(){ go({name:'learn'}); };
@@ -757,6 +829,7 @@ function finish(){
     var prev=S.done[L.node.id];
     S.done[L.node.id]={stars:Math.max(star, prev?prev.stars||0:0), at:today()};
   }
+  if(firstTime||L.review){ if(!L.review) markAct('steps'); if(L.review||['practice','recall','apply','master','checkpoint','warmup'].indexOf(k)>=0) markAct('practice'); }
   save();
   L.stars=star; L.flawless=flawless; L.firstTime=firstTime; L.newBadges=checkBadges(); L.phase='done'; render();
 }
@@ -961,6 +1034,7 @@ function intro(){
     +(STAR_KINDS[k]?'<li>Stars: 3 for 90% right the first time, 2 for 70%.</li>':'')+(k==='apply'?'<li>A hint is available on each scenario. It halves the XP.</li>':'');
   var body='<div class="introz"><div><p class="kicker">'+esc(kicker)+'</p><h1 class="bigt">'+esc(title)+'</h1></div>'+zed(n.level||zLv(), L.review?'think':'wink', 92)+'</div><p class="lede">'+esc(text)+'</p>'
     +'<ul class="facts-l">'+facts+'</ul>'
+    +(s&&!L.review&&n.kind!=='placement'?phaseStrip(s):'')
     +(s?'<button class="btn ghost" id="sheet" style="justify-self:start">'+ic('doc')+'Study sheet</button>':'');
   shell(body,'<button class="btn wide" id="primary">Start</button>','',false);
   $('#primary').onclick=nextItem;
@@ -1002,7 +1076,7 @@ function doneScreen(){
   var nx=nextStepFrom(L.node), db=(!L.review&&L.firstTime)?debrief(L.node):null;
   if(db){ title=db.title; }
   var foot=(nx?'<button class="btn wide" id="primary">Next: '+esc(nx.title)+'</button><button class="btn ghost wide" id="back">Back to session</button>':db&&db.next?'<button class="btn wide" id="primary">Start session '+db.next.n+'</button><button class="btn ghost wide" id="back">Back to session</button>':'<button class="btn wide" id="primary">Continue</button>');
-  shell(doneBlock({extra:db?db.html:'', title:title, sub:zsub, lv:L.node.level, mood:(showStars&&L.stars===1)?'happy':'cheer', stars:L.stars, showStars:showStars, facts:facts, badges:L.newBadges, note:note, confetti:(showStars&&L.stars===3)||(L.flawless&&L.graded>=5)}), foot, '', false);
+  shell(doneBlock({extra:((!L.review&&L.firstTime)?phaseNote(L.node):'')+(db?db.html:''), title:title, sub:zsub, lv:L.node.level, mood:(showStars&&L.stars===1)?'happy':'cheer', stars:L.stars, showStars:showStars, facts:facts, badges:L.newBadges, note:note, confetti:(showStars&&L.stars===3)||(L.flawless&&L.graded>=5)}), foot, '', false);
   $('#primary').onclick=function(){ if(nx) openNode(nx.id); else if(db&&db.next) go({name:'session', sid:db.next.id}); else leave(); };
   var b=$('#back'); if(b) b.onclick=leave;
 }
@@ -1069,7 +1143,7 @@ function masterDone(){
   if(L.passed){
     var muddy='<div class="fld muddy"><label for="muddy">Muddiest point: what is still unclear? (optional)</label><textarea id="muddy" placeholder="Leave empty if nothing.">'+esc(S.muddy[s.id]||'')+'</textarea></div>';
     var foot=(nx?'<button class="btn wide" id="primary">Next: '+esc(nx.title)+'</button><button class="btn ghost wide" id="back">Back to session</button>':'<button class="btn wide" id="primary">Continue</button>');
-    shell(doneBlock({title:'Mastered', sub:'You got '+L.first+' of '+L.graded+' right on the first try. The questions come back later so it stays secure.', lv:n.level, mood:'cheer', facts:facts, extra:objs+'<p class="todaynote"><b>Use it today.</b> '+esc(s.today)+'</p>'+muddy, badges:L.newBadges, confetti:true,
+    shell(doneBlock({title:'Mastered', sub:'You got '+L.first+' of '+L.graded+' right on the first try. The questions come back later so it stays secure.', lv:n.level, mood:'cheer', facts:facts, extra:(L.firstTime?phaseNote(n):'')+objs+'<p class="todaynote"><b>Use it today.</b> '+esc(s.today)+'</p>'+muddy, badges:L.newBadges, confetti:true,
       note:(L.firstTime?'':'Replay: XP is only awarded the first time.')}), foot, '', false);
     var mu=$('#muddy'); if(mu) mu.oninput=function(){ S.muddy[s.id]=mu.value; save(); };
     $('#primary').onclick=function(){ if(nx) openNode(nx.id); else leave(); };
@@ -1113,14 +1187,14 @@ function formShell(n, kicker, title, inner, foot, nofoot){
 }
 function finishForm(n, xp, title, sub){
   var first=!isDone(n.id);
-  if(first){ S.done[n.id]={stars:0, at:today()}; addXP(xp); }
+  if(first){ S.done[n.id]={stars:0, at:today()}; addXP(xp); markAct('steps'); }
   save();
   var nb=checkBadges(), nx=nextInSession(n.sid, n.id), db=first?debrief(n):null;
   L={node:n, phase:'done', done:true};
   if(db) title=db.title;
   var foot=(nx?'<button class="btn wide" id="primary">Next: '+esc(nx.title)+'</button><button class="btn ghost wide" id="back">Back to session</button>':db&&db.next?'<button class="btn wide" id="primary">Start session '+db.next.n+'</button><button class="btn ghost wide" id="back">Back to session</button>':'<button class="btn wide" id="primary">Back to session</button>');
   APP.innerHTML='<div class="player" data-lv="'+n.level+'"><header class="phead"><button class="icon-btn" id="quit" aria-label="Back to the session">'+ic('close')+'</button><div class="pmid"><span class="plabel">Session '+SBY[n.sid].n+' · '+esc(KIND[n.kind])+'</span></div><span class="combo ghost"></span></header><main class="pbody"><div class="pin">'
-    +doneBlock({title:title, sub:sub, lv:n.level, mood:'cheer', facts:[['+'+(first?xp:0),'XP'],[String(totalDone()),'Steps done']], extra:db?db.html:'', badges:nb, note:first?'':'Saved. XP is only awarded the first time.'})+'</div></main><footer class="pfoot"><div class="pfin">'+foot+'</div></footer></div>';
+    +doneBlock({title:title, sub:sub, lv:n.level, mood:'cheer', facts:[['+'+(first?xp:0),'XP'],[String(totalDone()),'Steps done']], extra:(first?phaseNote(n):'')+(db?db.html:''), badges:nb, note:first?'':'Saved. XP is only awarded the first time.'})+'</div></main><footer class="pfoot"><div class="pfin">'+foot+'</div></footer></div>';
   $('#quit').onclick=function(){ go({name:'session', sid:n.sid}); };
   $('#primary').onclick=function(){ if(nx) openNode(nx.id); else if(db&&db.next) go({name:'session', sid:db.next.id}); else go({name:'session', sid:n.sid}); };
   var b=$('#back'); if(b) b.onclick=function(){ go({name:'session', sid:n.sid}); };

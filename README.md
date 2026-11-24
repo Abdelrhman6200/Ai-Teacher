@@ -17,8 +17,30 @@ Progress is saved in the browser (`localStorage`), per device.
 3. **Each session opens with a situation**: a short, real workplace story that shows why the session matters, before the outcomes.
 4. **Each session closes with a debrief**: one thing to do today (+15 XP once ticked), what the learner now has, why the next session
    matters, and the outcomes secure or to revisit. The same action stays pinned at the top of a finished session until it is done.
-5. Sessions 4 to 24 use an authored worked example (three "predict, then see" scenarios) and an authored case with three specific
+5. **Each session is a quest in four phases: Learn, Apply, Prove, Use.** The session page shows a phase strip, Zed walking to the next
+   stop, and a chest for each phase (+10, +10, +15 and +20 XP). Finishing a step shows where you are and a "phase cleared" ribbon.
+6. **The home screen is a trail.** A mini-map of all 24 sessions in five worlds, with Zed on the current stop (he walks there when you
+   come back), plus three daily quests (finish a step, win a practice step, open a reference) and a daily chest.
+7. **From the sources.** Every session has a step built from Anthropic's own documentation and research: lesson cards with real numbers,
+   diagrams and four questions. Each card names its source and links to it. See "Where the content comes from".
+8. **Reference library.** 258 references (202 distinct pages on Anthropic's sites) grouped as Read, Go deeper and Try it, on every session
+   and study sheet and searchable in one library. Opening one earns 2 XP once, and counts towards the Explorer and Deep diver badges.
+9. Sessions 4 to 24 use an authored worked example (three "predict, then see" scenarios) and an authored case with three specific
    self-check points, in the same style as sessions 1 to 3.
+
+## Where the content comes from
+
+The "From the sources" step (`src/field_*.py`) is written from the pages on each session's reference shelf (`src/refs_a.py`, `refs_b.py`):
+Anthropic's API and Claude Code documentation, Help Center, and engineering and research posts. The text is paraphrased, with short
+quotations attributed, and every number is read from the page it cites. `src/field.py` refuses to build if a card cites a URL that is not on
+that session's shelf.
+
+- Facts are as of 24 November 2026 and several change monthly (model names, prices, retirement dates, plan limits). Re-check them with the
+  routine in session 16.
+- `python3 tools/check_links.py` opens every reference link and reports any that do not answer with 200. Run it monthly.
+- Shelves list Anthropic-hosted pages only, because those were the pages that could be opened and read to build the lessons. Papers and
+  standards on other sites (for example the MCP specification, OWASP's LLM list or arXiv papers) are good additions once someone has opened
+  and checked them.
 
 ## Run it
 
@@ -42,6 +64,11 @@ python3 build.py        # writes index.html from src/ and references/
 - `src/content.py`, `src/generic.py`: build sessions 1 to 3 and 4 to 24 from the references.
 - `src/deep_a.py`, `src/deep_b.py`: the authored situation, use-it-today action, bridge, worked example and case for every session.
   `python3 src/deep.py` validates them (shape, no dash style, and how often the correct option is the longest).
+- `src/refs_a.py`, `src/refs_b.py`, `src/refs.py`: the reference shelves and their validator (kinds, Anthropic hosts only, no duplicates).
+- `src/field_*.py`, `src/field.py`: the "From the sources" cards and questions and their validator (every card cites its own shelf, 3 to 6 cards
+  and exactly 4 questions per session, a diagram in each). `python3 src/field.py` checks them on its own.
+- `src/diagrams.js`: 13 diagram types, including swim (sequence between actors), rings (defence in layers), delta (before and after),
+  matrix, ladder and timeline.
 - `src/lc1.py` to `src/lc6.py`: the authored learning content for every session (guess-first, application scenarios,
   mastery-check items, teach-back, diagram). `python3 src/learn_content.py` validates it.
 - `src/method.py`: turns each session into the learning loop.
@@ -57,6 +84,7 @@ python3 build.py        # writes index.html from src/ and references/
 tests/run.sh full 420 900     # all 24 sessions, gates, warm-ups, reviews, teach-backs (phone width)
 tests/run.sh full 1100 900    # same at desktop width
 tests/run.sh extras           # quit, keyboard, replay XP, save, search, reset
+tests/run.sh quest            # sources step in every session, new diagrams, phases, chests, trail, daily quests, library
 tests/run.sh onboard          # set-up, placement (pass and fail), start point, situations, debrief, use-it-today, real task
 tests/run.sh duetest          # spaced review: due, answer, reschedule
 tests/run.sh shot dg_loop 420 900          # screenshot of a scene (see scenes in tests/test_driver.js)

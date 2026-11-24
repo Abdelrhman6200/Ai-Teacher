@@ -1,0 +1,46 @@
+"""From the sources, session 22."""
+C = 'https://code.claude.com/docs/en/'
+H = 'https://support.claude.com/en/articles/'
+A = 'https://www.anthropic.com/'
+Q = {}
+
+Q[22] = dict(steps=[
+ dict(title='A sandbox needs two walls, not one',
+      paras=['Anthropic\'s sandbox is built on operating-system features and draws two boundaries. Filesystem isolation means Claude can only reach chosen directories, which stops a prompt-injected Claude modifying sensitive system files. Network isolation means it can only connect to approved servers, which stops it leaking information or downloading malware.',
+             'Anthropic stresses that you need both. Without network isolation, a compromised agent could send out files like SSH keys. Without filesystem isolation, it could escape the sandbox and reach the network. In their own use, sandboxing cut permission prompts by 84 percent.'],
+      stats=[('84%', 'fewer permission prompts in Anthropic\'s internal use')],
+      viz=dict(kind='rings', title='Two boundaries around shell commands', center='Shell commands', layers=[dict(h='Network isolation', s='Only approved servers can be reached'), dict(h='Filesystem isolation', s='Only chosen directories can be touched')]),
+      src=('Making Claude Code safer with sandboxing', A + 'engineering/claude-code-sandboxing')),
+ ('Why does Anthropic say effective sandboxing needs both filesystem and network isolation?',
+  ['Each covers a route the other cannot: exfiltration or escape', 'Two walls make the sandbox noticeably faster to start', 'The network boundary is optional if the filesystem is locked', 'Filesystem isolation alone blocks all prompt injection'],
+  'Each wall covers what the other cannot. A single boundary leaves the other route open.'),
+ dict(title='Know what the sandbox does not wrap',
+      paras=['The sandbox is off by default. You turn it on with /sandbox or a setting, and it wraps the shell commands Claude runs, plus the processes they start. The built-in file and web tools, Read, Edit, Write, WebFetch and WebSearch, run outside it and follow permission rules.',
+             'The docs spell out the trap: a denyRead entry does not stop the Read tool, and allowedDomains does not limit WebFetch. So a real policy combines the sandbox boundary with permission and deny rules, and tests that each one holds.'],
+      viz=dict(kind='compare', title='Two enforcement layers', leftTone='neutral', rightTone='neutral',
+               left=dict(h='Inside the sandbox', items=['Shell commands, such as Bash', 'Processes those commands start', 'Limits set by sandbox settings']),
+               right=dict(h='Outside it', items=['Read, Edit and Write', 'WebFetch and WebSearch', 'Limits set by permission rules'])),
+      src=('Configure the sandboxed Bash tool', C + 'sandboxing')),
+ ('You add an allowedDomains list to the sandbox settings. Does it limit WebFetch?',
+  ['No: WebFetch runs outside the sandbox, under permission rules', 'Yes: the sandbox covers every tool Claude Code has', 'Only on macOS, where the sandbox uses Seatbelt', 'Only when auto-allow mode has been switched on'],
+  'A control that does not cover a tool is a gap. Test each route a secret could take.'),
+ dict(title='Approval fatigue, and a middle path',
+      paras=['Anthropic reports that users accept 93 percent of manual permission prompts anyway. That is approval fatigue, where people stop reading what they approve. The options it lays out: sandbox (safe, but each new capability needs configuring), skipping permissions altogether (no protection), and auto mode, which hands approvals to classifiers.',
+             'Auto mode uses two layers: a probe scanning what Claude reads for injected instructions, and a classifier reviewing what Claude does. Its incident log shows why. Examples such as deleting remote git branches, uploading an engineer\'s token or attempting production migrations came from the model being overeager, not from an attacker.'],
+      stats=[('93%', 'of manual permission prompts are accepted')],
+      viz=dict(kind='tree', title='Ways to cut approval fatigue', root='Too many prompts',
+               kids=[dict(h='Sandbox', s='Safe, but every new capability needs configuring'), dict(h='Skip permissions', s='No friction and no protection'), dict(h='Auto mode', s='Classifiers review what Claude reads and does')]),
+      src=('How we built Claude Code auto mode', A + 'research/claude-code-auto-mode')),
+ ('What did Anthropic\'s internal incident log show about agentic misbehaviour?',
+  ['The model was overeager and took initiative nobody intended', 'Outside attackers caused every one of those incidents', 'They were all traced back to hardware faults in the servers', 'They only happen to agents that run inside a browser'],
+  'Your threat model includes well-meaning mistakes. Hard stops on irreversible actions matter even with no attacker.'),
+ dict(title='Layers in Cowork, and your part in them',
+      paras=['Anthropic\'s Cowork safety page lists layers: model training to refuse malicious instructions, an isolated temporary cloud environment per session, classifiers that scan untrusted content, action screening in auto mode, and a required permission before any permanent file deletion. Isolation protects your network, but it does not change what Claude can read or do through the access you grant.',
+             'The page\'s advice to you: be selective about file access, use a dedicated working folder, watch for scope creep rather than every command, and be extra careful with scheduled tasks. You remain responsible for what Claude does on your behalf.'],
+      viz=dict(kind='rings', title='Defence in layers', center='Your task', layers=[dict(h='Deletion protection', s='Explicit permission for permanent deletes'), dict(h='Action screening', s='Reviews each action in auto mode'), dict(h='Content classifiers', s='Flag injected instructions'),
+                                                                                   dict(h='Isolated cloud session', s='Temporary and cut off from your network'), dict(h='Model training', s='Trained to refuse malicious instructions')]),
+      src=('Use Claude Cowork safely', H + '13364135')),
+ ('Which statement matches the Cowork safety page about responsibility?',
+  ['You remain responsible for what Claude does on your behalf', 'Anthropic is responsible for every action Claude takes', 'Responsibility transfers to the connector\'s owner', 'Nobody is responsible for actions in isolated sessions'],
+  'Layers reduce risk, and none removes your duty to scope access and watch for surprises.'),
+])

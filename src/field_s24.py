@@ -1,0 +1,46 @@
+"""From the sources, session 24."""
+A = 'https://www.anthropic.com/'
+Q = {}
+POST2 = A + 'engineering/a-postmortem-of-three-recent-issues'
+POST = A + 'research/april-23-postmortem'
+
+Q[24] = dict(steps=[
+ dict(title='Anatomy of an incident: three bugs that overlapped',
+      paras=['Anthropic\'s postmortem of a quality incident is a model for yours. Three separate bugs arrived at different times. A routing error sent some requests to servers set up for a longer context window. A misconfiguration corrupted output, producing characters from the wrong language. A compiler bug affected token selection. Each produced different symptoms on different platforms at different rates, which looked like random, inconsistent degradation.',
+             'A routine load-balancing change then made the routing bug worse. At the worst hour, 16 percent of Sonnet 4 requests were affected.'],
+      stats=[('0.8% → 16%', 'of Sonnet 4 requests affected by the routing bug, from first appearance to the worst hour')],
+      viz=dict(kind='timeline', title='How it unfolded', events=[dict(h='Aug 5', s='Routing bug appears, affecting about 0.8% of Sonnet 4 requests'), dict(h='Aug 25 and 26', s='Two more bugs ship: output corruption and a compiler bug', warn=True),
+                                                                dict(h='Aug 29', s='A load-balancing change increases the misrouting', warn=True), dict(h='Aug 31', s='Worst hour: 16% of Sonnet 4 requests affected', warn=True)]),
+      src=('A postmortem of three recent issues', POST2)),
+ ('At the worst hour of that incident, what share of Sonnet 4 requests were affected by the routing bug?',
+  ['16 percent', '0.8 percent', '2 percent', '100 percent'],
+  'It started at about 0.8 percent and grew after an unrelated routine change. Small bugs can be amplified by ordinary work.'),
+ dict(title='What a good postmortem contains',
+      paras=['Anthropic\'s April postmortem traced one complaint, that Claude Code felt worse, to three separate changes: a lower default effort, a caching change that cleared reasoning history every turn instead of once after an idle hour, and a system-prompt length limit. For each it says what changed, why, how it went wrong and how it was fixed.',
+             'Then it commits to process changes: more staff using the exact public build, per-model evals for every system-prompt change, ablations of each line, model-specific changes gated to their model, and soak periods, broader evals and gradual rollouts for anything that could trade off against quality.'],
+      viz=dict(kind='tree', title='Parts of a postmortem', root='One complaint, three causes',
+               kids=[dict(h='What changed, and when', s='Dates, versions and the exact change'), dict(h='Why it was missed', s='The checks that said everything was fine'), dict(h='The fix', s='What was reverted or repaired, and when'), dict(h='The process change', s='Evals, soak periods and gradual rollouts')]),
+      src=('An update on Claude Code quality reports', POST)),
+ ('Which of these is part of the process fix Anthropic commits to in its April postmortem?',
+  ['Per-model evals for every prompt change, plus gradual rollouts', 'Stopping every change to the system prompt, permanently', 'Relying on complaints from users alone to find faults', 'Keeping the details private, to avoid causing worry'],
+  'A postmortem that ends without a change to the process only describes the failure.'),
+ dict(title='Who stops the agent: the person or the agent itself',
+      paras=['Anthropic studied how Claude Code is supervised. People grant more autonomy with experience: newer users auto-approve about 20 percent of the time, and by 750 sessions it is over 40 percent. And Claude stops itself to ask more often than people interrupt it, more so as tasks get harder.',
+             'Anthropic calls training a model to recognise and act on its own uncertainty an important safety property that complements permission systems and human oversight. People interrupt for different reasons: to give missing technical context or corrections (32 percent), because Claude was slow or hanging (17 percent), or because they wanted to take the next step themselves.'],
+      stats=[('20% → 40%+', 'auto-approve rate, from under 50 sessions to 750 sessions')],
+      viz=dict(kind='bars', title='Why Claude stops itself', unit='Share of sampled agent-initiated stops.',
+               rows=[dict(h='Choice between approaches', v=35, label='35%'), dict(h='Diagnostic information', v=21, label='21%'), dict(h='Clarify a vague request', v=13, label='13%'), dict(h='Missing credentials or access', v=12, label='12%'), dict(h='Approval before acting', v=11, label='11%')]),
+      src=('Measuring AI agent autonomy in practice', A + 'research/measuring-agent-autonomy')),
+ ('What was the most common reason Claude stopped itself in Anthropic\'s sample?',
+  ['To offer a choice between approaches, at 35 percent', 'To request missing credentials, at 35 percent', 'Because it was slow or hanging, at 35 percent', 'To ask for approval before acting, at 35 percent'],
+  'Most self-initiated stops are about what you want. That is why a clear spec and criteria reduce interruptions.'),
+ dict(title='When you teach it, make them explain, not only delegate',
+      paras=['In an Anthropic randomised trial, 52 developers learned a new Python library with and without AI help. On a quiz about concepts they had used minutes earlier, the AI group scored 17 percent lower, nearly two letter grades. AI sped the task up slightly, but not by a statistically significant amount.',
+             'Using AI did not guarantee a low score. People with stronger mastery used it to build understanding while they worked, for instance by asking for explanations, and not only to produce code. It is a design rule for the session you teach: have learners predict and explain first, then delegate.'],
+      stats=[('17%', 'lower quiz score for the AI group, nearly two letter grades')],
+      viz=dict(kind='delta', title='Quiz on code they had just written', rows=[dict(h='Score, relative to the by-hand group', **{'from': '100'}, to='83', bad=True, s='AI group, 17 percent lower. Those who used AI to build understanding did better.')]),
+      src=('How AI assistance impacts the formation of coding skills', A + 'research/AI-assistance-coding-skills')),
+ ('In Anthropic\'s randomised trial of 52 developers, what happened to quiz scores on code they had just written when they used AI assistance?',
+  ['The AI group scored 17 percent lower', 'The AI group scored 17 percent higher', 'There was no difference between the groups', 'The AI group\'s scores roughly doubled'],
+  'How people used the AI mattered. Use it to build comprehension, not only to produce output.'),
+])
