@@ -352,7 +352,7 @@ def session3():
     AS_OF = 'As of the course notes, 16 November 2026. Check the models overview and pricing pages before you rely on it.'
     L1 = [
       teach(f'{p}-L1-1', 'Four tiers, four jobs',
-            ['All four list a 1M context window, 128K max output, text and image input, vision and tool use. Fable 5.2 and Mythos 5.2 are the same underlying model. Mythos is available through verification programs, and Fable carries safeguards for cybersecurity and biology.'],
+            ['All four list a 1M context window, 128K max output, text and image input, vision and tool use. Mythos 5.2 offers the same capabilities as Fable 5.2, but only to organizations verified through Anthropic\'s verification programs.'],
             table_=dict(headers=['Tier', 'Positioned for'], rows=[
               ['Fable 5.2', 'Demanding reasoning and long-horizon agentic work'],
               ['Opus 5.5', 'Long-running agentic coding and knowledge work. Where most workloads start'],
@@ -375,7 +375,7 @@ def session3():
          'Efficiency-first starts with Haiku 5.5 and upgrades only where there is a specific capability gap.'),
       teach(f'{p}-L1-8', 'What it costs',
             ['Work the maths for one job: 10,000 tokens in and 1,000 tokens out. Think in cost per finished task, not cost per token. A cheaper model that needs retries can cost more overall.',
-             'Newer tokenizers can produce more tokens for the same text, so count tokens on your own text.'],
+             'Claude 4.7 and later models use a newer tokenizer that produces about 30 percent more tokens for the same text, so count tokens on your own text with the model you plan to use.'],
             table_=table(sec['A worked cost example']),
             tag=AS_OF),
       fillq(f'{p}-L1-9', 'Opus 5.5 costs $____ per 1,000 requests of this job.', ['60'],

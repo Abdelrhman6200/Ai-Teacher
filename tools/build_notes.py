@@ -48,6 +48,17 @@ def slug(u): return re.sub(r'[^a-z0-9]+', '_', u.replace('https://', '').lower()
 
 nid = refs.nid
 
+# Lead lines for pages whose automatic lead would mislead: an index page whose first sentence belongs to one post, an author byline,
+# a plan-availability sentence. Each one restates something the page itself says (see that note's sections).
+LEAD_FIX = {
+    'www.anthropic.com/engineering': "Anthropic's engineering blog: how its own teams build, test and run Claude-based systems. The posts extracted here cover source control at scale, harness design for long-running agentic coding, and evaluations that Claude keeps beating.",
+    'code.claude.com/docs/en/changelog': 'Claude Code\'s version-by-version changelog. Longer releases are grouped by type of change, with long lists of improvements and bug fixes collapsed.',
+    'support.claude.com/en/articles/17457950': 'How to move in and out of an artifact with the keyboard or a screen reader: Tab moves you into an artifact, and Escape moves you back out to the artifact panel.',
+    'www.anthropic.com/research/working-with-ai': 'A study built on 66 face-to-face interviews about how businesses reorganise work around AI, and where the bottlenecks are.',
+    'code.claude.com/docs/en/skills': 'How skills work in Claude Code: custom commands and bundled skills, the frontmatter fields, and where skills load from.',
+    'platform.claude.com/docs/en/build-with-claude/structured-outputs': 'Get validated JSON results from agent workflows by giving the API a JSON schema. The page also lists the schema features that are not supported.',
+}
+
 
 def publisher(u):
     for k, v in PUB:
@@ -223,6 +234,7 @@ def main():
         first, pts, tbls = extract(pages.get(u, ''))
         if not pts and i in old:
             notes.append(old[i]); continue
+        first = LEAD_FIX.get(re.sub(r'^https://', '', u), first)
         if len(pts) < 2: thin.append(u)
         notes.append(dict(id=i, u=re.sub(r'^https://', '', u), t=e['t'], k=e['k'], p=publisher(u), w=e['w'], lead=first, pts=pts, tbl=tbls, s=sorted(set(e['s']))))
     json.dump(dict(built='2026-11-24', notes=notes), open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))

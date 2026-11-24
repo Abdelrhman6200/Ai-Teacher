@@ -8,7 +8,7 @@ WHY_PATCH = {
  's02q1': "The Agent SDK embeds Claude Code's agent in your own Python or TypeScript app.",
  's02q2': "Rollouts are gradual and many features are beta or plan-limited, so check the release notes and your plan first.",
  's03q1': "Haiku 5.5 is positioned for classification, extraction and routing at volume, where latency matters.",
- 's03q3': "Fable 5.2 and Mythos 5.2 are the same underlying model. Access and safeguards differ.",
+ 's03q3': "Mythos 5.2 offers the same capabilities as Fable 5.2, but only to organizations verified through Anthropic's verification programs.",
  's03q4': "If a model overthinks, lower the effort level rather than adding instructions.",
 }
 
