@@ -636,6 +636,49 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .blmiss li{padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;gap:3px}
 .blmiss li b{font-size:14.5px;line-height:1.35} .blmiss li span{font-size:14px;color:var(--ink-2);line-height:1.4}
 
+/* ---------- skill profile ---------- */
+.skillc{display:grid;gap:12px}
+.radar{width:100%;max-width:420px;height:auto;margin:0 auto;display:block}
+.radar .rg{fill:none;stroke:var(--line-2);stroke-width:1} .radar .ra{stroke:var(--line);stroke-width:1}
+.radar .rs{fill:var(--lv-soft);stroke:var(--lv);stroke-width:2.5;stroke-linejoin:round;fill-opacity:.85}
+.radar .rdot{fill:var(--lv);stroke:var(--surface);stroke-width:1.5}
+.radar .rl{font-size:12.5px;font-weight:700;fill:var(--ink)}
+.skl{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.skl li{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(60px,1fr) 30px auto;gap:10px;align-items:center}
+.sk-n{display:grid;gap:1px;min-width:0} .sk-n b{font-size:15px} .sk-n small{font-size:12px;color:var(--ink-2);font-weight:600}
+.sk-b{position:relative;height:10px;border-radius:99px;background:var(--bg);border:1px solid var(--line);overflow:hidden} .sk-b i{position:absolute;inset:0 auto 0 0;background:var(--lv);border-radius:99px}
+.sk-v{font-family:var(--font-display);text-align:end;font-size:15px} .sk-done{font-size:12.5px;font-weight:700;color:var(--ink-2);min-width:62px;text-align:end}
+.skl .btn.small{min-height:36px;padding:0 14px;font-size:13.5px}
+@media (max-width:420px){ .skl li{grid-template-columns:minmax(0,1fr) 30px auto} .skl .sk-b{grid-column:1/-1;grid-row:2} }
+
+/* ---------- playbook and certificate ---------- */
+.workc{display:grid;gap:12px}
+.pbsec{display:grid;gap:10px} .pbsec h2{font-size:19px}
+.pbd{border:1px solid var(--line);border-radius:12px;padding:2px 12px;background:var(--bg)} .pbd summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer}
+.pbpre{white-space:pre-wrap;font-family:var(--font-body);font-size:14.5px;line-height:1.5;padding:4px 0 12px;margin:0;color:var(--ink)}
+.certp{position:relative;border:3px solid var(--lv);border-radius:20px;padding:6px;background:var(--surface);box-shadow:0 6px 0 var(--line)}
+.cert-in{border:1.5px solid var(--line-2);border-radius:15px;padding:26px 20px 20px;display:grid;gap:8px;justify-items:center;text-align:center;background:linear-gradient(180deg,var(--lv-soft),var(--surface) 55%)}
+.cert-t{font-family:var(--font-display);font-size:30px;line-height:1.1;letter-spacing:-.01em}
+.cert-for{font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin-top:6px}
+.cert-name{font-family:var(--font-display);font-size:36px;font-weight:800;line-height:1.1;border-bottom:2px solid var(--lv);padding:0 18px 4px;word-break:break-word}
+.cert-did{font-size:17px;max-width:34ch}
+.cert-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin-top:8px}
+.cert-stats>div{display:grid;gap:2px;padding:8px 4px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.cert-stats b{font-family:var(--font-display);font-size:20px} .cert-stats span{font-size:11.5px;color:var(--ink-2);font-weight:700}
+.cert-rank{font-weight:800;color:var(--lv-ink)} .cert-date{font-size:14px;color:var(--ink-2);font-weight:700}
+@media (max-width:420px){ .cert-stats{grid-template-columns:repeat(2,1fr)} .cert-t{font-size:26px} .cert-name{font-size:30px} }
+@media print{
+  @page{margin:14mm}
+  body{background:#fff!important}
+  .bar,.tabs,.hud,.pfoot,.toast,.noprint,.modal{display:none!important}
+  .page{padding:0!important;max-width:none!important}
+  .narrow{max-width:none!important}
+  .certp{box-shadow:none!important;break-inside:avoid}
+  .card{box-shadow:none!important;break-inside:avoid}
+  .pbd{break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
 /* ================= diagrams and motion ================= */
 :root{--c0:#0070C0;--c1:#70AD47;--c2:#FFC000;--c3:#C00000;--c4:#595959;--c5:#7A3E9D}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--c0:#4DA6EC;--c1:#8CCB5E;--c2:#FFC000;--c3:#FF6B6B;--c4:#BDBDBD;--c5:#C79CE0} }
@@ -878,7 +921,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -1289,7 +1332,7 @@ function go(v){ view=v; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
-  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView})[view.name]();
+  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView})[view.name]();
   armGuard();
   showPending();
 }
@@ -1304,7 +1347,7 @@ function backInApp(){
   if(n==='blitz'){ var bq=$('#quit'); if(bq) bq.click(); else go({name:'review'}); return; }
   if(n==='lesson'||n==='task'||n==='kase'||n==='question'||n==='gate'){ var q=$('#quit'); if(q) q.click(); else leave(); return; }
   if(n==='onboard'||n==='place') return; // setup and placement are not interrupted by Back
-  go({name:n==='sheet'?'sheets':'learn'});
+  go({name:n==='sheet'?'sheets':(n==='shop'||n==='album'||n==='playbook'||n==='cert')?'you':'learn'});
 }
 window.addEventListener('popstate',function(){
   var atRoot=view.name==='learn' && !$('.modal');
@@ -1343,7 +1386,7 @@ function ring(pct, size, stroke, label, cls){
   var r=(size-stroke)/2, c=2*Math.PI*r, off=c*(1-Math.min(1,pct/100));
   return '<span class="ring-wrap '+(cls||'')+'" style="width:'+size+'px;height:'+size+'px"><svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" aria-hidden="true"><circle class="rt" cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" stroke-width="'+stroke+'"/><circle class="rf" cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" stroke-width="'+stroke+'" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/></svg><span class="rl">'+(label||'')+'</span></span>';
 }
-function starRow(n, cls){ var h='<span class="stars '+(cls||'')+'" aria-label="'+n+' of 3 stars">'; for(var i=1;i<=3;i++) h+=ic('star', i<=n?'on':'off'); return h+'</span>'; }
+function starRow(n, cls){ var h='<span class="stars '+(cls||'')+'" role="img" aria-label="'+n+' of 3 stars">'; for(var i=1;i<=3;i++) h+=ic('star', i<=n?'on':'off'); return h+'</span>'; }
 
 /* ================= LEARN ================= */
 function learnView(){
@@ -1834,19 +1877,20 @@ function youView(){
   var cl=currentLevel(), tot=totalDone(), stars=NODES.reduce(function(a,n){ return a+starsOf(n.id); },0), earned=BADGES.filter(function(b){ return S.badges[b.id]; }).length;
   var h='<div class="narrow"><h1 class="ph">You</h1>'
     +'<section class="card rank" data-lv="'+cl.n+'"><span class="rk-z">'+zed(cl.n,'happy',96,'bob')+'</span><div><span class="eyebrow">'+ZNAME[cl.n]+'</span><h2>Level '+cl.n+': '+esc(cl.name)+'</h2><p class="sub">'+esc(cl.range)+(cl.n===5?'':' points')+'. '+levelProg(cl).done+' of '+levelProg(cl).total+' sessions complete.</p></div></section>'
-    +gameYouCard()+setupCard()
+    +gameYouCard()+skillsCard()+workCard()+setupCard()
     +'<div class="kpis"><div class="kpi"><b>'+S.xp+'</b><span>Practice XP</span></div><div class="kpi"><b>'+tot+'</b><span>Steps done</span></div><div class="kpi"><b>'+stars+'</b><span>Stars</span></div><div class="kpi"><b>'+(S.streak.best||0)+'</b><span>Best streak</span></div></div>'
     +'<h2 class="sh">Zed forms <span class="cnt">'+cl.n+' of 5</span></h2><div class="cast">'+LEVELS.map(function(lv){ var on=lv.n<=cl.n; return '<div class="cast-i'+(on?' on':' off')+(lv.n===cl.n?' cur':'')+'" data-lv="'+lv.n+'">'+(on?zed(lv.n,'happy',58):zed(lv.n,'sleep',58,'zlock'))+'<b>Level '+lv.n+'</b><span>'+esc(lv.name)+'</span></div>'; }).join('')+'</div>'
     +learnHealth()+'<h2 class="sh">Badges <span class="cnt">'+earned+' of '+BADGES.length+'</span></h2><div class="bgrid">'
     +BADGES.map(function(b){ var e=S.badges[b.id], hv=Math.min(b.have(),b.need); return '<div class="badge'+(e?' on':'')+'"'+(b.level?' data-lv="'+b.level+'"':'')+'><span class="bi">'+ic(b.icon)+'</span><b>'+esc(b.name)+'</b><span class="bd">'+esc(b.desc)+'</span>'+(e?'<span class="bs">Earned '+e+'</span>':'<span class="bs">'+hv+' of '+b.need+'</span>')+'</div>'; }).join('')+'</div>'
     +'<h2 class="sh">Settings</h2><section class="card set"><div class="tr"><span>Daily goal</span><span class="segctl" role="group" aria-label="Daily goal in XP">'+[20,30,50].map(function(g){ return '<button data-goal="'+g+'" aria-pressed="'+(S.goal===g)+'">'+g+' XP</button>'; }).join('')+'</span></div>'
     +'<div class="tr stack"><span>Theme<small>Follows your device unless you choose.</small></span><span class="segctl" role="group" aria-label="Theme">'+[['auto','Auto'],['light','Light'],['dark','Dark']].map(function(o){ var on=(S.theme||'auto')===o[0]; return '<button data-theme-set="'+o[0]+'" aria-pressed="'+on+'">'+o[1]+'</button>'; }).join('')+'</span></div>'
+    +fxRows()
     +'<div class="tr"><span>Preview mode<small>Unlock every session. For instructors and for reading ahead.</small></span><button class="seg1" id="prev" aria-pressed="'+S.preview+'">'+(S.preview?'On':'Off')+'</button></div>'
     +'<div class="tr"><span>Progress report<small>Copy a summary to send to your instructor.</small></span><button class="btn ghost" id="rep">Copy report</button></div><div id="repbox"></div>'
     +'<div class="tr stack"><span>Back up<small>Copy a backup code, or paste one to restore it here or on another device.</small></span><span class="duo"><button class="btn ghost" id="bkCopy">Copy code</button><button class="btn ghost" id="bkOpen">Restore</button></span></div><div id="bkbox"></div>'
     +'<div class="tr"><span>Reset<small>Erases XP, streak, badges and your logs in this browser.</small></span><button class="btn ghost danger" id="reset">Reset progress</button></div>'
     +'<p class="fine">'+(canSave?'Progress saves in this browser only.':'Progress is not saved in this view.')+' XP, stars and badges are practice. Course points come from your instructor.</p></section></div>';
-  setPage(h,'you'); bindGameYou();
+  setPage(h,'you'); bindGameYou(); bindFx(); bindWork();
   $$('[data-goal]').forEach(function(b){ b.onclick=function(){ S.goal=+b.getAttribute('data-goal'); save(); youView(); }; });
   $$('[data-theme-set]').forEach(function(b){ b.onclick=function(){ S.theme=b.getAttribute('data-theme-set'); save(); applyTheme(); youView(); }; });
   var oe=$('#obEdit'); if(oe) oe.onclick=function(){ ob.step=0; go({name:'onboard'}); };
@@ -1939,7 +1983,7 @@ function check(){
   var c=L.cur, it=c.item; if(c.checked) return;
   if(it.type==='mcq'){ if(!c.sel) return; if(L.conf && !c.conf) return; c.ok = c.sel===it.key; }
   else if(it.type==='fill'){ c.ok = it.answers.every(function(a,i){ return it.numeric ? num(a)===num(c.vals[i]) : norm(a)===norm(c.vals[i]); }); }
-  c.checked=true;
+  c.checked=true; sfx(c.ok?'good':'bad');
   var firstTry=!L.tries[c.id];
   if(L.node.kind==='pretest'){ L.correct[c.id]=1; L.xp+=baseXP(it); if(c.ok) L.first++; L.combo=c.ok?L.combo+1:0; }
   else if(L.node.kind==='placement'){ L.correct[c.id]=1; var pl=L.pl[SBY[it.node.split('-')[0]].level]; pl[1]++; if(c.ok){ pl[0]++; L.first++; } L.combo=c.ok?L.combo+1:0; L.best=Math.max(L.best,L.combo); }
@@ -1968,7 +2012,7 @@ function finish(){
     if(k==='master' && !L.passed && L.mast && L.mast.fails>1) award=0;   // a failed check pays once, so it cannot be farmed
   }
   if(award>0 && !L.review && (S.boost||0)>0){ S.boost--; L.boosted=award; award*=2; }
-  L.xpGot=award; addXP(award);
+  L.xpGot=award; addXP(award); if(firstTime&&L.passed) sfx('win');
   if(!L.review && L.passed){
     var prev=S.done[L.node.id];
     S.done[L.node.id]={stars:Math.max(star, prev?prev.stars||0:0), at:today()};
@@ -2604,6 +2648,7 @@ function celebrate(p){
   }
   m.innerHTML='<div class="card celec">'+(p.t==='epic'||p.t==='level'?confetti():'')+'<div class="cele-hero">'+hero+'</div><h2>'+esc(title)+'</h2>'+(chips.length?'<div class="chips-r">'+chips.join('')+'</div>':'')+body
     +'<button type="button" class="btn wide" id="celeDone">'+(PEND.length?'Next reward':'Continue')+'</button></div>';
+  m.setAttribute('aria-label', title);
   document.body.appendChild(m);
   var release=trapFocus(m,function(){ close(); });
   function close(){ release(); if(m.parentNode) m.parentNode.removeChild(m); showPending(); }
@@ -2680,6 +2725,40 @@ function gameYouCard(){
 function bindGameYou(){
   var a=$('.gamec [data-go-album]'); if(a) a.onclick=function(){ go({name:'album'}); };
   var s=$('.gamec [data-go-shop]'); if(s) s.onclick=function(){ go({name:'shop'}); };
+  $$('[data-train]').forEach(function(b){ b.onclick=function(){ go({name:'session', sid:b.getAttribute('data-train')}); }; });
+}
+
+/* ---- the skill profile: eight skills, each built from the sessions that teach it ---- */
+var SKILLS=[['Model sense',[1,2,3]],['Prompting',[4,18]],['Verifying',[5,19]],['Creating',[6]],['Context',[7,17]],['Connecting',[8,9,10,21]],['Building',[11,12,13,14,16,20]],['Safe and lean',[15,22,23,24]]];
+function sessScore(s){
+  var ns=sessNodes(s.id), done=ns.filter(function(n){ return isDone(n.id); }).length/ns.length;
+  var mast=(S.mast[s.id]&&S.mast[s.id].passed)?1:0, mis=NBY[s.id+'-MS'], stars=mis?starsOf(mis.id)/3:0;
+  return 100*(0.6*done+0.25*mast+0.15*stars);
+}
+function skillScores(){
+  return SKILLS.map(function(k){
+    var sc=k[1].map(function(n){ return sessScore(SESSIONS[n-1]); }), avg=sc.reduce(function(a,b){ return a+b; },0)/sc.length;
+    var next=k[1].map(function(n){ return SESSIONS[n-1]; }).filter(function(s){ return !sessComplete(s) && sessOpen(s); })[0];
+    return {name:k[0], sessions:k[1], score:Math.round(avg), next:next, all:k[1].every(function(n){ return sessComplete(SESSIONS[n-1]); })};
+  });
+}
+function skillTitle(v){ return v<=0?'Not started':v<30?'Novice':v<60?'Practising':v<85?'Skilled':'Expert'; }
+function radarSVG(sc){
+  var cx=170, cy=150, R=96, n=sc.length;
+  function P(i,r){ var a=-Math.PI/2+i*2*Math.PI/n; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; }
+  function pts(f){ return sc.map(function(s,i){ var p=P(i,f(s)); return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' '); }
+  var grid=[25,50,75,100].map(function(g){ return '<polygon class="rg" points="'+pts(function(){ return R*g/100; })+'"/>'; }).join('');
+  var axes=sc.map(function(s,i){ var p=P(i,R); return '<line class="ra" x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'"/>'; }).join('');
+  var shape='<polygon class="rs" points="'+pts(function(s){ return R*Math.max(0.04,s.score/100); })+'"/>';
+  var dots=sc.map(function(s,i){ var p=P(i,R*Math.max(0.04,s.score/100)); return '<circle class="rdot" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.5"/>'; }).join('');
+  var labs=sc.map(function(s,i){ var p=P(i,R+16), x=p[0], anchor=x<cx-8?'end':x>cx+8?'start':'middle'; return '<text class="rl" x="'+x.toFixed(1)+'" y="'+(p[1]+4).toFixed(1)+'" text-anchor="'+anchor+'">'+esc(s.name)+'</text>'; }).join('');
+  return '<svg class="radar" viewBox="0 0 340 300" role="img" aria-label="Skill profile. '+sc.map(function(s){ return esc(s.name)+' '+s.score+' percent'; }).join(', ')+'">'+grid+axes+shape+dots+labs+'</svg>';
+}
+function skillsCard(){
+  var sc=skillScores(), top=sc.slice().sort(function(a,b){ return b.score-a.score; })[0], low=sc.filter(function(s){ return s.next; }).sort(function(a,b){ return a.score-b.score; })[0];
+  return '<section class="card skillc"><div class="revc-h">'+ic('target')+'<h2>Skill profile</h2></div>'+radarSVG(sc)
+    +'<p class="sub">Each skill grows with the steps, mastery checks and missions of the sessions that teach it.'+(top&&top.score>0?' Strongest: '+esc(top.name)+'.':'')+(low?' Next to grow: '+esc(low.name)+'.':'')+'</p>'
+    +'<ul class="skl">'+sc.map(function(s){ return '<li><span class="sk-n"><b>'+esc(s.name)+'</b><small>'+skillTitle(s.score)+' · sessions '+s.sessions.join(', ')+'</small></span><span class="sk-b" role="progressbar" aria-label="'+esc(s.name)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+s.score+'"><i style="width:'+s.score+'%"></i></span><b class="sk-v">'+s.score+'</b>'+(s.next?'<button class="btn ghost small" data-train="'+s.next.id+'" aria-label="Train '+esc(s.name)+': open session '+s.next.n+'">Train</button>':'<span class="sk-done">'+(s.all?'Complete':'Locked')+'</span>')+'</li>'; }).join('')+'</ul></section>';
 }
 
 /* ================= FIELD MISSIONS: a short branching story. Make a call, see what it costs, replay to find the strong moves. ================= */
@@ -2850,6 +2929,136 @@ document.addEventListener('keydown',function(e){
   if(view.name!=='blitz'||!BL||BL.done) return;
   if(/^[1-4]$/.test(e.key)){ var k=+e.key-1; if(BL.opts[k]) blitzAnswer(k); }
 });
+
+/* ================= SOUND AND TOUCH: optional, quiet, and off or on by choice =================
+   Sound effects are small synthesised tones (no audio files) and are off until the learner turns them on in You, Settings.
+   Vibration is a short tap on phones that support it and is on by default. Neither changes any score. */
+var AC=null;
+function sfxCtx(){
+  if(AC) return AC;
+  try{ var C=window.AudioContext||window.webkitAudioContext; if(C) AC=new C(); }catch(e){}
+  return AC;
+}
+function sfxTone(f, t0, dur, type){
+  var c=AC, o=c.createOscillator(), g=c.createGain(), t=c.currentTime+t0;
+  o.type=type||'sine'; o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.07,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.03);
+}
+var SFX={
+  good:[[660,0,.09],[880,.08,.13]],
+  bad:[[220,0,.14,'triangle'],[165,.12,.22,'triangle']],
+  tick:[[520,0,.05]],
+  win:[[523,0,.12],[659,.11,.12],[784,.22,.12],[1047,.33,.3]],
+  chest:[[523,0,.08],[659,.07,.08],[784,.14,.08],[1047,.21,.1],[1319,.3,.32]]
+};
+var HAP={good:[10], bad:[35], win:[20,40,20], chest:[20,40,20]};
+function sfx(name){
+  if(S.haptics!==false && HAP[name] && navigator.vibrate){ try{ navigator.vibrate(HAP[name]); }catch(e){} }
+  if(!S.sound) return;
+  var c=sfxCtx(); if(!c) return;
+  try{
+    if(c.state==='suspended') c.resume();
+    (SFX[name]||[]).forEach(function(n){ sfxTone(n[0], n[1], n[2], n[3]); });
+  }catch(e){}
+}
+function fxRows(){
+  function seg(key, on){ return '<span class="segctl" role="group" aria-label="'+key+'"><button data-fx="'+key+':1" aria-pressed="'+on+'">On</button><button data-fx="'+key+':0" aria-pressed="'+!on+'">Off</button></span>'; }
+  return '<div class="tr"><span>Sound effects<small>Short tones for right and wrong answers, chests and level-ups.</small></span>'+seg('sound', !!S.sound)+'</div>'
+    +'<div class="tr"><span>Vibration<small>A small tap on phones that support it.</small></span>'+seg('haptics', S.haptics!==false)+'</div>';
+}
+function bindFx(){
+  $$('[data-fx]').forEach(function(b){ b.onclick=function(){
+    var p=b.getAttribute('data-fx').split(':'); S[p[0]]=p[1]==='1'; save();
+    youView(); if(S[p[0]]) sfx('good');
+  }; });
+}
+
+/* ================= PLAYBOOK AND CERTIFICATE: the learner's own work, kept and printable =================
+   The playbook gathers what the learner wrote and earned: rules, exit-ticket verdicts, exercise logs, cases, teach-backs, doubts and actions.
+   The certificate marks the highest level whose gate has been handed in. Both print cleanly; neither leaves the page. */
+IC.print='<path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v6H7z"/>';
+IC.seal='<circle cx="12" cy="9" r="5.500"/><path d="M8.500 13.500L7 21l5-2.500L17 21l-1.500-7.500"/>';
+function bookHas(o){ return Object.keys(o||{}).some(function(k){ var v=o[k]; return typeof v==='string'?v.trim():!!v; }); }
+function playbookSections(){
+  var out=[], P=S.profile, own=ownedCards();
+  var me=[]; if(P.name) me.push('Name: '+P.name); if(P.role) me.push('Work: '+P.role); if(P.task) me.push('My real task: '+P.task);
+  if(me.length) out.push({h:'About me', lines:me});
+  if(own.length){
+    var cs=own.slice().sort(function(a,b){ var ka=a.k==='epic'?99:a.n; var kb=b.k==='epic'?99:b.n; return (ka-kb)||(a.k==='core'?-1:1); });
+    out.push({h:'Rules I keep', lines:cs.map(function(c){ return c.t+'. '+c.w; })});
+  }
+  var ex=Object.keys(S.exits).filter(function(id){ var e=S.exits[id]; return NBY[id] && e.verdict && e.verdict.trim(); }).sort();
+  if(ex.length) out.push({h:'How I check what Claude gives me', lines:ex.map(function(id){ var e=S.exits[id], s=SBY[NBY[id].sid]; return 'Session '+s.n+': '+e.verdict.trim()+(e.closer&&e.closer.trim()?' The check I would run: '+e.closer.trim():''); })});
+  var tasks=Object.keys(S.logs).filter(function(id){ return NBY[id] && NBY[id].task && bookHas(S.logs[id]); }).sort();
+  if(tasks.length) out.push({h:'My exercise logs', blocks:tasks.map(function(id){ var n=NBY[id]; return {t:'Session '+SBY[n.sid].n+': '+n.task.title, text:taskText(n)}; })});
+  var cases=Object.keys(S.cases).filter(function(id){ return NBY[id] && S.cases[id].text && S.cases[id].text.trim(); }).sort();
+  if(cases.length) out.push({h:'My case answers', lines:cases.map(function(id){ return 'Session '+SBY[NBY[id].sid].n+': '+S.cases[id].text.trim(); })});
+  var tb=Object.keys(S.expl).filter(function(id){ return S.expl[id] && S.expl[id].text && S.expl[id].text.trim() && ITEMS[id]; }).sort();
+  if(tb.length) out.push({h:'In my own words', lines:tb.map(function(id){ return 'Session '+SBY[ITEMS[id].node.split('-')[0]].n+': '+S.expl[id].text.trim(); })});
+  var mu=Object.keys(S.muddy).filter(function(k){ return SBY[k] && S.muddy[k] && S.muddy[k].trim(); }).sort();
+  if(mu.length) out.push({h:'Still unclear', lines:mu.map(function(k){ return 'Session '+SBY[k].n+': '+S.muddy[k].trim(); })});
+  var td=Object.keys(S.today).filter(function(k){ return SBY[k] && S.today[k] && SBY[k].today; }).sort();
+  if(td.length) out.push({h:'What I put to use', lines:td.map(function(k){ return 'Session '+SBY[k].n+': '+SBY[k].today; })});
+  return out;
+}
+function playbookText(){
+  var out='My Claude playbook\nZero to 100 Practice · '+today()+'\n';
+  playbookSections().forEach(function(s){
+    out+='\n## '+s.h+'\n';
+    if(s.lines) s.lines.forEach(function(l){ out+='- '+l+'\n'; });
+    if(s.blocks) s.blocks.forEach(function(b){ out+='\n### '+b.t+'\n'+b.text+'\n'; });
+  });
+  return out;
+}
+function playbookView(){
+  var secs=playbookSections(), h='<div class="narrow playbook"><h1 class="ph">My playbook</h1><p class="lead">Your own rules, checks and work, in one place. It fills as you go. Copy it into your notes or print it.</p>';
+  if(secs.length<=1 && !ownedCards().length) h+='<section class="card empty-c">'+zed(zLv(),'wink',110,'bob')+'<h2>Nothing here yet</h2><p>Finish a session to earn a rule card. Exercise logs, cases and exit tickets add to this page as you write them.</p></section>';
+  secs.forEach(function(s){
+    h+='<section class="card pbsec"><h2>'+esc(s.h)+'</h2>';
+    if(s.lines) h+='<ul class="blist">'+s.lines.map(function(l){ return '<li>'+esc(l)+'</li>'; }).join('')+'</ul>';
+    if(s.blocks) h+=s.blocks.map(function(b){ return '<details class="pbd"><summary>'+esc(b.t)+'</summary><pre class="pbpre">'+esc(b.text)+'</pre></details>'; }).join('');
+    h+='</section>';
+  });
+  h+='<div class="duo noprint"><button class="btn" id="pbCopy">Copy playbook</button><button class="btn ghost" id="pbPrint">'+ic('print')+'Print</button></div><div id="pbbox" class="noprint"></div><div class="duo noprint"><button class="btn ghost" data-tab-go="you">Back to You</button></div></div>';
+  setPage(h,'you');
+  $('#pbCopy').onclick=function(){ copyText(playbookText(), $('#pbbox')); };
+  $('#pbPrint').onclick=function(){ $$('.pbd').forEach(function(d){ d.open=true; }); window.print(); };
+  $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; });
+}
+
+function certLevel(){ var best=null; LEVELS.forEach(function(lv){ if(levelDone(lv)) best=lv; }); return best; }
+function certView(){
+  var lv=certLevel(), P=S.profile;
+  if(!lv){
+    setPage('<div class="narrow"><h1 class="ph">Certificate</h1><section class="card empty-c">'+zed(zLv(),'wink',110,'bob')+'<h2>Not yet</h2><p>Your certificate unlocks when you hand in the Level 1 gate. It then grows with every level you complete.</p></section><div class="duo"><button class="btn ghost" data-tab-go="you">Back to You</button></div></div>','you');
+    $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; }); return;
+  }
+  var all=levelDone(LEVELS[LEVELS.length-1]) && SESSIONS.every(sessComplete), p=plInfo();
+  var stars=NODES.reduce(function(a,n){ return a+starsOf(n.id); },0);
+  var h='<div class="narrow"><h1 class="ph noprint">Certificate</h1><section class="certp" data-lv="'+lv.n+'"><div class="cert-in"><span class="cert-z">'+zed(lv.n,'cheer',96)+'</span>'
+    +'<p class="eyebrow">Zero to 100 Practice</p><h2 class="cert-t">'+(all?'Certificate of completion':'Certificate of practice')+'</h2>'
+    +'<p class="cert-for">Awarded to</p><p class="cert-name">'+esc(P.name||'A learner')+'</p>'
+    +'<p class="cert-did">'+(all?'for completing all 24 sessions and all five levels of the course.':'for completing <b>Level '+lv.n+': '+esc(lv.name)+'</b>.')+'</p>'
+    +'<div class="cert-stats"><div><b>'+totalDone()+'</b><span>steps done</span></div><div><b>'+masteredCount()+'</b><span>sessions mastered</span></div><div><b>'+stars+'</b><span>stars</span></div><div><b>'+ownedCards().length+'</b><span>rule cards</span></div></div>'
+    +'<p class="cert-rank">Player level '+p.n+': '+esc(p.title)+'</p>'
+    +'<p class="cert-date">'+today()+'</p>'
+    +'<p class="fine">This is a practice certificate from the learning app. Level gates and course points are graded by your instructor.</p></div></section>'
+    +'<div class="duo noprint"><button class="btn" id="certPrint">'+ic('print')+'Print or save as PDF</button><button class="btn ghost" data-tab-go="you">Back to You</button></div></div>';
+  setPage(h,'you',lv.n);
+  $('#certPrint').onclick=function(){ window.print(); };
+  $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; });
+}
+function workCard(){
+  var lv=certLevel();
+  return '<section class="card workc"><div class="revc-h">'+ic('doc')+'<h2>Your work</h2></div><p class="sub">Keep what you have written and earned.</p>'
+    +'<div class="duo"><button class="btn" id="goBook">'+ic('doc')+'Playbook</button><button class="btn'+(lv?'':' ghost')+'" id="goCert">'+ic('seal')+'Certificate</button></div>'
+    +(lv?'':'<p class="fine">The certificate unlocks when you hand in the Level 1 gate.</p>')+'</section>';
+}
+function bindWork(){
+  var b=$('#goBook'); if(b) b.onclick=function(){ go({name:'playbook'}); };
+  var c=$('#goCert'); if(c) c.onclick=function(){ go({name:'cert'}); };
+}
 
 render();
 })();

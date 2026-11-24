@@ -6,7 +6,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -251,7 +251,7 @@ function go(v){ view=v; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
-  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView})[view.name]();
+  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView})[view.name]();
   armGuard();
   showPending();
 }
@@ -266,7 +266,7 @@ function backInApp(){
   if(n==='blitz'){ var bq=$('#quit'); if(bq) bq.click(); else go({name:'review'}); return; }
   if(n==='lesson'||n==='task'||n==='kase'||n==='question'||n==='gate'){ var q=$('#quit'); if(q) q.click(); else leave(); return; }
   if(n==='onboard'||n==='place') return; // setup and placement are not interrupted by Back
-  go({name:n==='sheet'?'sheets':'learn'});
+  go({name:n==='sheet'?'sheets':(n==='shop'||n==='album'||n==='playbook'||n==='cert')?'you':'learn'});
 }
 window.addEventListener('popstate',function(){
   var atRoot=view.name==='learn' && !$('.modal');
@@ -305,7 +305,7 @@ function ring(pct, size, stroke, label, cls){
   var r=(size-stroke)/2, c=2*Math.PI*r, off=c*(1-Math.min(1,pct/100));
   return '<span class="ring-wrap '+(cls||'')+'" style="width:'+size+'px;height:'+size+'px"><svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" aria-hidden="true"><circle class="rt" cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" stroke-width="'+stroke+'"/><circle class="rf" cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" stroke-width="'+stroke+'" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/></svg><span class="rl">'+(label||'')+'</span></span>';
 }
-function starRow(n, cls){ var h='<span class="stars '+(cls||'')+'" aria-label="'+n+' of 3 stars">'; for(var i=1;i<=3;i++) h+=ic('star', i<=n?'on':'off'); return h+'</span>'; }
+function starRow(n, cls){ var h='<span class="stars '+(cls||'')+'" role="img" aria-label="'+n+' of 3 stars">'; for(var i=1;i<=3;i++) h+=ic('star', i<=n?'on':'off'); return h+'</span>'; }
 
 /* ================= LEARN ================= */
 function learnView(){
@@ -796,19 +796,20 @@ function youView(){
   var cl=currentLevel(), tot=totalDone(), stars=NODES.reduce(function(a,n){ return a+starsOf(n.id); },0), earned=BADGES.filter(function(b){ return S.badges[b.id]; }).length;
   var h='<div class="narrow"><h1 class="ph">You</h1>'
     +'<section class="card rank" data-lv="'+cl.n+'"><span class="rk-z">'+zed(cl.n,'happy',96,'bob')+'</span><div><span class="eyebrow">'+ZNAME[cl.n]+'</span><h2>Level '+cl.n+': '+esc(cl.name)+'</h2><p class="sub">'+esc(cl.range)+(cl.n===5?'':' points')+'. '+levelProg(cl).done+' of '+levelProg(cl).total+' sessions complete.</p></div></section>'
-    +gameYouCard()+setupCard()
+    +gameYouCard()+skillsCard()+workCard()+setupCard()
     +'<div class="kpis"><div class="kpi"><b>'+S.xp+'</b><span>Practice XP</span></div><div class="kpi"><b>'+tot+'</b><span>Steps done</span></div><div class="kpi"><b>'+stars+'</b><span>Stars</span></div><div class="kpi"><b>'+(S.streak.best||0)+'</b><span>Best streak</span></div></div>'
     +'<h2 class="sh">Zed forms <span class="cnt">'+cl.n+' of 5</span></h2><div class="cast">'+LEVELS.map(function(lv){ var on=lv.n<=cl.n; return '<div class="cast-i'+(on?' on':' off')+(lv.n===cl.n?' cur':'')+'" data-lv="'+lv.n+'">'+(on?zed(lv.n,'happy',58):zed(lv.n,'sleep',58,'zlock'))+'<b>Level '+lv.n+'</b><span>'+esc(lv.name)+'</span></div>'; }).join('')+'</div>'
     +learnHealth()+'<h2 class="sh">Badges <span class="cnt">'+earned+' of '+BADGES.length+'</span></h2><div class="bgrid">'
     +BADGES.map(function(b){ var e=S.badges[b.id], hv=Math.min(b.have(),b.need); return '<div class="badge'+(e?' on':'')+'"'+(b.level?' data-lv="'+b.level+'"':'')+'><span class="bi">'+ic(b.icon)+'</span><b>'+esc(b.name)+'</b><span class="bd">'+esc(b.desc)+'</span>'+(e?'<span class="bs">Earned '+e+'</span>':'<span class="bs">'+hv+' of '+b.need+'</span>')+'</div>'; }).join('')+'</div>'
     +'<h2 class="sh">Settings</h2><section class="card set"><div class="tr"><span>Daily goal</span><span class="segctl" role="group" aria-label="Daily goal in XP">'+[20,30,50].map(function(g){ return '<button data-goal="'+g+'" aria-pressed="'+(S.goal===g)+'">'+g+' XP</button>'; }).join('')+'</span></div>'
     +'<div class="tr stack"><span>Theme<small>Follows your device unless you choose.</small></span><span class="segctl" role="group" aria-label="Theme">'+[['auto','Auto'],['light','Light'],['dark','Dark']].map(function(o){ var on=(S.theme||'auto')===o[0]; return '<button data-theme-set="'+o[0]+'" aria-pressed="'+on+'">'+o[1]+'</button>'; }).join('')+'</span></div>'
+    +fxRows()
     +'<div class="tr"><span>Preview mode<small>Unlock every session. For instructors and for reading ahead.</small></span><button class="seg1" id="prev" aria-pressed="'+S.preview+'">'+(S.preview?'On':'Off')+'</button></div>'
     +'<div class="tr"><span>Progress report<small>Copy a summary to send to your instructor.</small></span><button class="btn ghost" id="rep">Copy report</button></div><div id="repbox"></div>'
     +'<div class="tr stack"><span>Back up<small>Copy a backup code, or paste one to restore it here or on another device.</small></span><span class="duo"><button class="btn ghost" id="bkCopy">Copy code</button><button class="btn ghost" id="bkOpen">Restore</button></span></div><div id="bkbox"></div>'
     +'<div class="tr"><span>Reset<small>Erases XP, streak, badges and your logs in this browser.</small></span><button class="btn ghost danger" id="reset">Reset progress</button></div>'
     +'<p class="fine">'+(canSave?'Progress saves in this browser only.':'Progress is not saved in this view.')+' XP, stars and badges are practice. Course points come from your instructor.</p></section></div>';
-  setPage(h,'you'); bindGameYou();
+  setPage(h,'you'); bindGameYou(); bindFx(); bindWork();
   $$('[data-goal]').forEach(function(b){ b.onclick=function(){ S.goal=+b.getAttribute('data-goal'); save(); youView(); }; });
   $$('[data-theme-set]').forEach(function(b){ b.onclick=function(){ S.theme=b.getAttribute('data-theme-set'); save(); applyTheme(); youView(); }; });
   var oe=$('#obEdit'); if(oe) oe.onclick=function(){ ob.step=0; go({name:'onboard'}); };
@@ -901,7 +902,7 @@ function check(){
   var c=L.cur, it=c.item; if(c.checked) return;
   if(it.type==='mcq'){ if(!c.sel) return; if(L.conf && !c.conf) return; c.ok = c.sel===it.key; }
   else if(it.type==='fill'){ c.ok = it.answers.every(function(a,i){ return it.numeric ? num(a)===num(c.vals[i]) : norm(a)===norm(c.vals[i]); }); }
-  c.checked=true;
+  c.checked=true; sfx(c.ok?'good':'bad');
   var firstTry=!L.tries[c.id];
   if(L.node.kind==='pretest'){ L.correct[c.id]=1; L.xp+=baseXP(it); if(c.ok) L.first++; L.combo=c.ok?L.combo+1:0; }
   else if(L.node.kind==='placement'){ L.correct[c.id]=1; var pl=L.pl[SBY[it.node.split('-')[0]].level]; pl[1]++; if(c.ok){ pl[0]++; L.first++; } L.combo=c.ok?L.combo+1:0; L.best=Math.max(L.best,L.combo); }
@@ -930,7 +931,7 @@ function finish(){
     if(k==='master' && !L.passed && L.mast && L.mast.fails>1) award=0;   // a failed check pays once, so it cannot be farmed
   }
   if(award>0 && !L.review && (S.boost||0)>0){ S.boost--; L.boosted=award; award*=2; }
-  L.xpGot=award; addXP(award);
+  L.xpGot=award; addXP(award); if(firstTime&&L.passed) sfx('win');
   if(!L.review && L.passed){
     var prev=S.done[L.node.id];
     S.done[L.node.id]={stars:Math.max(star, prev?prev.stars||0:0), at:today()};
@@ -1455,5 +1456,7 @@ document.addEventListener('keydown',function(e){
 /*GAME*/
 /*MISSIONS*/
 /*BLITZ*/
+/*FX*/
+/*BOOK*/
 render();
 })();

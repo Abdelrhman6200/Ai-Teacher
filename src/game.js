@@ -112,6 +112,7 @@ function celebrate(p){
   }
   m.innerHTML='<div class="card celec">'+(p.t==='epic'||p.t==='level'?confetti():'')+'<div class="cele-hero">'+hero+'</div><h2>'+esc(title)+'</h2>'+(chips.length?'<div class="chips-r">'+chips.join('')+'</div>':'')+body
     +'<button type="button" class="btn wide" id="celeDone">'+(PEND.length?'Next reward':'Continue')+'</button></div>';
+  m.setAttribute('aria-label', title);
   document.body.appendChild(m);
   var release=trapFocus(m,function(){ close(); });
   function close(){ release(); if(m.parentNode) m.parentNode.removeChild(m); showPending(); }
@@ -188,4 +189,38 @@ function gameYouCard(){
 function bindGameYou(){
   var a=$('.gamec [data-go-album]'); if(a) a.onclick=function(){ go({name:'album'}); };
   var s=$('.gamec [data-go-shop]'); if(s) s.onclick=function(){ go({name:'shop'}); };
+  $$('[data-train]').forEach(function(b){ b.onclick=function(){ go({name:'session', sid:b.getAttribute('data-train')}); }; });
+}
+
+/* ---- the skill profile: eight skills, each built from the sessions that teach it ---- */
+var SKILLS=[['Model sense',[1,2,3]],['Prompting',[4,18]],['Verifying',[5,19]],['Creating',[6]],['Context',[7,17]],['Connecting',[8,9,10,21]],['Building',[11,12,13,14,16,20]],['Safe and lean',[15,22,23,24]]];
+function sessScore(s){
+  var ns=sessNodes(s.id), done=ns.filter(function(n){ return isDone(n.id); }).length/ns.length;
+  var mast=(S.mast[s.id]&&S.mast[s.id].passed)?1:0, mis=NBY[s.id+'-MS'], stars=mis?starsOf(mis.id)/3:0;
+  return 100*(0.6*done+0.25*mast+0.15*stars);
+}
+function skillScores(){
+  return SKILLS.map(function(k){
+    var sc=k[1].map(function(n){ return sessScore(SESSIONS[n-1]); }), avg=sc.reduce(function(a,b){ return a+b; },0)/sc.length;
+    var next=k[1].map(function(n){ return SESSIONS[n-1]; }).filter(function(s){ return !sessComplete(s) && sessOpen(s); })[0];
+    return {name:k[0], sessions:k[1], score:Math.round(avg), next:next, all:k[1].every(function(n){ return sessComplete(SESSIONS[n-1]); })};
+  });
+}
+function skillTitle(v){ return v<=0?'Not started':v<30?'Novice':v<60?'Practising':v<85?'Skilled':'Expert'; }
+function radarSVG(sc){
+  var cx=170, cy=150, R=96, n=sc.length;
+  function P(i,r){ var a=-Math.PI/2+i*2*Math.PI/n; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; }
+  function pts(f){ return sc.map(function(s,i){ var p=P(i,f(s)); return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' '); }
+  var grid=[25,50,75,100].map(function(g){ return '<polygon class="rg" points="'+pts(function(){ return R*g/100; })+'"/>'; }).join('');
+  var axes=sc.map(function(s,i){ var p=P(i,R); return '<line class="ra" x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'"/>'; }).join('');
+  var shape='<polygon class="rs" points="'+pts(function(s){ return R*Math.max(0.04,s.score/100); })+'"/>';
+  var dots=sc.map(function(s,i){ var p=P(i,R*Math.max(0.04,s.score/100)); return '<circle class="rdot" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.5"/>'; }).join('');
+  var labs=sc.map(function(s,i){ var p=P(i,R+16), x=p[0], anchor=x<cx-8?'end':x>cx+8?'start':'middle'; return '<text class="rl" x="'+x.toFixed(1)+'" y="'+(p[1]+4).toFixed(1)+'" text-anchor="'+anchor+'">'+esc(s.name)+'</text>'; }).join('');
+  return '<svg class="radar" viewBox="0 0 340 300" role="img" aria-label="Skill profile. '+sc.map(function(s){ return esc(s.name)+' '+s.score+' percent'; }).join(', ')+'">'+grid+axes+shape+dots+labs+'</svg>';
+}
+function skillsCard(){
+  var sc=skillScores(), top=sc.slice().sort(function(a,b){ return b.score-a.score; })[0], low=sc.filter(function(s){ return s.next; }).sort(function(a,b){ return a.score-b.score; })[0];
+  return '<section class="card skillc"><div class="revc-h">'+ic('target')+'<h2>Skill profile</h2></div>'+radarSVG(sc)
+    +'<p class="sub">Each skill grows with the steps, mastery checks and missions of the sessions that teach it.'+(top&&top.score>0?' Strongest: '+esc(top.name)+'.':'')+(low?' Next to grow: '+esc(low.name)+'.':'')+'</p>'
+    +'<ul class="skl">'+sc.map(function(s){ return '<li><span class="sk-n"><b>'+esc(s.name)+'</b><small>'+skillTitle(s.score)+' · sessions '+s.sessions.join(', ')+'</small></span><span class="sk-b" role="progressbar" aria-label="'+esc(s.name)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+s.score+'"><i style="width:'+s.score+'%"></i></span><b class="sk-v">'+s.score+'</b>'+(s.next?'<button class="btn ghost small" data-train="'+s.next.id+'" aria-label="Train '+esc(s.name)+': open session '+s.next.n+'">Train</button>':'<span class="sk-done">'+(s.all?'Complete':'Locked')+'</span>')+'</li>'; }).join('')+'</ul></section>';
 }

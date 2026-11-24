@@ -241,8 +241,19 @@ async function gameChecks(){
   const sp=()=>+$('.hud-sp b').textContent;
   await click('[data-tab="learn"]'); if(!$('.hud')) throw new Error('no HUD on Learn');
   const lvl0=+$('.hud-lv b').textContent; if(lvl0<8) throw new Error('player level only '+lvl0);
+  // skill profile after the whole course
+  await click('[data-tab="you"]'); const skl=$$('.sk-v').map(x=>+x.textContent); if(skl.length!==8||skl.some(v=>v<95)) throw new Error('every skill should be near full after the whole course: '+skl.join(','));
+  log('skills ok: '+skl.join(' / '));
+  // playbook and certificate after the whole course
+  await click('#goBook'); const heads=$$('.pbsec h2').map(h=>h.textContent);
+  for(const need of ['Rules I keep','How I check what Claude gives me','My case answers']) if(!heads.includes(need)) throw new Error('playbook is missing a section: '+need+' in '+heads.join(' | '));
+  await click('[data-tab-go="you"]'); await click('#goCert');
+  const cert=$('.certp'); if(!cert||!/Certificate of completion/.test(cert.textContent)||!/all 24 sessions/.test(cert.textContent)) throw new Error('the finished course should earn the certificate of completion');
+  if(!$('#certPrint')) throw new Error('no print button on the certificate');
+  log('playbook and certificate ok: '+heads.length+' sections; completion certificate shown');
+  await click('[data-tab-go="you"]');
   // collection
-  await click('[data-tab="you"]'); await click('.gamec [data-go-album]');
+  await click('.gamec [data-go-album]');
   const found=$$('.rcard').length, lack=$$('.lackl li').length; if(found<29) throw new Error('only '+found+' cards found after the whole course'); if(found+lack!==53) throw new Error('album does not account for 53 cards: '+found+' + '+lack);
   if($$('.rcard.r-epic').length!==5) throw new Error('five epic cards expected');
   // shop
@@ -470,6 +481,9 @@ async function quest(){
   await click('[data-theme-set="light"]'); if(document.documentElement.getAttribute('data-theme')!=='light') throw new Error('light theme did not apply');
   await click('[data-theme-set="auto"]'); if(document.documentElement.hasAttribute('data-theme')) throw new Error('auto theme should follow the device');
   log('theme ok: auto, light and dark');
+  if(!$('.radar')||$$('.skl li').length!==8) throw new Error('the You page should show the skill radar and eight skills');
+  if($$('.radar .rl').length!==8) throw new Error('the radar should label eight skills'); if(!/Skill profile/.test($('.radar').getAttribute('aria-label')||'')&&!/percent/.test($('.radar').getAttribute('aria-label')||'')) throw new Error('the radar needs a text alternative');
+  const skl0=$$('.sk-v').map(x=>+x.textContent); if(skl0.every(v=>v===0)) throw new Error('some skill should have moved after the steps played so far');
 
   // ---- field missions: the data, the meters, the keyboard and the reward
   let nm=0, boss=0;
@@ -538,6 +552,25 @@ async function quest(){
   await click('#blBack'); await click('#blitzGo'); await playBlitz(true); if(!/used up/.test($('.center.done').textContent)) throw new Error('the fourth round of the day should say the paid rounds are used up');
   await click('#blBack'); if(!new RegExp('Your best: '+score1).test($('.blitzc').textContent)) throw new Error('the best score should be shown on the Review tab: '+$('.blitzc').textContent);
   log('blitz ok: '+qn+' questions, perfect '+score1+' points, misses leave smudges, time-out, daily cap');
+
+  // ---- sound and touch: vibration is on by default, sound is off, both are a choice
+  let vib=0; try{ Object.defineProperty(navigator,'vibrate',{value:()=>{ vib++; return true; },configurable:true}); }catch(e){}
+  await click('#blitzGo'); await click('[data-b]'); const vib1=vib; await click('#quit');
+  if(vib1<1) throw new Error('vibration is on by default and should tap on an answer');
+  await click('[data-tab="you"]'); if($('[data-fx="haptics:1"]').getAttribute('aria-pressed')!=='true') throw new Error('vibration should default to on');
+  if($('[data-fx="sound:0"]').getAttribute('aria-pressed')!=='true') throw new Error('sound effects should default to off');
+  await click('[data-fx="haptics:0"]'); if($('[data-fx="haptics:0"]').getAttribute('aria-pressed')!=='true') throw new Error('the vibration choice was not kept');
+  await click('[data-tab="review"]'); await click('#blitzGo'); await click('[data-b]'); if(vib!==vib1) throw new Error('with vibration off nothing should tap'); await click('#quit');
+  await click('[data-tab="you"]'); await click('[data-fx="sound:1"]'); if($('[data-fx="sound:1"]').getAttribute('aria-pressed')!=='true') throw new Error('the sound choice was not kept');
+  await click('[data-fx="sound:0"]'); await click('[data-fx="haptics:1"]');
+  log('sound and touch ok: vibration taps '+vib1+' time(s) by default, off stays silent, sound is a choice');
+  try{ Object.defineProperty(navigator,'clipboard',{value:{writeText:()=>Promise.reject(new Error('blocked'))},configurable:true}); }catch(e){}
+  await click('[data-tab="you"]'); await click('#goBook'); if(!$('.playbook')) throw new Error('the playbook did not open');
+  if(!$$('.pbsec h2').some(h=>h.textContent==='Rules I keep')) throw new Error('earned rule cards should appear in the playbook');
+  await click('#pbCopy'); await sleep(40); if(!/My Claude playbook/.test(($('#pbbox textarea')||{}).value||'')) throw new Error('the playbook text was not offered to copy');
+  window.dispatchEvent(new PopStateEvent('popstate')); await sleep(10); if(!$('[data-tab="you"].on')||$('.playbook')) throw new Error('Back from the playbook should return to You');
+  await click('#goCert'); if(!/Not yet/.test($('.narrow').textContent)) throw new Error('the certificate should wait for the first gate');
+  log('playbook ok: rule cards listed, copy works, Back returns; certificate locked before the first gate');
   log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf
