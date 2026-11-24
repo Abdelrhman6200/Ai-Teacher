@@ -335,6 +335,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .copybox{width:100%;min-height:120px;font-size:14px}
 #bkbox{padding:0 16px 14px}.bkr{display:grid;gap:10px}.bkr label{font-weight:700}.bkr .btn{justify-self:start}
 .tr .duo{grid-template-columns:auto auto}
+.tr.stack{flex-wrap:wrap}.tr.stack>span:first-child{flex:1 1 200px}
 .modal{position:fixed;inset:0;z-index:40;background:rgb(10 14 30 / .55);display:grid;place-items:center;padding:16px}
 .modal .card{max-width:400px;gap:14px} .modal h2{font-size:22px}
 .toast{position:fixed;inset-inline:0;bottom:24px;z-index:50;display:flex;justify-content:center;pointer-events:none}
@@ -1737,10 +1738,10 @@ function youView(){
     +learnHealth()+'<h2 class="sh">Badges <span class="cnt">'+earned+' of '+BADGES.length+'</span></h2><div class="bgrid">'
     +BADGES.map(function(b){ var e=S.badges[b.id], hv=Math.min(b.have(),b.need); return '<div class="badge'+(e?' on':'')+'"'+(b.level?' data-lv="'+b.level+'"':'')+'><span class="bi">'+ic(b.icon)+'</span><b>'+esc(b.name)+'</b><span class="bd">'+esc(b.desc)+'</span>'+(e?'<span class="bs">Earned '+e+'</span>':'<span class="bs">'+hv+' of '+b.need+'</span>')+'</div>'; }).join('')+'</div>'
     +'<h2 class="sh">Settings</h2><section class="card set"><div class="tr"><span>Daily goal</span><span class="segctl" role="group" aria-label="Daily goal in XP">'+[20,30,50].map(function(g){ return '<button data-goal="'+g+'" aria-pressed="'+(S.goal===g)+'">'+g+' XP</button>'; }).join('')+'</span></div>'
-    +'<div class="tr"><span>Theme<small>Follows your device unless you choose.</small></span><span class="segctl" role="group" aria-label="Theme">'+[['auto','Auto'],['light','Light'],['dark','Dark']].map(function(o){ var on=(S.theme||'auto')===o[0]; return '<button data-theme-set="'+o[0]+'" aria-pressed="'+on+'">'+o[1]+'</button>'; }).join('')+'</span></div>'
+    +'<div class="tr stack"><span>Theme<small>Follows your device unless you choose.</small></span><span class="segctl" role="group" aria-label="Theme">'+[['auto','Auto'],['light','Light'],['dark','Dark']].map(function(o){ var on=(S.theme||'auto')===o[0]; return '<button data-theme-set="'+o[0]+'" aria-pressed="'+on+'">'+o[1]+'</button>'; }).join('')+'</span></div>'
     +'<div class="tr"><span>Preview mode<small>Unlock every session. For instructors and for reading ahead.</small></span><button class="seg1" id="prev" aria-pressed="'+S.preview+'">'+(S.preview?'On':'Off')+'</button></div>'
     +'<div class="tr"><span>Progress report<small>Copy a summary to send to your instructor.</small></span><button class="btn ghost" id="rep">Copy report</button></div><div id="repbox"></div>'
-    +'<div class="tr"><span>Back up<small>Progress lives in this browser. Copy a backup code to keep it safe, or paste one to restore it here or on another device.</small></span><span class="duo"><button class="btn ghost" id="bkCopy">Copy code</button><button class="btn ghost" id="bkOpen">Restore</button></span></div><div id="bkbox"></div>'
+    +'<div class="tr stack"><span>Back up<small>Copy a backup code, or paste one to restore it here or on another device.</small></span><span class="duo"><button class="btn ghost" id="bkCopy">Copy code</button><button class="btn ghost" id="bkOpen">Restore</button></span></div><div id="bkbox"></div>'
     +'<div class="tr"><span>Reset<small>Erases XP, streak, badges and your logs in this browser.</small></span><button class="btn ghost danger" id="reset">Reset progress</button></div>'
     +'<p class="fine">'+(canSave?'Progress saves in this browser only.':'Progress is not saved in this view.')+' XP, stars and badges are practice. Course points come from your instructor.</p></section></div>';
   setPage(h,'you');

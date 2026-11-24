@@ -325,6 +325,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .copybox{width:100%;min-height:120px;font-size:14px}
 #bkbox{padding:0 16px 14px}.bkr{display:grid;gap:10px}.bkr label{font-weight:700}.bkr .btn{justify-self:start}
 .tr .duo{grid-template-columns:auto auto}
+.tr.stack{flex-wrap:wrap}.tr.stack>span:first-child{flex:1 1 200px}
 .modal{position:fixed;inset:0;z-index:40;background:rgb(10 14 30 / .55);display:grid;place-items:center;padding:16px}
 .modal .card{max-width:400px;gap:14px} .modal h2{font-size:22px}
 .toast{position:fixed;inset-inline:0;bottom:24px;z-index:50;display:flex;justify-content:center;pointer-events:none}
