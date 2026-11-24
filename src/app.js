@@ -6,7 +6,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -194,15 +194,20 @@ function boxCounts(){ var c=[0,0,0,0,0,0]; Object.keys(S.srs).forEach(function(i
 /* ================= xp, streak, badges ================= */
 function addXP(n){
   if(!n) return;
-  var t=today(); S.xp+=n; S.xpByDay[t]=(S.xpByDay[t]||0)+n;
+  var t=today(), before=plOf(S.xp); S.xp+=n; S.xpByDay[t]=(S.xpByDay[t]||0)+n;
   if(S.xpByDay[t]>=S.goal && S.streak.last!==t){
-    S.streak.n = (S.streak.last===dayAgo(1)) ? S.streak.n+1 : 1; S.streak.last=t;
+    if(S.streak.last===dayAgo(1)) S.streak.n++;
+    else if(S.streak.last===dayAgo(2) && (S.freezes||0)>0 && S.streak.n>0){ S.freezes--; S.streak.n++; PEND.push({t:'freeze'}); }   // one missed day, covered by a freeze
+    else S.streak.n=1;
+    S.streak.last=t;
     S.streak.best = Math.max(S.streak.best||0, S.streak.n);
     if(S.goalDays.indexOf(t)<0) S.goalDays.push(t);
   }
+  for(var l=before+1;l<=plOf(S.xp);l++) levelUp(l);
   save();
 }
-function streakNow(){ return (S.streak.last===today()||S.streak.last===dayAgo(1)) ? S.streak.n : 0; }
+function streakNow(){ return (S.streak.last===today()||S.streak.last===dayAgo(1)||(S.streak.last===dayAgo(2)&&(S.freezes||0)>0)) ? S.streak.n : 0; }
+function frozenToday(){ return S.streak.last===dayAgo(2) && (S.freezes||0)>0 && S.streak.n>0; }
 function countKind(kind){ return NODES.filter(function(n){ return n.kind===kind && isDone(n.id); }).length; }
 function threeStars(){ return NODES.filter(function(n){ return STAR_KINDS[n.kind] && starsOf(n.id)===3; }).length; }
 var BADGES = [
@@ -231,6 +236,8 @@ var BADGES = [
 function checkBadges(){
   var fresh=[];
   BADGES.forEach(function(b){ if(!S.badges[b.id] && b.have()>=b.need){ S.badges[b.id]=today(); fresh.push(b); } });
+  if(fresh.length){ S.sparks=(S.sparks||0)+5*fresh.length; }
+  settleRewards();
   if(fresh.length) save();
   return fresh;
 }
@@ -241,8 +248,9 @@ function go(v){ view=v; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
-  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView})[view.name]();
+  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView})[view.name]();
   armGuard();
+  showPending();
 }
 
 /* ---- the browser's Back button stays inside the app ---- */
@@ -250,7 +258,7 @@ var guardOn=false;
 function armGuard(){ if(!guardOn && view.name!=='learn' && view.name!=='onboard' && view.name!=='place'){ try{ history.pushState({z:1},''); guardOn=true; }catch(e){} } }
 function backInApp(){
   var m=$('.modal');
-  if(m){ var x=$('#noteX',m)||$('#stay',m); if(x) x.click(); else if(m.parentNode) m.parentNode.removeChild(m); return; }
+  if(m){ var x=$('#noteX',m)||$('#stay',m)||$('#celeDone',m); if(x) x.click(); else if(m.parentNode) m.parentNode.removeChild(m); return; }
   var n=view.name;
   if(n==='lesson'||n==='task'||n==='kase'||n==='question'||n==='gate'){ var q=$('#quit'); if(q) q.click(); else leave(); return; }
   if(n==='onboard'||n==='place') return; // setup and placement are not interrupted by Back
@@ -284,9 +292,10 @@ function setPage(html, tab, lv){
   APP.innerHTML='<div class="shell"'+(lv?' data-lv="'+lv+'"':'')+'><header class="bar"><div class="bar-in"><div class="brand">'+logoMark(32)+'<span class="wm"><b>Zero</b> <i>to</i> <b>100</b></span></div>'
     +'<div class="stats"><span class="stat flame" title="Day streak">'+ic('flame')+'<b>'+streakNow()+'</b><span class="sr"> day streak</span></span><span class="stat xp" title="Practice XP">'+ic('bolt')+'<b>'+S.xp+'</b><span class="sr"> XP</span></span></div></div>'
     +'<nav class="tabs" aria-label="Sections"><div class="tabs-in">'+tabs.map(function(t){ return '<button class="tab'+(t[0]===tab?' on':'')+'" data-tab="'+t[0]+'"'+(t[0]===tab?' aria-current="page"':'')+'>'+ic(t[2])+'<span>'+t[1]+'</span>'+(t[0]==='review'&&rev?'<i class="dot">'+rev+'</i>':'')+'</button>'; }).join('')+'</div></nav></header>'
-    +'<main class="page">'+html+'</main></div>';
+    +'<main class="page">'+hudHTML()+html+'</main></div>';
   $$('[data-tab]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab')}); }; });
-  bindDiagrams();
+  $$('[data-hud]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-hud')}); }; });
+  bindDiagrams(); showPending();
 }
 function ring(pct, size, stroke, label, cls){
   var r=(size-stroke)/2, c=2*Math.PI*r, off=c*(1-Math.min(1,pct/100));
@@ -347,7 +356,7 @@ function learnView(){
   $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; });
   var dgo=$('#dueGo'); if(dgo) dgo.onclick=startDue;
   var pg=$('#placeGo'); if(pg) pg.onclick=function(){ go({name:'place'}); };
-  var dq=$('#dqChest'); if(dq) dq.onclick=function(){ S.chest['dq-'+today()]=today(); addXP(20); var nb=checkBadges(); save(); toast('Chest opened: +20 XP'+(nb.length?' · Badge: '+nb[0].name:'')); learnView(); };
+  var dq=$('#dqChest'); if(dq) dq.onclick=function(){ S.chest['dq-'+today()]=today(); openChest(20, 8, 'Daily');  learnView(); };
 }
 
 /* ================= ONBOARDING, PLACEMENT AND THE SESSION CLOSE ================= */
@@ -613,8 +622,7 @@ function bindChests(rerender){
   $$('[data-chest]').forEach(function(b){ b.onclick=function(){
     var key=b.getAttribute('data-chest'); if(S.chest[key]) return;
     var ph=PHASES.filter(function(p){ return p.id===key.split('-')[1]; })[0];
-    S.chest[key]=today(); addXP(ph.bonus); var nb=checkBadges(); save();
-    toast('Chest opened: +'+ph.bonus+' XP'+(nb.length?' · Badge: '+nb[0].name:'')); rerender();
+    S.chest[key]=today(); openChest(ph.bonus, 5, ph.name); rerender();
   }; });
 }
 
@@ -782,7 +790,7 @@ function youView(){
   var cl=currentLevel(), tot=totalDone(), stars=NODES.reduce(function(a,n){ return a+starsOf(n.id); },0), earned=BADGES.filter(function(b){ return S.badges[b.id]; }).length;
   var h='<div class="narrow"><h1 class="ph">You</h1>'
     +'<section class="card rank" data-lv="'+cl.n+'"><span class="rk-z">'+zed(cl.n,'happy',96,'bob')+'</span><div><span class="eyebrow">'+ZNAME[cl.n]+'</span><h2>Level '+cl.n+': '+esc(cl.name)+'</h2><p class="sub">'+esc(cl.range)+(cl.n===5?'':' points')+'. '+levelProg(cl).done+' of '+levelProg(cl).total+' sessions complete.</p></div></section>'
-    +setupCard()
+    +gameYouCard()+setupCard()
     +'<div class="kpis"><div class="kpi"><b>'+S.xp+'</b><span>Practice XP</span></div><div class="kpi"><b>'+tot+'</b><span>Steps done</span></div><div class="kpi"><b>'+stars+'</b><span>Stars</span></div><div class="kpi"><b>'+(S.streak.best||0)+'</b><span>Best streak</span></div></div>'
     +'<h2 class="sh">Zed forms <span class="cnt">'+cl.n+' of 5</span></h2><div class="cast">'+LEVELS.map(function(lv){ var on=lv.n<=cl.n; return '<div class="cast-i'+(on?' on':' off')+(lv.n===cl.n?' cur':'')+'" data-lv="'+lv.n+'">'+(on?zed(lv.n,'happy',58):zed(lv.n,'sleep',58,'zlock'))+'<b>Level '+lv.n+'</b><span>'+esc(lv.name)+'</span></div>'; }).join('')+'</div>'
     +learnHealth()+'<h2 class="sh">Badges <span class="cnt">'+earned+' of '+BADGES.length+'</span></h2><div class="bgrid">'
@@ -794,7 +802,7 @@ function youView(){
     +'<div class="tr stack"><span>Back up<small>Copy a backup code, or paste one to restore it here or on another device.</small></span><span class="duo"><button class="btn ghost" id="bkCopy">Copy code</button><button class="btn ghost" id="bkOpen">Restore</button></span></div><div id="bkbox"></div>'
     +'<div class="tr"><span>Reset<small>Erases XP, streak, badges and your logs in this browser.</small></span><button class="btn ghost danger" id="reset">Reset progress</button></div>'
     +'<p class="fine">'+(canSave?'Progress saves in this browser only.':'Progress is not saved in this view.')+' XP, stars and badges are practice. Course points come from your instructor.</p></section></div>';
-  setPage(h,'you');
+  setPage(h,'you'); bindGameYou();
   $$('[data-goal]').forEach(function(b){ b.onclick=function(){ S.goal=+b.getAttribute('data-goal'); save(); youView(); }; });
   $$('[data-theme-set]').forEach(function(b){ b.onclick=function(){ S.theme=b.getAttribute('data-theme-set'); save(); applyTheme(); youView(); }; });
   var oe=$('#obEdit'); if(oe) oe.onclick=function(){ ob.step=0; go({name:'onboard'}); };
@@ -912,6 +920,7 @@ function finish(){
     award = L.passed ? L.xp : Math.round(L.xp/2);
     if(k==='master' && !L.passed && L.mast && L.mast.fails>1) award=0;   // a failed check pays once, so it cannot be farmed
   }
+  if(award>0 && !L.review && (S.boost||0)>0){ S.boost--; L.boosted=award; award*=2; }
   L.xpGot=award; addXP(award);
   if(!L.review && L.passed){
     var prev=S.done[L.node.id];
@@ -1158,12 +1167,12 @@ function doneScreen(){
     : k==='checkpoint' ? 'Anything you missed comes back in later warm-ups. Fix it before the gate.'
     : showStars ? (L.stars===3?'Clean run. No smudges.':L.stars===2?'Solid. A few smudges went on your review list.':'Done. The smudges are on your review list.')
     : (L.mistakes?'Step complete. The smudges are on your review list.':'Step complete.');
-  var facts=[['+'+(L.firstTime||L.review?L.xp:0),'XP']];
+  var facts=[['+'+(L.boosted?L.xpGot:(L.firstTime||L.review?L.xp:0)),'XP']];
   if(acc!==null && k!=='pretest') facts.push([acc+'%','First try']);
   if(k==='pretest') facts.push([L.first+' of '+L.graded,'Right before learning']);
   if(L.review) facts.push([String(L.cleared),'Cleared']); else if(L.best>=3) facts.push(['x'+L.best,'Best streak']);
   var met=(S.xpByDay[today()]||0)>=S.goal;
-  var note = (!L.firstTime&&!L.review)?'Replay: XP is only awarded the first time, stars keep your best.':(L.mistakes&&k!=='pretest'?'Missed questions are on your review list.':'')+(met?(L.mistakes&&k!=='pretest'?' ':'')+'Daily goal met. Streak: '+streakNow()+(streakNow()===1?' day':' days')+'.':'');
+  var note = L.boosted?'XP booster used: this step paid double.':(!L.firstTime&&!L.review)?'Replay: XP is only awarded the first time, stars keep your best.':(L.mistakes&&k!=='pretest'?'Missed questions are on your review list.':'')+(met?(L.mistakes&&k!=='pretest'?' ':'')+'Daily goal met. Streak: '+streakNow()+(streakNow()===1?' day':' days')+'.':'');
   var nx=nextStepFrom(L.node), db=(!L.review&&L.firstTime)?debrief(L.node):null;
   if(db){ title=db.title; }
   var foot=(nx?'<button class="btn wide" id="primary">Next: '+esc(nx.title)+'</button><button class="btn ghost wide" id="back">Back to session</button>':db&&db.next?'<button class="btn wide" id="primary">Start session '+db.next.n+'</button><button class="btn ghost wide" id="back">Back to session</button>':'<button class="btn wide" id="primary">Continue</button>');
@@ -1432,5 +1441,6 @@ document.addEventListener('keydown',function(e){
   if(it.type==='mcq'&&!c.checked&&tag!=='input'&&/^[1-5]$/.test(e.key)){ var o=c.opts[+e.key-1]; if(o){ c.sel=o.k; render(); } }
 });
 
+/*GAME*/
 render();
 })();

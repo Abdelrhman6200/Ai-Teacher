@@ -1,6 +1,7 @@
 (async()=>{
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const D=JSON.parse(document.getElementById('course-data').textContent);
+window.__cele=[]; new MutationObserver(ms=>{ for(const m of ms) for(const a of m.addedNodes){ if(a.nodeType===1&&a.classList.contains('cele')){ const h=a.querySelector('h2'); window.__cele.push(h?h.textContent:'?'); } } }).observe(document.body,{childList:true});
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const out=[]; let pre=null;
 const log=m=>{ out.push(m); flush(); };
@@ -18,7 +19,12 @@ D.sessions.forEach(s=>{ SESS[s.id]=s; s.nodes.forEach(n=>{ n.id=s.id+'-'+n.k; n.
   else if(i.type==='flash') FLASH[i.term]=i;
   else if(i.type==='teach') TEACH[i.title]=i;
 }); }); });
-async function click(s){ const e=typeof s==='string'?$(s):s; if(!e) throw new Error('missing '+s); e.click(); await sleep(3); }
+async function click(s){
+  const e=typeof s==='string'?$(s):s; if(!e) throw new Error('missing '+s);
+  // a learner dismisses reward pop-ups before doing anything else
+  for(let i=0;i<8;i++){ const cd=$('#celeDone'); if(!cd||cd.closest('.modal').contains(e)) break; cd.click(); await sleep(3); }
+  e.click(); await sleep(3);
+}
 function setv(el,v,ev){ el.value=v; el.dispatchEvent(new Event(ev||'input',{bubbles:true})); }
 function words(n){ return Array.from({length:n},(_,i)=>'word'+i).join(' '); }
 const feet=()=>$('.pfoot')&&$('.pfoot').className;
@@ -191,6 +197,45 @@ async function full(){
   try{ Object.defineProperty(navigator,'clipboard',{value:{writeText:()=>Promise.reject(new Error('blocked'))},configurable:true}); }catch(e){}
   await click('#rep'); await sleep(60); if(!$('#repbox textarea')) throw new Error('a blocked clipboard did not fall back to a box to copy from');
   log('report box or toast ok: true');
+  await gameChecks();
+}
+
+// ---- the game layer, after the whole course: rewards, collection, shop, streak freeze
+async function gameChecks(){
+  const ce=window.__cele, count=re=>ce.filter(x=>re.test(x)).length;
+  if(count(/^Session \d+ complete$/)!==24) throw new Error('expected 24 session rewards, saw '+count(/^Session \d+ complete$/));
+  if(count(/^Epic card unlocked$/)!==5) throw new Error('expected 5 epic cards, saw '+count(/^Epic card unlocked$/));
+  if(count(/^Level \d+: /)<8) throw new Error('only '+count(/^Level \d+: /)+' player level-ups');
+  log('rewards ok: '+count(/^Session/)+' session pop-ups, '+count(/^Epic/)+' epic cards, '+count(/^Level \d+: /)+' level-ups, '+count(/^Chest/)+' chests');
+  const sp=()=>+$('.hud-sp b').textContent;
+  await click('[data-tab="learn"]'); if(!$('.hud')) throw new Error('no HUD on Learn');
+  const lvl0=+$('.hud-lv b').textContent; if(lvl0<8) throw new Error('player level only '+lvl0);
+  // collection
+  await click('[data-tab="you"]'); await click('.gamec [data-go-album]');
+  const found=$$('.rcard').length, lack=$$('.lackl li').length; if(found<29) throw new Error('only '+found+' cards found after the whole course'); if(found+lack!==53) throw new Error('album does not account for 53 cards: '+found+' + '+lack);
+  if($$('.rcard.r-epic').length!==5) throw new Error('five epic cards expected');
+  // shop
+  await click('[data-go-shop]'); const bal0=sp(); if(bal0<100) throw new Error('only '+bal0+' Sparks after the whole course');
+  const own=id=>$('[data-buy="'+id+'"]').closest('.shopi').querySelector('.own').textContent;
+  const hold=id=>+/You hold (\d+)/.exec(own(id))[1];
+  await click('[data-buy="boost"]'); if(hold('boost')!==1) throw new Error('booster not added'); if(sp()!==bal0-25) throw new Error('booster price wrong');
+  const fz0=hold('freeze'); if(fz0<2){ await click('[data-buy="freeze"]'); if(hold('freeze')!==fz0+1) throw new Error('freeze not added'); }
+  const fz1=hold('freeze'); const cards0=+/(\d+) of 53/.exec(own('mystery'))[1];
+  await click('[data-buy="mystery"]'); await sleep(5); if(!$('.cele')) throw new Error('mystery chest did not reveal a card');
+  await click('#celeDone'); await sleep(5);
+  const cards1=+/(\d+) of 53/.exec(own('mystery'))[1]; if(cards1!==cards0+1) throw new Error('mystery chest gave '+(cards1-cards0)+' cards');
+  log('shop ok: booster, freeze x'+fz1+', mystery chest');
+  // streak freeze: miss one day, then meet the goal
+  await click('[data-tab="learn"]'); const flame0=+$('.stat.flame b').textContent;
+  if(flame0<1) throw new Error('no streak to protect');
+  window.__skew+=DAY; await toLearn(); if(+$('.stat.flame b').textContent!==flame0) throw new Error('a freeze in hand should protect the streak display');
+  await click('[data-tab="sheets"]'); await click('#libGo');
+  const notes=$$('[data-note].ref').filter(b=>!b.classList.contains('on')).slice(0,18);
+  for(const b of notes){ await click(b); await click('#noteDone'); }
+  await click('[data-tab="learn"]'); const flame1=+$('.stat.flame b').textContent;
+  if(flame1!==flame0+1) throw new Error('streak '+flame0+' -> '+flame1+' after a freeze day, expected +1');
+  if(!ce.includes('Streak saved')) throw new Error('no streak-saved pop-up');
+  log('streak freeze ok: '+flame0+' -> '+flame1);
 }
 
 const stored=()=>JSON.parse(localStorage.getItem('z100-practice-v4')||'{}');
@@ -333,7 +378,10 @@ async function quest(){
   await click('#back'); const cb=$('.chest.ready[data-chest="s01-learn"]'); if(!cb) throw new Error('no chest after the Learn phase');
   const x0=xpNow(); await click(cb); await sleep(5); const x1=xpNow(); if(x1-x0!==10) throw new Error('chest paid '+(x1-x0));
   if($('.chest.ready[data-chest="s01-learn"]')||!$('.phase[data-ph="learn"] .chest.opened')) throw new Error('chest did not close after opening');
-  log('chest +10 XP, opened once');
+  const cm=$('.cele'); if(!cm||!/Chest opened/.test(cm.textContent)) throw new Error('opening a chest should show a reward pop-up');
+  if(!/\+10 XP/.test(cm.textContent)||!/\+5 Sparks/.test(cm.textContent)) throw new Error('chest pop-up does not list its rewards: '+cm.textContent.slice(0,80));
+  if(!cm.querySelector('.rcard')) throw new Error('a chest in session 1 should drop a rule card');
+  log('chest +10 XP, +5 Sparks and a rule card, opened once');
 
   // ---- daily quests fill as you work
   if($$('.questc li.on').length) { /* the home card is not on this screen */ }

@@ -5,6 +5,7 @@ import re, json
 import content as C
 import generic as G
 import method as M
+import cards as CD
 
 LEVEL_NAMES = {1: 'Foundations', 2: 'Practitioner', 3: 'Builder', 4: 'Operator', 5: 'Expert'}
 RUBRIC = {1: 'Gate rubric', 2: 'Gate rubric', 3: 'Gate rubric', 4: 'Capstone rubric', 5: 'Expert rubric'}
@@ -73,6 +74,10 @@ def build():
                 for b in it.get('blocks', []) or []:
                     if b.get('t') == 'src': assert b['id'] in notes, ('source line without a note', it['id'])
     d['notes'] = notes
+    cards = CD.load()
+    cerrs = CD.validate(cards)
+    assert not cerrs, cerrs[:5]
+    d['cards'] = cards
     ids = set()
     for s in sessions:
         for n in s['nodes']:

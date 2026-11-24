@@ -11,7 +11,7 @@ def b64(*p): return base64.b64encode(open(os.path.join(SRC, *p), 'rb').read()).d
 d = course.build()
 blob = json.dumps(d, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
 css = rd('style.css') + rd('diagrams.css')
-js = rd('app.js').replace('/*CHARS*/', rd('chars.js')).replace('/*DIAGRAMS*/', rd('diagrams.js'))
+js = rd('app.js').replace('/*CHARS*/', rd('chars.js')).replace('/*DIAGRAMS*/', rd('diagrams.js')).replace('/*GAME*/', rd('game.js'))
 assert '</script' not in js.lower()
 ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23C00000'/%3E%3Ccircle cx='16' cy='16' r='8.2' fill='none' stroke='white' stroke-width='4.2'/%3E%3Ccircle cx='13.3' cy='14.6' r='1.7' fill='white'/%3E%3Ccircle cx='18.7' cy='14.6' r='1.7' fill='white'/%3E%3C/svg%3E"
 head = '''<!DOCTYPE html>
