@@ -85,6 +85,7 @@ def build():
                 if 'type' not in it:
                     it['type'] = 'mcq' if 'options' in it else 'fill' if 'answers' in it else 'match' if 'pairs' in it else None
                 assert it['type'], it['id']
+                if it['type'] == 'mission': ids.add(it['id']); continue
                 assert it['id'] not in ids, 'duplicate id ' + it['id']
                 ids.add(it['id'])
                 if it['type'] == 'mcq':

@@ -76,8 +76,8 @@ function ic(n,cls){ return '<svg class="i '+(cls||'')+'" viewBox="0 0 24 24" ari
 var LEVELS = DATA.levels, SESSIONS = DATA.sessions, SBY = {}, NODES = [], NBY = {}, GATES = {};
 SESSIONS.forEach(function(s){ SBY[s.id]=s; s.items=0; });
 LEVELS.forEach(function(lv){ lv.sessionObjs = lv.sessions.map(function(id){ return SBY[id]; }); GATES[lv.gate.id]=lv; });
-var KIND = {learn:'Learn', field:'From the sources', demo:'See it', practice:'Practise', recall:'Recall', task:'Exercise', case:'Case', question:'Exit ticket', gate:'Level gate', warmup:'Warm-up', pretest:'Guess first', apply:'Apply', master:'Mastery check', checkpoint:'Level checkpoint', review:'Review'};
-var STAR_KINDS = {practice:1, recall:1};
+var KIND = {learn:'Learn', field:'From the sources', demo:'See it', practice:'Practise', recall:'Recall', task:'Exercise', case:'Case', question:'Exit ticket', gate:'Level gate', warmup:'Warm-up', pretest:'Guess first', apply:'Apply', master:'Mastery check', checkpoint:'Level checkpoint', review:'Review', mission:'Field mission'};
+var STAR_KINDS = {practice:1, recall:1, mission:1};
 var ITEMS = {};
 SESSIONS.forEach(function(s){
   s.nodes.forEach(function(n){
@@ -112,7 +112,7 @@ function gateReady(lv){ return sessNodes(lv.gate.session).every(function(n){ ret
 function estMin(n){
   if(n.kind==='learn'||n.kind==='field') return Math.max(3, Math.round(n.items.length*0.7));
   if(n.kind==='warmup') return 3; if(n.kind==='pretest') return 2; if(n.kind==='apply') return 4; if(n.kind==='master') return 6; if(n.kind==='checkpoint') return 8;
-  if(n.kind==='demo') return 4; if(n.kind==='practice') return 4; if(n.kind==='recall') return 5;
+  if(n.kind==='mission') return n.boss?9:5; if(n.kind==='demo') return 4; if(n.kind==='practice') return 4; if(n.kind==='recall') return 5;
   if(n.kind==='task') return 45; if(n.kind==='case') return 6; if(n.kind==='question') return 8; return 10;
 }
 
@@ -224,6 +224,8 @@ var BADGES = [
   {id:'session', icon:'layers', name:'Session complete', desc:'Finish every step of one session.', have:function(){ return SESSIONS.filter(sessComplete).length; }, need:1},
   {id:'explorer', icon:'search', name:'Explorer', desc:'Read 10 source notes.', have:function(){ return refsOpened(); }, need:10},
   {id:'diver', icon:'layers', name:'Deep diver', desc:'Read 5 Go deeper notes.', have:function(){ return refsOpened('deep'); }, need:5},
+  {id:'agent', icon:'mission', name:'Field agent', desc:'Finish five field missions.', have:function(){ return countKind('mission'); }, need:5},
+  {id:'ace', icon:'star', name:'Mission ace', desc:'Earn three stars on five field missions.', have:function(){ return NODES.filter(function(n){ return n.kind==='mission' && starsOf(n.id)===3; }).length; }, need:5},
   {id:'chests', icon:'chest', name:'Treasure hunter', desc:'Open 5 chests.', have:function(){ return Object.keys(S.chest).length; }, need:5},
   {id:'goal5', icon:'target', name:'Goal getter', desc:'Meet your daily goal on five different days.', have:function(){ return S.goalDays.length; }, need:5},
   {id:'xp500', icon:'bolt', name:'Five hundred', desc:'Earn 500 practice XP.', have:function(){ return S.xp; }, need:500},
@@ -572,7 +574,7 @@ function libraryView(){
 IC.chest='<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M4 11V9a3 3 0 013-3h10a3 3 0 013 3v2M12 11v4M10 15h4"/>';
 var PHASES=[
   {id:'learn', name:'Learn', tag:'Take it in', icon:'learn', bonus:10, kinds:['warmup','pretest','learn','field','demo']},
-  {id:'apply', name:'Apply', tag:'Try it yourself', icon:'pen', bonus:10, kinds:['apply','practice']},
+  {id:'apply', name:'Apply', tag:'Try it yourself', icon:'pen', bonus:10, kinds:['apply','mission','practice']},
   {id:'prove', name:'Prove', tag:'Show you have it', icon:'medal', bonus:15, kinds:['recall','master']},
   {id:'use', name:'Use', tag:'Make it yours', icon:'flag', bonus:20, kinds:['task','case','question','checkpoint','gate']}
 ];
@@ -865,6 +867,7 @@ function prep(id){
   else if(it.type==='order'){ c.shuf=shuffle(it.steps.map(function(s,i){ return i; })); c.placed=[]; c.wrong=0; c.flash=null; }
   else if(it.type==='flash'){ c.flipped=false; }
   else if(it.type==='explain'){ c.text=''; c.revealed=false; c.pts=[]; }
+  else if(it.type==='mission'){ c.m=missionNew(it); c.best=0; }
   return c;
 }
 function nextItem(){
@@ -902,12 +905,14 @@ function check(){
   save(); render();
 }
 function starsFor(){
+  if(L.node.kind==='mission') return L.mstars||1;
   if(!L.graded) return 0;
   var acc=L.first/L.graded; return acc>=0.9?3:acc>=0.7?2:1;
 }
 function finish(){
   if(L.node.kind==='placement') return finishPlacement();
   var k=L.node.kind, star = (!L.review && STAR_KINDS[k]) ? starsFor() : 0;
+  if(k==='mission' && !L.review && !isDone(L.node.id)) S.sparks=(S.sparks||0)+3*star;
   var flawless = L.mistakes===0 && L.graded>0 && k!=='pretest';
   if(flawless) L.xp += 5;
   var firstTime = !L.review && !isDone(L.node.id);
@@ -956,8 +961,8 @@ function confirmQuit(){
 function lessonView(){
   if(L.phase==='intro') return intro();
   if(L.phase==='done') return doneScreen();
-  var c=L.cur, it=c.item, r=({teach:scrTeach, mcq:scrMcq, fill:scrFill, match:scrMatch, order:scrOrder, flash:scrFlash, explain:scrExplain})[it.type](c);
-  shell(r.body, r.foot, r.fcls, true); bindLesson();
+  var c=L.cur, it=c.item, r=({teach:scrTeach, mcq:scrMcq, fill:scrFill, match:scrMatch, order:scrOrder, flash:scrFlash, explain:scrExplain, mission:scrMission})[it.type](c);
+  shell(r.body, r.foot, r.fcls, it.type!=='mission'); bindLesson(); if(it.type==='mission') bindMission(c);
 }
 function scrTeach(c){
   var it=c.item, kick=L.node.kind==='demo'?'See it':L.node.kind==='field'?'From the sources':'Learn';
@@ -1173,6 +1178,7 @@ function doneScreen(){
   if(L.review) facts.push([String(L.cleared),'Cleared']); else if(L.best>=3) facts.push(['x'+L.best,'Best streak']);
   var met=(S.xpByDay[today()]||0)>=S.goal;
   var note = L.boosted?'XP booster used: this step paid double.':(!L.firstTime&&!L.review)?'Replay: XP is only awarded the first time, stars keep your best.':(L.mistakes&&k!=='pretest'?'Missed questions are on your review list.':'')+(met?(L.mistakes&&k!=='pretest'?' ':'')+'Daily goal met. Streak: '+streakNow()+(streakNow()===1?' day':' days')+'.':'');
+  if(k==='mission'){ title=L.mstars===3?'Mission aced':'Mission complete'; zsub=L.mstars===3?'Every strong call made. The calls you made here are the ones to make at work.':L.mstars===2?'Solid. One or two calls cost something. The recap showed which.':'You got through it. Replay it to find the strong moves.'; facts=[['+'+(L.xpGot||0),'XP'],[L.mstars+' of 3','Stars']]; if(L.firstTime) facts.push(['+'+(3*L.mstars),'Sparks']); }
   var nx=nextStepFrom(L.node), db=(!L.review&&L.firstTime)?debrief(L.node):null;
   if(db){ title=db.title; }
   var foot=(nx?'<button class="btn wide" id="primary">Next: '+esc(nx.title)+'</button><button class="btn ghost wide" id="back">Back to session</button>':db&&db.next?'<button class="btn wide" id="primary">Start session '+db.next.n+'</button><button class="btn ghost wide" id="back">Back to session</button>':'<button class="btn wide" id="primary">Continue</button>');
@@ -1439,8 +1445,10 @@ document.addEventListener('keydown',function(e){
   if(L.phase!=='q') return;
   var c=L.cur, it=c.item;
   if(it.type==='mcq'&&!c.checked&&tag!=='input'&&/^[1-5]$/.test(e.key)){ var o=c.opts[+e.key-1]; if(o){ c.sel=o.k; render(); } }
+  if(it.type==='mission'&&c.m.stage==='ask'&&/^[1-3]$/.test(e.key)) missionPick(c, +e.key-1);
 });
 
 /*GAME*/
+/*MISSIONS*/
 render();
 })();

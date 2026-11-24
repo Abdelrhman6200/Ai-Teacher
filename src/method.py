@@ -5,6 +5,7 @@ import learn_content as LC
 import deep as DP
 import refs as RF
 import field as FL
+import mission as MI
 
 LETTERS = 'ABCD'
 
@@ -32,6 +33,9 @@ def apply(sessions):
     DQ = DP.load()
     RQ = RF.load()
     FQ = FL.load()
+    MQ = MI.load()
+    merrs = MI.validate(list(MQ.values()))
+    assert not merrs, merrs[:5]
     ferrs = FL.validate(FQ, RQ)
     assert not ferrs, ferrs[:5]
     rerrs = RF.validate(RQ)
@@ -121,7 +125,16 @@ def apply(sessions):
         if n > 1:
             order.append(node('U', 'warmup', 'Warm-up',
                               'Retrieval before anything new: questions from earlier sessions that are due again. Answer from memory, then rate how sure you were.', dyn='warmup'))
-        order += [PR, by['L1'], by['L2']] + ([L3] if L3 else []) + [by['W'], AP, by['P1'], by['P2'], by['R'], CK]
+        # the field mission: a branching decision story (a longer boss mission closes each level)
+        ms = MQ[n]
+        item = dict(id='%s-MS-1' % sid, type='mission', title=ms['title'], brief=ms['brief'], meters=ms['meters'], boss=ms['boss'],
+                    steps=[dict(scene=st['scene'], ask=st['ask'], choices=[dict(t=c['t'], say=c['say'], why=c['why'], r=c['r'], fx=c['fx']) for c in st['choices']]) for st in ms['steps']],
+                    ends=ms['ends'], tip=ms['tip'])
+        MS = node('MS', 'mission', 'Boss mission' if ms['boss'] else 'Field mission',
+                  ('Level boss. Five calls that draw on everything in this level. Each one has a cost, and you see it at once. Replay to find the strong moves.' if ms['boss']
+                   else 'A short story with %d decisions. Pick what you would do, see what it costs, and replay to find the strong moves.' % len(ms['steps'])),
+                  [item], boss=ms['boss'])
+        order += [PR, by['L1'], by['L2']] + ([L3] if L3 else []) + [by['W'], AP, MS, by['P1'], by['P2'], by['R'], CK]
         for k in ('X', 'C', 'Q'):
             if k in by: order.append(by[k])
         if s['kind_gate']:

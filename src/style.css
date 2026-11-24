@@ -587,3 +587,32 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .shopi .own,.shopi .why{display:block;font-size:13px;font-weight:700;color:var(--ink-2)} .shopi .why{color:var(--bad)}
 .shopi .btn .i{width:18px;height:18px}
 @media (max-width:420px){ .shopi{grid-template-columns:auto 1fr} .shopi .btn{grid-column:1/-1} }
+
+/* ---------- field missions ---------- */
+.mbrief{margin-top:-4px}
+.mmeters{display:grid;gap:8px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.mm{display:grid;grid-template-columns:84px 1fr 56px;align-items:center;gap:10px}
+.mm-l{font-size:13px;font-weight:800;color:var(--ink-2)}
+.mm-bar{position:relative;height:10px;border-radius:99px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.mm-bar i{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--lv);transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.mm b{font-family:var(--font-display);font-size:16px;text-align:end;display:flex;gap:4px;justify-content:flex-end;align-items:baseline}
+.mm em{font-style:normal;font-size:12.5px;font-weight:800;animation:mmpop .5s ease both} .mm em.up{color:var(--good)} .mm em.dn{color:var(--bad)}
+@keyframes mmpop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.mscene{padding:16px 18px;border-radius:14px;background:var(--lv-soft);border-inline-start:5px solid var(--lv)}
+.mscene p{font-size:17px;line-height:1.5;color:var(--ink)}
+.mask{font-size:21px}
+.opt.pick.m2{border-color:var(--good);background:var(--good-bg)} .opt.pick.m0{border-color:var(--bad);background:var(--bad-bg)} .opt.pick.m1{border-color:var(--gold);background:var(--l3s)}
+.opt.pick.m2 .k{background:var(--good);color:var(--on-sig);border-color:var(--good)} .opt.pick.m0 .k{background:var(--bad);color:var(--on-sig);border-color:var(--bad)} .opt.pick.m1 .k{background:var(--gold);color:#262626;border-color:var(--gold)}
+.opt.dim:disabled{opacity:.62}
+.mres{display:grid;gap:8px;padding:16px 18px;border-radius:14px;border:2px solid var(--line-2);background:var(--surface);animation:cardIn .45s cubic-bezier(.2,1.2,.3,1) both}
+.mres h3{font-family:var(--font-display);font-size:19px}
+.mres.r2{border-color:var(--good);background:var(--good-bg)} .mres.r2 h3{color:var(--good)}
+.mres.r1{border-color:var(--gold);background:var(--l3s)} .mres.r1 h3{color:var(--l3i)}
+.mres.r0{border-color:var(--bad);background:var(--bad-bg)} .mres.r0 h3{color:var(--bad)}
+.mres p{font-size:16px;line-height:1.5} .mwhy{color:var(--ink)} .mbest{padding-top:6px;border-top:1px dashed var(--line-2)}
+.mfoot{width:100%;text-align:center;font-size:14.5px;font-weight:700;color:var(--ink-2)}
+.mrecap{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.mrecap li{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.mrecap .rd{width:14px;height:14px;border-radius:50%;margin-top:5px;background:var(--line-2)} .mrecap .r2 .rd{background:var(--good)} .mrecap .r1 .rd{background:var(--gold)} .mrecap .r0 .rd{background:var(--bad)}
+.mrecap b{display:block;font-size:14.5px} .mrecap small{display:block;font-size:13.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:420px){ .mm{grid-template-columns:72px 1fr 52px} }

@@ -10,7 +10,7 @@ window.addEventListener('error',e=>log('PAGE ERROR: '+e.message+' @'+(e.lineno||
 const mode=(location.hash||'#full').slice(1);
 const realNow=Date.now.bind(Date); window.__skew=0; Date.now=()=>realNow()+window.__skew;
 const DAY=864e5;
-const SESS={}, NODE={}, MCQ={}, FILL={}, MATCH={}, ORDER={}, FLASH={}, TEACH={};
+const SESS={}, NODE={}, MCQ={}, FILL={}, MATCH={}, ORDER={}, FLASH={}, TEACH={}, MIS={};
 D.sessions.forEach(s=>{ SESS[s.id]=s; s.nodes.forEach(n=>{ n.id=s.id+'-'+n.k; n.sid=s.id; NODE[n.id]=n; (n.items||[]).forEach(i=>{
   if(i.type==='mcq'){ (MCQ[i.stem]=MCQ[i.stem]||[]).push(i); }
   else if(i.type==='fill'){ FILL[i.stem.split('____').join('')]=i; }
@@ -18,6 +18,7 @@ D.sessions.forEach(s=>{ SESS[s.id]=s; s.nodes.forEach(n=>{ n.id=s.id+'-'+n.k; n.
   else if(i.type==='order') ORDER[i.prompt]=i;
   else if(i.type==='flash') FLASH[i.term]=i;
   else if(i.type==='teach') TEACH[i.title]=i;
+  else if(i.type==='mission') i.steps.forEach(st=>{ MIS[st.scene]=st; });
 }); }); });
 async function click(s){
   const e=typeof s==='string'?$(s):s; if(!e) throw new Error('missing '+s);
@@ -30,6 +31,7 @@ function words(n){ return Array.from({length:n},(_,i)=>'word'+i).join(' '); }
 const feet=()=>$('.pfoot')&&$('.pfoot').className;
 function screen(){
   if($('.center.done')) return 'done';
+  if($('.mscene')||$('.mrecap')) return 'mission';
   if($('#expl')) return 'explain';
   if($('.fcard')) return 'flash';
   if($('.pairs')) return 'match';
@@ -87,6 +89,35 @@ async function step(right){
     $$('[data-pt]').forEach(cb=>{ cb.checked=true; cb.dispatchEvent(new Event('change',{bubbles:true})); }); await click('#primary'); return t;
   }
   if(t==='flash'){ if(!FLASH[$('.term').textContent]) throw new Error('unknown flash'); await click('#primary'); await click('#primary'); return t; }
+  if(t==='mission'){
+    // every third mission starts with the costly move at each step, then replays for the strong ones
+    window.__misN=(window.__misN||0)+1; const costlyFirst=(window.__misN%3===1);
+    const playAll=async(strong)=>{
+      const meters0=$$('.mm-bar').map(b=>+b.getAttribute('aria-valuenow'));
+      for(let g=0;g<8;g++){
+        if($('.mrecap')) return;
+        const st=MIS[$('.mscene p').textContent]; if(!st) throw new Error('unknown mission step: '+$('.mscene p').textContent.slice(0,50));
+        const want=st.choices.find(c=>c.r===(strong?2:0)), btn=$$('.opt[data-i]').find(o=>o.querySelector('span:last-child').textContent===want.t);
+        if(!btn) throw new Error('mission option not found: '+want.t);
+        await click(btn);
+        if(!$('.mres')) throw new Error('no consequence shown after a choice');
+        const label=$('.mres h3').textContent, wantLabel=strong?'Strong move':'Costly move'; if(label!==wantLabel) throw new Error('mission verdict '+label+' expected '+wantLabel);
+        if(!strong && !$('.mbest')) throw new Error('a weak call should show the strong move');
+        if($$('.opt[data-i]').some(o=>!o.disabled)) throw new Error('options should lock after a choice');
+        await click('#primary');
+      }
+      throw new Error('mission did not reach its outcome');
+    };
+    if(costlyFirst){
+      await playAll(false);
+      if($$('.stars .i.on').length!==1) throw new Error('all costly moves should earn one star, got '+$$('.stars .i.on').length);
+      await click('#replay'); if($('.mrecap')||!$('.mscene')) throw new Error('replay did not restart the mission');
+    }
+    await playAll(true);
+    if($$('.stars .i.on').length!==3) throw new Error('all strong moves should earn three stars, got '+$$('.stars .i.on').length);
+    if(!$$('.mrecap li').length||!$('.callout')) throw new Error('the outcome should show a recap and a takeaway');
+    await click('#primary'); return t;
+  }
   throw new Error('stuck on '+t+' '+(document.body.textContent||'').slice(0,120));
 }
 async function playLesson(wrongFirst){
@@ -439,6 +470,41 @@ async function quest(){
   await click('[data-theme-set="light"]'); if(document.documentElement.getAttribute('data-theme')!=='light') throw new Error('light theme did not apply');
   await click('[data-theme-set="auto"]'); if(document.documentElement.hasAttribute('data-theme')) throw new Error('auto theme should follow the device');
   log('theme ok: auto, light and dark');
+
+  // ---- field missions: the data, the meters, the keyboard and the reward
+  let nm=0, boss=0;
+  for(const s of D.sessions){
+    const n=s.nodes.find(x=>x.kind==='mission'); if(!n) throw new Error('no field mission in '+s.id);
+    const it=n.items[0]; if(it.type!=='mission') throw new Error('mission item type in '+s.id);
+    const levelEnd=s.nodes.some(x=>x.kind==='checkpoint');
+    if(!!it.boss!==levelEnd) throw new Error('only level-end sessions have a boss mission: '+s.id);
+    if(it.steps.length!==(it.boss?5:3)) throw new Error(s.id+' mission steps '+it.steps.length);
+    if(it.ends.length!==3||!it.tip) throw new Error(s.id+' mission needs three endings and a takeaway');
+    for(const st of it.steps){ if(st.choices.map(c=>c.r).sort().join('')!=='012') throw new Error(s.id+' step needs one choice of each rating'); }
+    nm++; if(it.boss) boss++;
+    const ix=s.nodes.indexOf(n); if(s.nodes[ix-1].k!=='AP') throw new Error(s.id+' mission should follow the Apply step');
+  }
+  if(nm!==24||boss!==5) throw new Error('missions '+nm+', bosses '+boss);
+  await toSession('s01'); const mnode=D.sessions[0].nodes.find(x=>x.kind==='mission'), mit=mnode.items[0];
+  if(!$('.phase[data-ph="apply"] [data-node="s01-MS"]')) throw new Error('the mission should sit in the Apply phase');
+  await openNodeById('s01-MS'); await advanceUntil(()=>screen()==='mission');
+  const start0=mit.meters.map(m=>m[2]);
+  const st0=MIS[$('.mscene p').textContent], strong0=st0.choices.find(c=>c.r===2);
+  await click($$('.opt[data-i]').find(o=>o.querySelector('span:last-child').textContent===strong0.t));
+  const now0=$$('.mm-bar').map(b=>+b.getAttribute('aria-valuenow'));
+  mit.meters.forEach((m,i)=>{ const want=Math.max(0,Math.min(100,start0[i]+(strong0.fx[m[1]]||0))); if(now0[i]!==want) throw new Error('meter '+m[0]+' is '+now0[i]+', expected '+want); });
+  await click('#primary'); document.dispatchEvent(new KeyboardEvent('keydown',{key:'1',bubbles:true})); await sleep(5);
+  if(!$('.mres')) throw new Error('key 1 did not choose an option in a mission');
+  await click('#quit'); if(!$('#quitok')) throw new Error('quitting a mission mid-way should ask first'); await click('#stay');
+  // finish it with the strong move at every step: three stars and the reward
+  await click('#primary');
+  const playStrong=async()=>{ for(let g=0;g<4&&!$('.mrecap');g++){ const st=MIS[$('.mscene p').textContent]; const w=st.choices.find(c=>c.r===2); await click($$('.opt[data-i]').find(o=>o.querySelector('span:last-child').textContent===w.t)); await click('#primary'); } };
+  await playStrong(); if(!$('.mrecap')) throw new Error('mission did not reach its outcome');
+  await click('#replay'); await playStrong(); if($$('.stars .i.on').length!==3) throw new Error('the replay with every strong move should earn three stars');
+  await click('#primary'); await sleep(5);
+  if(screen()!=='done') throw new Error('finishing a mission should show the done screen');
+  const facts=$$('.fact').map(f=>f.textContent).join(' | '); if(!/\+38XP/.test(facts)||!/3 of 3Stars/.test(facts)||!/\+9Sparks/.test(facts)) throw new Error('mission reward facts wrong: '+facts);
+  log('missions ok: 24 missions, 5 bosses, meters, keys, quit prompt, reward '+facts);
   log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf
