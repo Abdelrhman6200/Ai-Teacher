@@ -13,7 +13,7 @@ function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.string
 
 /* ================= helpers ================= */
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-function inl(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>'); }
+function inl(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>').replace(/\[([^\]]+)\]\((?:https?:|\/|#)[^)\s]*\)/g,'$1'); }
 function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function today(){ return ymd(new Date(Date.now())); }
 function dayAgo(k){ return ymd(new Date(Date.now()-k*864e5)); }
@@ -214,8 +214,8 @@ var BADGES = [
   {id:'case', icon:'case', name:'Case closed', desc:'Finish five cases.', have:function(){ return countKind('case'); }, need:5},
   {id:'skeptic', icon:'question', name:'Skeptic', desc:'Finish five exit tickets. Question what Claude gave you.', have:function(){ return countKind('question'); }, need:5},
   {id:'session', icon:'layers', name:'Session complete', desc:'Finish every step of one session.', have:function(){ return SESSIONS.filter(sessComplete).length; }, need:1},
-  {id:'explorer', icon:'search', name:'Explorer', desc:'Open 10 reference links.', have:function(){ return refsOpened(); }, need:10},
-  {id:'diver', icon:'layers', name:'Deep diver', desc:'Open 5 Go deeper articles.', have:function(){ return refsOpened('deep'); }, need:5},
+  {id:'explorer', icon:'search', name:'Explorer', desc:'Read 10 source notes.', have:function(){ return refsOpened(); }, need:10},
+  {id:'diver', icon:'layers', name:'Deep diver', desc:'Read 5 Go deeper notes.', have:function(){ return refsOpened('deep'); }, need:5},
   {id:'chests', icon:'chest', name:'Treasure hunter', desc:'Open 5 chests.', have:function(){ return Object.keys(S.chest).length; }, need:5},
   {id:'goal5', icon:'target', name:'Goal getter', desc:'Meet your daily goal on five different days.', have:function(){ return S.goalDays.length; }, need:5},
   {id:'xp500', icon:'bolt', name:'Five hundred', desc:'Earn 500 practice XP.', have:function(){ return S.xp; }, need:500},
@@ -445,46 +445,68 @@ function todayCard(s){
     +'<label class="chk"><input type="checkbox" id="todo"'+(done?' checked disabled':'')+'><div><b>'+(done?'Done on '+esc(done):'I did this')+'</b><span>'+(done?'This is how the session becomes a habit.':'Ten minutes on your own work. Tick it when you have done it for +15 XP.')+'</span></div></label></section>';
 }
 
-/* ================= REFERENCE SHELF AND LIBRARY ================= */
-var REFK={docs:'Read', deep:'Go deeper', 'try':'Try it'}, REFI={docs:'doc', deep:'layers', 'try':'target'}, REFU={};
-SESSIONS.forEach(function(s){ (s.refs||[]).forEach(function(r){ if(!REFU[r.u]) REFU[r.u]=r; }); });
-function refsOpened(kind){ return Object.keys(S.read).filter(function(u){ return REFU[u] && (!kind || REFU[u].k===kind); }).length; }
-function refHost(u){ return u.replace(/^https:\/\//,'').split('/')[0]; }
-function markAct(k){ var t=today(), a=S.act[t]||(S.act[t]={steps:0,reviews:0,refs:0}); a[k]=(a[k]||0)+1; }
+/* ================= SOURCE NOTES: read inside the app. Nothing here is a link. ================= */
+var NOTES = DATA.notes || {};
+var NOTEKIND={docs:'Reference', deep:'Deeper reading', 'try':'Hands-on'};
+var REFK={docs:'Read', deep:'Go deeper', 'try':'Try it'}, REFI={docs:'doc', deep:'layers', 'try':'target'}, REFU={}, NOTEHAY={};
+SESSIONS.forEach(function(s){ (s.refs||[]).forEach(function(r){ if(!REFU[r.id]) REFU[r.id]=r; }); });
+Object.keys(NOTES).forEach(function(id){ var n=NOTES[id]; NOTEHAY[id]=(n.t+' '+n.w+' '+n.p+' '+(n.lead||'')+' '+n.pts.map(function(p){ return p[0]+' '+p[1].join(' '); }).join(' ')).toLowerCase(); });
+function refsOpened(kind){ return Object.keys(S.read).filter(function(id){ return REFU[id] && (!kind || REFU[id].k===kind); }).length; }
+function markAct(k){ var t=today(), a=S.act[t]||(S.act[t]={steps:0,refs:0,practice:0}); a[k]=(a[k]||0)+1; }
 function refItem(r){
-  var on=S.read[r.u];
-  return '<a class="ref'+(on?' on':'')+'" href="'+esc(r.u)+'" target="_blank" rel="noopener" data-ref="'+esc(r.u)+'"><span class="rk '+r.k+'">'+ic(REFI[r.k])+'</span><span class="rb"><b>'+esc(r.t)+'</b><span>'+esc(r.w)+'</span><small>'+esc(refHost(r.u))+'</small></span><span class="rs">'+(on?ic('check')+'Opened':ic('arrow'))+'</span></a>';
+  var on=S.read[r.id], n=NOTES[r.id]||{p:''};
+  return '<button type="button" class="ref'+(on?' on':'')+'" data-note="'+esc(r.id)+'"><span class="rk '+r.k+'">'+ic(REFI[r.k])+'</span><span class="rb"><b>'+esc(r.t)+'</b><span>'+esc(r.w)+'</span><small>'+esc(n.p)+'</small></span><span class="rs">'+(on?ic('check')+'Read':ic('arrow')+'Open')+'</span></button>';
 }
 function refShelf(s, open){
   var rs=s.refs||[]; if(!rs.length) return '';
-  var done=rs.filter(function(r){ return S.read[r.u]; }).length;
+  var done=rs.filter(function(r){ return S.read[r.id]; }).length;
   var groups=['docs','deep','try'].map(function(k){ var g=rs.filter(function(r){ return r.k===k; }); return g.length?'<h3 class="rg">'+REFK[k]+'</h3><div class="refs">'+g.map(refItem).join('')+'</div>':''; }).join('');
-  return '<details class="shelf" data-lv="'+s.level+'"'+(open?' open':'')+'><summary><span><b>Reference shelf</b><small data-shelfc="'+s.id+'">'+rs.length+' links · '+done+' opened</small></span>'+ic('arrow')+'</summary>'
-    +'<p class="hint">Real pages from Anthropic. Opening one earns 2 XP the first time. Read it, then try what it says on your own work.</p>'+groups+'</details>';
+  return '<details class="shelf" data-lv="'+s.level+'"'+(open?' open':'')+'><summary><span><b>Source notes</b><small data-shelfc="'+s.id+'">'+rs.length+' notes · '+done+' read</small></span>'+ic('arrow')+'</summary>'
+    +'<p class="hint">Short notes drawn from Anthropic\'s own documentation and research, written up so you can read them here. Reading one earns 2 XP the first time.</p>'+groups+'</details>';
 }
-function bindRefs(){
-  $$('[data-ref]').forEach(function(a){
-    a.addEventListener('click', function(){
-      var u=a.getAttribute('data-ref'); if(S.read[u]) return;
-      S.read[u]=today(); markAct('refs'); addXP(2); var nb=checkBadges(); save();
-      var xe=document.querySelector('.stat.xp b'); if(xe) xe.textContent=S.xp; var fe=document.querySelector('.stat.flame b'); if(fe) fe.textContent=streakNow();
-      a.classList.add('on'); var rs=a.querySelector('.rs'); if(rs) rs.innerHTML=ic('check')+'Opened';
-      $$('[data-shelfc]').forEach(function(c){ var s=SBY[c.getAttribute('data-shelfc')]; c.textContent=s.refs.length+' links · '+s.refs.filter(function(r){ return S.read[r.u]; }).length+' opened'; });
-      toast('+2 XP for opening a reference'+(nb.length?' · Badge: '+nb[0].name:''));
-    });
-  });
+function refreshNoteUI(){
+  $$('[data-note].ref').forEach(function(b){ var id=b.getAttribute('data-note'), on=!!S.read[id]; b.classList.toggle('on',on); var rs=b.querySelector('.rs'); if(rs) rs.innerHTML=on?ic('check')+'Read':ic('arrow')+'Open'; });
+  $$('[data-shelfc]').forEach(function(c){ var s=SBY[c.getAttribute('data-shelfc')]; c.textContent=s.refs.length+' notes · '+s.refs.filter(function(r){ return S.read[r.id]; }).length+' read'; });
+  var lc=$('#libc'); if(lc) lc.textContent=refsOpened();
 }
+function openNote(id){
+  var n=NOTES[id]; if(!n) return;
+  var r=REFU[id]||{k:n.k}, first=!S.read[id], nb=[];
+  if(first){
+    S.read[id]=today(); markAct('refs'); addXP(2); nb=checkBadges(); save();
+    var xe=document.querySelector('.stat.xp b'); if(xe) xe.textContent=S.xp; var fe=document.querySelector('.stat.flame b'); if(fe) fe.textContent=streakNow();
+  }
+  var prevFocus=document.activeElement;
+  var body='<p class="nwhy"><b>Why it matters here.</b> '+esc(n.w)+'</p>'+(n.lead?'<p class="nlead">'+esc(n.lead)+'</p>':'');
+  n.pts.forEach(function(p){ body+='<h3>'+esc(p[0])+'</h3><ul class="blist">'+p[1].map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'; });
+  (n.tbl||[]).forEach(function(tb){ body+=blockHTML({t:'table', headers:tb.h, rows:tb.r}); });
+  if(!n.pts.length) body+='<p class="hint">This is a short page. The point is above.</p>';
+  body+='<p class="nsrc">Extracted from '+esc(n.t)+' ('+esc(n.p)+', as of 24 November 2026). Short extracts only. The lessons in this app are written from notes like this one.'
+    +(n.s&&n.s.length?' Used in '+n.s.map(function(x){ return 'session '+x; }).join(', ')+'.':'')+'</p>';
+  var m=document.createElement('div'); m.className='modal notem'; m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true'); m.setAttribute('aria-label','Source note: '+n.t);
+  m.innerHTML='<div class="card notec"><header class="noteh"><span class="rk '+r.k+'">'+ic(REFI[r.k]||'doc')+'</span><div><small class="np">'+esc(n.p)+' · '+esc(NOTEKIND[r.k]||'')+'</small><h2>'+esc(n.t)+'</h2></div><button type="button" class="icon-btn" id="noteX" aria-label="Close this note">'+ic('close')+'</button></header><div class="nbody">'+body+'</div><footer class="notef"><button type="button" class="btn wide" id="noteDone">'+(first?'Done: +2 XP':'Done')+'</button></footer></div>';
+  document.body.appendChild(m);
+  function close(){ document.removeEventListener('keydown',esc2); if(m.parentNode) m.parentNode.removeChild(m); refreshNoteUI(); try{ if(prevFocus&&prevFocus.focus) prevFocus.focus(); }catch(e){} }
+  function esc2(e){ if(e.key==='Escape'){ e.stopPropagation(); close(); } }
+  document.addEventListener('keydown',esc2);
+  m.addEventListener('click',function(e){ if(e.target===m) close(); });
+  m.querySelector('#noteX').onclick=close; m.querySelector('#noteDone').onclick=close;
+  m.querySelector('#noteX').focus();
+  refreshNoteUI();
+  if(first) toast('+2 XP for reading a note'+(nb.length?' · Badge: '+nb[0].name:''));
+}
+function bindRefs(){ $$('[data-note]').forEach(function(a){ a.onclick=function(){ openNote(a.getAttribute('data-note')); }; }); }
 var lib={kind:'all', lv:0, q:''};
 function libraryView(){
   var q=lib.q.toLowerCase().trim(), total=Object.keys(REFU).length;
-  var h='<div class="narrow"><button class="back" id="back">'+ic('back')+'<span>Study sheets</span></button><div class="phz"><div><h1 class="ph">Reference library</h1><p class="lead">'+total+' pages from Anthropic, picked for each session. You have opened '+refsOpened()+'.</p></div>'+zed(zLv(),'happy',84)+'</div>'
-    +'<div class="search">'+ic('search')+'<input id="lq" type="search" placeholder="Search titles and notes" aria-label="Search the library" value="'+esc(lib.q)+'" autocomplete="off"></div>'
+  var h='<div class="narrow"><button class="back" id="back">'+ic('back')+'<span>Study sheets</span></button><div class="phz"><div><h1 class="ph">Source notes</h1><p class="lead">'+total+' short notes from Anthropic\'s documentation and research, readable here. You have read <span id="libc">'+refsOpened()+'</span>.</p></div>'+zed(zLv(),'happy',84)+'</div>'
+    +'<div class="search">'+ic('search')+'<input id="lq" type="search" placeholder="Search the notes, for example: caching" aria-label="Search the source notes" value="'+esc(lib.q)+'" autocomplete="off"></div>'
     +'<div class="chips" role="group" aria-label="Type">'+[['all','All']].concat(Object.keys(REFK).map(function(k){ return [k,REFK[k]]; })).map(function(c){ return '<button type="button" class="chip'+(lib.kind===c[0]?' on':'')+'" data-lk="'+c[0]+'" aria-pressed="'+(lib.kind===c[0])+'">'+c[1]+'</button>'; }).join('')+'</div>'
     +'<div class="chips" role="group" aria-label="Level">'+[[0,'All levels']].concat(LEVELS.map(function(l){ return [l.n,'Level '+l.n]; })).map(function(c){ return '<button type="button" class="chip'+(lib.lv===c[0]?' on':'')+'" data-ll="'+c[0]+'" aria-pressed="'+(lib.lv===c[0])+'">'+c[1]+'</button>'; }).join('')+'</div><div id="ll">';
   var any=false;
   SESSIONS.forEach(function(s){
     if(lib.lv && s.level!==lib.lv) return;
-    var rs=(s.refs||[]).filter(function(r){ return (lib.kind==='all'||r.k===lib.kind) && (!q || (r.t+' '+r.w+' '+refHost(r.u)).toLowerCase().indexOf(q)>=0); });
+    var rs=(s.refs||[]).filter(function(r){ return (lib.kind==='all'||r.k===lib.kind) && (!q || (NOTEHAY[r.id]||'').indexOf(q)>=0); });
     if(!rs.length) return; any=true;
     h+='<section class="libs" data-lv="'+s.level+'"><h2><span class="sn">'+s.n+'</span>'+esc(s.title)+'</h2><div class="refs">'+rs.map(refItem).join('')+'</div></section>';
   });
@@ -527,7 +549,7 @@ function phaseNote(n){
   return phaseStrip(s)+ribbon;
 }
 function actToday(){ return S.act[today()]||{steps:0, practice:0, refs:0}; }
-var QUESTS=[['steps','Finish a step','Any new step counts.'],['practice','Win a practice step','Practice, recall, apply, warm-up, mastery or a review round.'],['refs','Open a reference','One page from the shelf of any session.']];
+var QUESTS=[['steps','Finish a step','Any new step counts.'],['practice','Win a practice step','Practice, recall, apply, warm-up, mastery or a review round.'],['refs','Read a source note','A short note from the shelf of any session.']];
 function questsCard(){
   var a=actToday(), key='dq-'+today(), claimed=S.chest[key], n=QUESTS.filter(function(q){ return (a[q[0]]||0)>=1; }).length;
   return '<section class="card questc"><div class="revc-h">'+ic('chest')+'<h2>Today\'s quests</h2></div><ul class="qlist">'
@@ -617,14 +639,14 @@ function blockHTML(b){
   if(b.t==='diagram') return dgHTML(b);
   if(b.t==='label') return '<h3>'+esc(b.text)+'</h3>';
   if(b.t==='stats') return '<div class="statrow">'+b.items.map(function(i){ return '<div class="stat3"><b>'+esc(i.n)+'</b><span>'+esc(i.l)+'</span></div>'; }).join('')+'</div>';
-  if(b.t==='src') return '<p class="srcn">Source: <a href="'+esc(b.url)+'" target="_blank" rel="noopener">'+esc(b.title)+'</a></p>';
+  if(b.t==='src') return NOTES[b.id] ? '<p class="srcn">Source note: <button type="button" class="srcb" data-note="'+esc(b.id)+'">'+esc(b.title)+'</button></p>' : '<p class="srcn">Source: '+esc(b.title)+'</p>';
   if(b.t==='quote') return '<blockquote class="bq">'+inl(b.text)+(b.by?'<small>'+esc(b.by)+'</small>':'')+'</blockquote>';
   return '<p>'+inl(b.text)+'</p>';
 }
 function sheetsView(){
   var q=(view.q||'').toLowerCase().trim();
   var h='<div class="narrow"><div class="phz"><div><h1 class="ph">Study sheets</h1><p class="lead">One page per session: the cheat sheet, terms, tables and common mistakes. Open one before you practise.</p></div>'+zed(zLv(),'think',84)+'</div>'
-    +'<button class="libgo" id="libGo"><span class="libi">'+ic('layers')+'</span><span><b>Reference library</b><small>'+Object.keys(REFU).length+' Anthropic pages for the course, by session and type. '+refsOpened()+' opened.</small></span>'+ic('arrow')+'</button>'
+    +'<button class="libgo" id="libGo"><span class="libi">'+ic('layers')+'</span><span><b>Source notes</b><small>'+Object.keys(REFU).length+' short notes from Anthropic\'s documentation and research, readable here. '+refsOpened()+' read.</small></span>'+ic('arrow')+'</button>'
     +'<div class="search">'+ic('search')+'<input id="q" type="search" placeholder="Search all 24 sheets" aria-label="Search study sheets" value="'+esc(view.q||'')+'" autocomplete="off"></div><div id="sl">';
   var any=false;
   LEVELS.forEach(function(lv){
@@ -946,6 +968,7 @@ function scrFlash(c){
   return {body:body, foot:'<div class="duo"><button class="btn ghost" id="again">Again</button><button class="btn" id="primary">Got it</button></div>'};
 }
 function bindLesson(){
+  bindRefs();
   var c=L.cur, it=c.item, p=$('#primary');
   if(it.type==='teach' && p) p.onclick=function(){ L.correct[c.id]=1; nextItem(); };
   if(it.type==='mcq'){

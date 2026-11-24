@@ -1,4 +1,5 @@
-"""Opens every reference link in src/refs_a.py and src/refs_b.py and reports any that do not answer with 200.
+"""Maintenance only: opens every page on the shelves (src/refs_a.py, refs_b.py) and reports any that no longer answer with 200.
+The app never links to these pages; they are the sources the in-app notes are extracted from (tools/build_notes.py).
 Run monthly, with the rest of the facts check:  python3 tools/check_links.py
 Needs curl and network access. Exit code 1 if any link fails."""
 import os, sys, subprocess

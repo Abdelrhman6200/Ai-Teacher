@@ -292,6 +292,12 @@ async function quest(){
   }
   for(const k of NEWK) if(!seenK[k]) throw new Error('no diagram of kind '+k);
   log('sources ok: '+cards+' cards, '+qs+' questions; diagrams '+JSON.stringify(seenK));
+  const NT=D.notes||{}; const noteIds=Object.keys(NT); if(noteIds.length<150) throw new Error('only '+noteIds.length+' notes');
+  const walk=(o,path)=>{ if(typeof o==='string'){ if(/https?:\/\//.test(o)) throw new Error('web address in the data at '+path+': '+o.slice(0,60)); } else if(Array.isArray(o)) o.forEach((x,i)=>walk(x,path+'['+i+']')); else if(o&&typeof o==='object') for(const k in o) walk(o[k],path+'.'+k); };
+  walk(D.sessions,'sessions'); walk(D.levels,'levels'); walk(NT,'notes');
+  for(const s of D.sessions) for(const r of s.refs) if(!NT[r.id]) throw new Error('shelf entry without a note '+s.id+' '+r.t);
+  const thinNotes=noteIds.filter(id=>!NT[id].pts.length&&!NT[id].lead).length; if(thinNotes>3) throw new Error(thinNotes+' empty notes');
+  log('notes ok: '+noteIds.length+' notes, no web address anywhere in the data');
 
   // ---- every new diagram type draws
   for(const k of NEWK){
@@ -310,6 +316,7 @@ async function quest(){
   if($$('.mtrail .mt-d').length!==24) throw new Error('trail dots '+$$('.mtrail .mt-d').length);
   if($$('.mtrail .mt-z').length!==1) throw new Error('trail needs exactly one Zed');
   if($$('.questc li').length!==3||$$('.questc li.on').length) throw new Error('daily quests should start empty');
+  if(document.querySelector('a[href]')) throw new Error('a link on the home screen');
   log('home ok: trail of 24 stops with one Zed, 3 daily quests');
 
   // ---- a session is a quest in four phases
@@ -330,22 +337,32 @@ async function quest(){
   if($$('.questc li.on').length) { /* the home card is not on this screen */ }
   await toLearn(); if(!document.querySelector('.questc')) await toLearn(); let on=$$('.questc li.on').length; if(on!==1) throw new Error('after a step, 1 quest should be done, got '+on);
   await toSession('s01'); await playNode(NODE['s01-P1'],false); await toLearn(); if(!document.querySelector('.questc')) await toLearn(); on=$$('.questc li.on').length; if(on!==2) throw new Error('after practice, 2 quests, got '+on);
-  await toSession('s01'); const link=$('[data-ref]'); link.addEventListener('click',e=>e.preventDefault()); const r0=xpNow(); await click(link); await sleep(5);
-  if(xpNow()-r0!==2) throw new Error('opening a reference paid '+(xpNow()-r0)); const r1=xpNow(); await click(link); await sleep(5); if(xpNow()!==r1) throw new Error('second open paid XP');
+  await toSession('s01'); if(document.querySelector('a[href]')) throw new Error('a link on the session page');
+  const link=$('.shelf [data-note]'); const r0=xpNow(); await click(link); await sleep(5);
+  const md=$('.notem'); if(!md) throw new Error('a source note did not open in the app'); if(($('.notem .nbody').textContent||'').length<200) throw new Error('note body is empty');
+  if(md.querySelector('a[href]')) throw new Error('a link inside a note'); if(!/Extracted from/.test(md.textContent)) throw new Error('note has no plain-text provenance');
+  if(xpNow()-r0!==2) throw new Error('reading a note paid '+(xpNow()-r0)); await click('#noteDone'); if($('.notem')) throw new Error('note did not close');
+  const r1=xpNow(); await click(link); await sleep(5); if(xpNow()!==r1) throw new Error('second read paid XP'); document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})); await sleep(5); if($('.notem')) throw new Error('Escape did not close the note');
+  if(!$('.shelf .ref.on')) throw new Error('read state not shown');
   await toLearn(); if(!document.querySelector('.questc')) await toLearn(); if($$('.questc li.on').length!==3) throw new Error('all three quests should be done'); const dq=$('#dqChest'); if(!dq) throw new Error('no daily chest');
   const q0=xpNow(); await click(dq); await sleep(5); if(xpNow()-q0!==20) throw new Error('daily chest paid '+(xpNow()-q0));
   if($('#dqChest')||!/Chest opened today/.test($('.questc').textContent)) throw new Error('daily chest did not close');
   log('daily quests: 3 of 3, chest +20 XP');
 
   // ---- the reference library
-  await click('[data-tab="sheets"]'); await click('#libGo'); const all=$$('[data-ref]').length; if(all<150) throw new Error('library lists '+all);
-  await click('[data-lk="deep"]'); const deep=$$('[data-ref]').length; if(!(deep>0&&deep<all)) throw new Error('kind filter broke: '+deep+' of '+all);
-  await click('[data-lk="all"]'); await click('[data-ll="5"]'); const l5=$$('[data-ref]').length; if(!(l5>0&&l5<all)) throw new Error('level filter broke');
-  await click('[data-ll="0"]'); setv($('#lq'),'prompt caching'); await sleep(5); const hit=$$('[data-ref]').length; if(!(hit>0&&hit<all)) throw new Error('search broke: '+hit);
+  await click('[data-tab="sheets"]'); await click('#libGo'); const all=$$('[data-note].ref').length; if(all<150) throw new Error('library lists '+all); if(document.querySelector('a[href]')) throw new Error('a link in the library');
+  await click('[data-lk="deep"]'); const deep=$$('[data-note].ref').length; if(!(deep>0&&deep<all)) throw new Error('kind filter broke: '+deep+' of '+all);
+  await click('[data-lk="all"]'); await click('[data-ll="5"]'); const l5=$$('[data-note].ref').length; if(!(l5>0&&l5<all)) throw new Error('level filter broke');
+  await click('[data-ll="0"]'); setv($('#lq'),'cache_creation_input_tokens'); await sleep(5); const hit=$$('[data-note].ref').length; if(!(hit>0&&hit<all)) throw new Error('search broke: '+hit);
   const sheetHit=(()=>{ return true; })();
-  log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', search "prompt caching" '+hit);
+  log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf
+  await openNodeById('s02-L3'); await advanceUntil(()=>screen()==='teach'&&!!$('.srcb'));
+  const ttl=$('h1.bigt').textContent; await click('.srcb'); if(!$('.notem')) throw new Error('lesson source line did not open a note'); await click('#noteX');
+  if($('.notem')||screen()!=='teach'||$('h1.bigt').textContent!==ttl) throw new Error('closing the note should return to the same lesson card');
+  if(document.querySelector('a[href]')) throw new Error('a link in a lesson'); log('lesson source note opens and closes in place: '+ttl);
+  await click('#quit'); if($('.modal')) await click('#quitok'); await toLearn();
   await toSession('s02'); await playNode(NODE['s02-L3'],false); if(!$('.center.done')) throw new Error('source step did not finish'); log('source step played through: s02-L3');
   await toLearn(); await click('[data-tab="sheets"]'); await click('[data-sheet="s09"]'); if(!$('.shelf[open]')) throw new Error('study sheet has no open shelf');
 }
@@ -503,6 +520,12 @@ scenes.quest=async()=>{ await playFirst('s01',5,false); };
 scenes.quest_chest=async()=>{ await playFirst('s01',5,false); window.scrollTo(0,420); };
 scenes.phase_done=async()=>{ await playFirst('s01',4,false); await click(nodeBtn('s01-W')); await playLesson(false); };
 scenes.trail=async()=>{ await playFirst('s01',12,false); window.__skew+=DAY; await playFirst('s02',6,false); await click('[data-tab="learn"]'); };
+
+
+// ---- source notes (the in-app reader)
+scenes.note=async()=>{ await preview(); await toSession('s17'); await click($('.shelf [data-note]')); };
+scenes.note_tbl=async()=>{ await preview(); await toSession('s03'); const b=$$('.shelf [data-note]').find(x=>/Effort/.test(x.textContent)); await click(b); };
+scenes.note_lesson=async()=>{ const f=findTeach((i,n,s)=>n.k==='L3'&&s.id==='s17'&&(i.blocks||[]).some(b=>b.t==='src')); await openNodeById(f.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.srcb')); await click('.srcb'); };
 
 scenes.duetest=async()=>{
   await playFirst('s01',12,true); window.__skew+=2*DAY; await click('[data-tab="learn"]');

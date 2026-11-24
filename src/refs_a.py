@@ -19,13 +19,12 @@ Q[1] = [
 ]
 
 Q[2] = [
- ('docs', H + '8461763', 'Where can I access Claude?', 'The countries and regions where Claude is available. Check it before you promise access abroad.'),
  ('docs', H + '8114491', 'Get started with Claude', 'Account, apps and first steps, for the surface you will use most.'),
  ('docs', C + 'overview', 'Claude Code overview', 'What the coding agent is, and where it runs: terminal, IDE, desktop and browser.'),
  ('docs', C + 'platforms', 'Platforms and integrations', 'Which Claude Code surface fits which job.'),
  ('docs', P + 'build-with-claude/overview', 'Features overview (API)', 'Everything the API offers, grouped by what you want to do.'),
  ('docs', H + '14503520', 'Available beta and research preview features', 'What is new, what is plan-limited, and how to check before promising it.'),
- ('deep', A + 'features/making-of-claude-code', 'The Making of Claude Code', 'How a terminal tool became a coding agent. Context for why surfaces differ.'),
+ ('deep', A + 'research/claude-code-expertise', 'How Claude Code is used in practice', 'What people really ask a coding agent to do. Useful when you choose a surface.'),
  ('try', H + '13345190', 'Get started with Claude Cowork', 'Set up the surface for multi-step desktop work.'),
  ('try', H + '12012173', 'Get started with Claude in Chrome', 'Try the browser surface on one real web task.'),
  ('try', C + 'quickstart', 'Claude Code quickstart', 'Install it and make your first change in about ten minutes.'),

@@ -6,6 +6,14 @@ KINDS = ('docs', 'deep', 'try')
 HOSTS = ('https://platform.claude.com/', 'https://code.claude.com/', 'https://support.claude.com/', 'https://www.anthropic.com/')
 
 
+import hashlib
+
+
+def nid(u):
+    """Stable short id of a reference. The id is all the app ships and shows; the address itself is never a link."""
+    return hashlib.sha1(u.encode()).hexdigest()[:8]
+
+
 def _load(name):
     spec = importlib.util.spec_from_file_location(name, os.path.join(HERE, name + '.py'))
     m = importlib.util.module_from_spec(spec)

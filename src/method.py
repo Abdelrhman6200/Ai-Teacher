@@ -47,7 +47,7 @@ def apply(sessions):
         s['hook'] = dict(title=dq['hook'][0], text=dq['hook'][1])
         s['today'] = dq['today']
         s['bridge'] = dq['bridge']
-        s['refs'] = [dict(k=k, u=u, t=t_, w=w) for (k, u, t_, w) in RQ[n]]
+        s['refs'] = [dict(k=k, id=RF.nid(u), t=t_, w=w) for (k, u, t_, w) in RQ[n]]
         # sessions 4 to 24: authored worked example and case replace the generated ones
         if 'demo' in dq:
             W0 = by['W']
@@ -110,7 +110,7 @@ def apply(sessions):
                     if st.get('quote'): blocks.append(dict(t='quote', text=st['quote'][0], by=st['quote'][1]))
                     if st.get('bullets'): blocks.append(dict(t='list', items=list(st['bullets'])))
                     if st.get('viz'): blocks.append(dict(t='diagram', **st['viz']))
-                    for sr in (st['src'] if isinstance(st['src'], list) else [st['src']]): blocks.append(dict(t='src', title=sr[0], url=sr[1]))
+                    for sr in (st['src'] if isinstance(st['src'], list) else [st['src']]): blocks.append(dict(t='src', title=sr[0], id=RF.nid(sr[1])))
                     fitems.append(dict(id=iid, type='teach', title=st['title'], blocks=blocks))
                 else:
                     stem, opts, why = st

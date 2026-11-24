@@ -51,6 +51,9 @@ def build():
                                      lead=('You supply the project. The examiner supplies a new input on the day.' if lm['n'] == 4 else
                                            'Evidence must come from your own running system, not from description.' if lm['n'] == 5 else ''))))
     for s in sessions:
+        # the old pointers to pages outside the app are replaced by the in-app source notes
+        s['sheet'] = [sh for sh in s['sheet'] if sh['title'] != 'Study sources']
+    for s in sessions:
         s['search'] = ' '.join(
             [s['title'], s['deliverable']] + [b.get('text', '') + ' '.join(b.get('items', [])) + ' '.join(' '.join(r) for r in b.get('rows', []))
                                               for sh in s['sheet'] for b in sh['blocks']] + [sh['title'] for sh in s['sheet']]
@@ -62,6 +65,14 @@ def build():
         return o
     levels = walk(levels); sessions = walk(sessions)
     d = dict(levels=levels, sessions=sessions)
+    notes = {n['id']: n for n in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'notes.json'), encoding='utf-8'))['notes']}
+    for s in sessions:
+        for r in s['refs']: assert r['id'] in notes, ('shelf entry without a note', s['id'], r['t'])
+        for nd in s['nodes']:
+            for it in nd.get('items', []):
+                for b in it.get('blocks', []) or []:
+                    if b.get('t') == 'src': assert b['id'] in notes, ('source line without a note', it['id'])
+    d['notes'] = notes
     ids = set()
     for s in sessions:
         for n in s['nodes']:
