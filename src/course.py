@@ -53,7 +53,8 @@ def build():
     for s in sessions:
         s['search'] = ' '.join(
             [s['title'], s['deliverable']] + [b.get('text', '') + ' '.join(b.get('items', [])) + ' '.join(' '.join(r) for r in b.get('rows', []))
-                                              for sh in s['sheet'] for b in sh['blocks']] + [sh['title'] for sh in s['sheet']]).lower()
+                                              for sh in s['sheet'] for b in sh['blocks']] + [sh['title'] for sh in s['sheet']]
+            + [r['t'] + ' ' + r['w'] for r in s.get('refs', [])]).lower()
     def walk(o, key=None):
         if isinstance(o, str): return o if key == 'search' else G.you(o)
         if isinstance(o, list): return [walk(x) for x in o]

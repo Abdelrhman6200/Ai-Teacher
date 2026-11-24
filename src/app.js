@@ -6,7 +6,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -65,7 +65,7 @@ var IC = {
 /*DIAGRAMS*/
 IC.warmup='<circle cx="12" cy="12" r="8.500"/><path d="M12 7.500V12l3.200 2"/>';
 IC.pretest='<path d="M9 18h6M10 21h4"/><path d="M12 3.500a5.500 5.500 0 00-3.200 10c.7.600 1.200 1.500 1.200 2.500h4c0-1 .5-1.900 1.200-2.500A5.500 5.500 0 0012 3.500z"/>';
-IC.apply=IC.pen; IC.master=IC.medal; IC.checkpoint=IC.flag;
+IC.apply=IC.pen; IC.master=IC.medal; IC.checkpoint=IC.flag; IC.field=IC.search;
 function zLv(){ return currentLevel().n; }
 function ic(n,cls){ return '<svg class="i '+(cls||'')+'" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'; }
 
@@ -73,7 +73,7 @@ function ic(n,cls){ return '<svg class="i '+(cls||'')+'" viewBox="0 0 24 24" ari
 var LEVELS = DATA.levels, SESSIONS = DATA.sessions, SBY = {}, NODES = [], NBY = {}, GATES = {};
 SESSIONS.forEach(function(s){ SBY[s.id]=s; s.items=0; });
 LEVELS.forEach(function(lv){ lv.sessionObjs = lv.sessions.map(function(id){ return SBY[id]; }); GATES[lv.gate.id]=lv; });
-var KIND = {learn:'Learn', demo:'See it', practice:'Practise', recall:'Recall', task:'Exercise', case:'Case', question:'Exit ticket', gate:'Level gate', warmup:'Warm-up', pretest:'Guess first', apply:'Apply', master:'Mastery check', checkpoint:'Level checkpoint', review:'Review'};
+var KIND = {learn:'Learn', field:'From the sources', demo:'See it', practice:'Practise', recall:'Recall', task:'Exercise', case:'Case', question:'Exit ticket', gate:'Level gate', warmup:'Warm-up', pretest:'Guess first', apply:'Apply', master:'Mastery check', checkpoint:'Level checkpoint', review:'Review'};
 var STAR_KINDS = {practice:1, recall:1};
 var ITEMS = {};
 SESSIONS.forEach(function(s){
@@ -107,7 +107,7 @@ function nextInSession(sid, afterId){
 function currentLevel(){ for(var i=SESSIONS[Math.max(0,S.startAt-1)].level-1;i<LEVELS.length;i++) if(!levelDone(LEVELS[i])) return LEVELS[i]; return LEVELS[LEVELS.length-1]; }
 function gateReady(lv){ return sessNodes(lv.gate.session).every(function(n){ return n.kind==='gate' || isDone(n.id); }); }
 function estMin(n){
-  if(n.kind==='learn') return Math.max(3, Math.round(n.items.length*0.6));
+  if(n.kind==='learn'||n.kind==='field') return Math.max(3, Math.round(n.items.length*0.7));
   if(n.kind==='warmup') return 3; if(n.kind==='pretest') return 2; if(n.kind==='apply') return 4; if(n.kind==='master') return 6; if(n.kind==='checkpoint') return 8;
   if(n.kind==='demo') return 4; if(n.kind==='practice') return 4; if(n.kind==='recall') return 5;
   if(n.kind==='task') return 45; if(n.kind==='case') return 6; if(n.kind==='question') return 8; return 10;
@@ -214,6 +214,8 @@ var BADGES = [
   {id:'case', icon:'case', name:'Case closed', desc:'Finish five cases.', have:function(){ return countKind('case'); }, need:5},
   {id:'skeptic', icon:'question', name:'Skeptic', desc:'Finish five exit tickets. Question what Claude gave you.', have:function(){ return countKind('question'); }, need:5},
   {id:'session', icon:'layers', name:'Session complete', desc:'Finish every step of one session.', have:function(){ return SESSIONS.filter(sessComplete).length; }, need:1},
+  {id:'explorer', icon:'search', name:'Explorer', desc:'Open 10 reference links.', have:function(){ return refsOpened(); }, need:10},
+  {id:'diver', icon:'layers', name:'Deep diver', desc:'Open 5 Go deeper articles.', have:function(){ return refsOpened('deep'); }, need:5},
   {id:'goal5', icon:'target', name:'Goal getter', desc:'Meet your daily goal on five different days.', have:function(){ return S.goalDays.length; }, need:5},
   {id:'xp500', icon:'bolt', name:'Five hundred', desc:'Earn 500 practice XP.', have:function(){ return S.xp; }, need:500},
   {id:'xp2500', icon:'bolt', name:'Twenty-five hundred', desc:'Earn 2,500 practice XP.', have:function(){ return S.xp; }, need:2500},
@@ -233,7 +235,7 @@ function checkBadges(){
 var view = {name:(!S.profile.done && !S.xp && !Object.keys(S.done).length) ? 'onboard' : 'learn'}, L = null, lastLevelUp = null;
 function go(v){ view=v; render(); window.scrollTo(0,0); }
 function render(){
-  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView})[view.name]();
+  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView})[view.name]();
 }
 function setPage(html, tab, lv){
   var rev=S.missed.filter(function(id){ return ITEMS[id]; }).length;
@@ -439,6 +441,58 @@ function todayCard(s){
     +'<label class="chk"><input type="checkbox" id="todo"'+(done?' checked disabled':'')+'><div><b>'+(done?'Done on '+esc(done):'I did this')+'</b><span>'+(done?'This is how the session becomes a habit.':'Ten minutes on your own work. Tick it when you have done it for +15 XP.')+'</span></div></label></section>';
 }
 
+/* ================= REFERENCE SHELF AND LIBRARY ================= */
+var REFK={docs:'Read', deep:'Go deeper', 'try':'Try it'}, REFI={docs:'doc', deep:'layers', 'try':'target'}, REFU={};
+SESSIONS.forEach(function(s){ (s.refs||[]).forEach(function(r){ if(!REFU[r.u]) REFU[r.u]=r; }); });
+function refsOpened(kind){ return Object.keys(S.read).filter(function(u){ return REFU[u] && (!kind || REFU[u].k===kind); }).length; }
+function refHost(u){ return u.replace(/^https:\/\//,'').split('/')[0]; }
+function markAct(k){ var t=today(), a=S.act[t]||(S.act[t]={steps:0,reviews:0,refs:0}); a[k]=(a[k]||0)+1; }
+function refItem(r){
+  var on=S.read[r.u];
+  return '<a class="ref'+(on?' on':'')+'" href="'+esc(r.u)+'" target="_blank" rel="noopener" data-ref="'+esc(r.u)+'"><span class="rk '+r.k+'">'+ic(REFI[r.k])+'</span><span class="rb"><b>'+esc(r.t)+'</b><span>'+esc(r.w)+'</span><small>'+esc(refHost(r.u))+'</small></span><span class="rs">'+(on?ic('check')+'Opened':ic('arrow'))+'</span></a>';
+}
+function refShelf(s, open){
+  var rs=s.refs||[]; if(!rs.length) return '';
+  var done=rs.filter(function(r){ return S.read[r.u]; }).length;
+  var groups=['docs','deep','try'].map(function(k){ var g=rs.filter(function(r){ return r.k===k; }); return g.length?'<h3 class="rg">'+REFK[k]+'</h3><div class="refs">'+g.map(refItem).join('')+'</div>':''; }).join('');
+  return '<details class="shelf" data-lv="'+s.level+'"'+(open?' open':'')+'><summary><span><b>Reference shelf</b><small data-shelfc="'+s.id+'">'+rs.length+' links · '+done+' opened</small></span>'+ic('arrow')+'</summary>'
+    +'<p class="hint">Real pages from Anthropic. Opening one earns 2 XP the first time. Read it, then try what it says on your own work.</p>'+groups+'</details>';
+}
+function bindRefs(){
+  $$('[data-ref]').forEach(function(a){
+    a.addEventListener('click', function(){
+      var u=a.getAttribute('data-ref'); if(S.read[u]) return;
+      S.read[u]=today(); markAct('refs'); addXP(2); var nb=checkBadges(); save();
+      a.classList.add('on'); var rs=a.querySelector('.rs'); if(rs) rs.innerHTML=ic('check')+'Opened';
+      $$('[data-shelfc]').forEach(function(c){ var s=SBY[c.getAttribute('data-shelfc')]; c.textContent=s.refs.length+' links · '+s.refs.filter(function(r){ return S.read[r.u]; }).length+' opened'; });
+      toast('+2 XP for opening a reference'+(nb.length?' · Badge: '+nb[0].name:''));
+    });
+  });
+}
+var lib={kind:'all', lv:0, q:''};
+function libraryView(){
+  var q=lib.q.toLowerCase().trim(), total=Object.keys(REFU).length;
+  var h='<div class="narrow"><button class="back" id="back">'+ic('back')+'<span>Study sheets</span></button><div class="phz"><div><h1 class="ph">Reference library</h1><p class="lead">'+total+' pages from Anthropic, picked for each session. You have opened '+refsOpened()+'.</p></div>'+zed(zLv(),'happy',84)+'</div>'
+    +'<div class="search">'+ic('search')+'<input id="lq" type="search" placeholder="Search titles and notes" aria-label="Search the library" value="'+esc(lib.q)+'" autocomplete="off"></div>'
+    +'<div class="chips" role="group" aria-label="Type">'+[['all','All']].concat(Object.keys(REFK).map(function(k){ return [k,REFK[k]]; })).map(function(c){ return '<button type="button" class="chip'+(lib.kind===c[0]?' on':'')+'" data-lk="'+c[0]+'" aria-pressed="'+(lib.kind===c[0])+'">'+c[1]+'</button>'; }).join('')+'</div>'
+    +'<div class="chips" role="group" aria-label="Level">'+[[0,'All levels']].concat(LEVELS.map(function(l){ return [l.n,'Level '+l.n]; })).map(function(c){ return '<button type="button" class="chip'+(lib.lv===c[0]?' on':'')+'" data-ll="'+c[0]+'" aria-pressed="'+(lib.lv===c[0])+'">'+c[1]+'</button>'; }).join('')+'</div><div id="ll">';
+  var any=false;
+  SESSIONS.forEach(function(s){
+    if(lib.lv && s.level!==lib.lv) return;
+    var rs=(s.refs||[]).filter(function(r){ return (lib.kind==='all'||r.k===lib.kind) && (!q || (r.t+' '+r.w+' '+refHost(r.u)).toLowerCase().indexOf(q)>=0); });
+    if(!rs.length) return; any=true;
+    h+='<section class="libs" data-lv="'+s.level+'"><h2><span class="sn">'+s.n+'</span>'+esc(s.title)+'</h2><div class="refs">'+rs.map(refItem).join('')+'</div></section>';
+  });
+  if(!any) h+='<p class="empty">Nothing matches. Try another word or clear a filter.</p>';
+  h+='</div></div>';
+  setPage(h,'sheets');
+  $('#back').onclick=function(){ go({name:'sheets'}); };
+  var inp=$('#lq'); inp.oninput=function(){ lib.q=inp.value; var pos=inp.selectionStart; libraryView(); var n=$('#lq'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
+  $$('[data-lk]').forEach(function(b){ b.onclick=function(){ lib.kind=b.getAttribute('data-lk'); libraryView(); }; });
+  $$('[data-ll]').forEach(function(b){ b.onclick=function(){ lib.lv=+b.getAttribute('data-ll'); libraryView(); }; });
+  bindRefs();
+}
+
 /* ================= SESSION ================= */
 function sessionView(){
   settleWarm(SBY[view.sid]);
@@ -464,8 +518,9 @@ function sessionView(){
   var nextS=SESSIONS[s.n]||null;
   if(S.today[s.id]) h+=todayCard(s);
   if(sessComplete(s)&&s.bridge&&nextS) h+='<section class="nextc"><span class="eyebrow">Next</span><p>'+esc(s.bridge)+'</p>'+(sessOpen(nextS)?'<button class="btn ghost" id="nextS">Session '+nextS.n+': '+esc(nextS.title)+ic('arrow')+'</button>':'')+'</section>';
-  h+='</div>';
+  h+=refShelf(s,false)+'</div>';
   setPage(h,'learn',s.level);
+  bindRefs();
   var td=$('#todo'); if(td&&!td.disabled) td.onchange=function(){ if(!td.checked) return; S.today[s.id]=today(); addXP(15); toast('+15 XP for using it'); save(); sessionView(); };
   var ns2=$('#nextS'); if(ns2) ns2.onclick=function(){ go({name:'session', sid:nextS.id}); };
   $('#back').onclick=function(){ go({name:'learn'}); };
@@ -489,11 +544,15 @@ function blockHTML(b){
   if(b.t==='olist') return '<ol class="blist">'+b.items.map(function(i){ return '<li>'+inl(i)+'</li>'; }).join('')+'</ol>';
   if(b.t==='diagram') return dgHTML(b);
   if(b.t==='label') return '<h3>'+esc(b.text)+'</h3>';
+  if(b.t==='stats') return '<div class="statrow">'+b.items.map(function(i){ return '<div class="stat3"><b>'+esc(i.n)+'</b><span>'+esc(i.l)+'</span></div>'; }).join('')+'</div>';
+  if(b.t==='src') return '<p class="srcn">Source: <a href="'+esc(b.url)+'" target="_blank" rel="noopener">'+esc(b.title)+'</a></p>';
+  if(b.t==='quote') return '<blockquote class="bq">'+inl(b.text)+(b.by?'<small>'+esc(b.by)+'</small>':'')+'</blockquote>';
   return '<p>'+inl(b.text)+'</p>';
 }
 function sheetsView(){
   var q=(view.q||'').toLowerCase().trim();
   var h='<div class="narrow"><div class="phz"><div><h1 class="ph">Study sheets</h1><p class="lead">One page per session: the cheat sheet, terms, tables and common mistakes. Open one before you practise.</p></div>'+zed(zLv(),'think',84)+'</div>'
+    +'<button class="libgo" id="libGo"><span class="libi">'+ic('layers')+'</span><span><b>Reference library</b><small>'+Object.keys(REFU).length+' Anthropic pages for the course, by session and type. '+refsOpened()+' opened.</small></span>'+ic('arrow')+'</button>'
     +'<div class="search">'+ic('search')+'<input id="q" type="search" placeholder="Search all 24 sheets" aria-label="Search study sheets" value="'+esc(view.q||'')+'" autocomplete="off"></div><div id="sl">';
   var any=false;
   LEVELS.forEach(function(lv){
@@ -507,13 +566,15 @@ function sheetsView(){
   setPage(h,'sheets');
   var inp=$('#q'); inp.oninput=function(){ view.q=inp.value; var pos=inp.selectionStart; sheetsView(); var n=$('#q'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
   $$('[data-sheet]').forEach(function(b){ b.onclick=function(){ go({name:'sheet', sid:b.getAttribute('data-sheet'), from:{name:'sheets', q:view.q}}); }; });
+  $('#libGo').onclick=function(){ go({name:'library'}); };
 }
 function sheetView(){
   var s=SBY[view.sid]; if(S.sheets.indexOf(s.id)<0){ S.sheets.push(s.id); save(); var nb=checkBadges(); if(nb.length) toast('Badge earned: '+nb[0].name); }
   var h='<div class="narrow sheet"><button class="back" id="back">'+ic('back')+'<span>Back</span></button><p class="kicker">Session '+s.n+': '+esc(s.title)+'</p><h1 class="ph">Study sheet</h1>';
   s.sheet.forEach(function(sec){ h+='<section><h2>'+esc(sec.title)+'</h2>'+sec.blocks.map(blockHTML).join('')+'</section>'; });
-  h+='</div>';
+  h+=refShelf(s,true)+'</div>';
   setPage(h,view.from&&view.from.name==='sheets'?'sheets':'learn',s.level);
+  bindRefs();
   $('#back').onclick=function(){ go(view.from||{name:'sheets'}); };
 }
 
@@ -619,7 +680,7 @@ function startLesson(n, ids, review, opts){
   var order = (review || n.kind==='practice') ? shuffle(items) : items.slice();
   var teachOnly = items.filter(function(i){ return i.type==='teach'; }).length;
   L = {node:n, items:items, queue:order.slice(), mistakes:0, first:0, xp:0, correct:{}, phase:'intro', cur:null, review:!!review, tries:{}, combo:0, best:0, cleared:0,
-       graded:items.filter(function(i){ return GRADED[i.type]; }).length, screens:items.length, teachOnly:teachOnly, soft:(n.kind==='learn'||n.kind==='demo'),
+       graded:items.filter(function(i){ return GRADED[i.type]; }).length, screens:items.length, teachOnly:teachOnly, soft:(n.kind==='learn'||n.kind==='demo'||n.kind==='field'),
        conf:!!(CONF[n.kind]||opts.conf), due:!!opts.due, obj:{}, postOK:0, animKey:'', expl:null};
   go({name:'lesson'});
 }
@@ -727,7 +788,7 @@ function lessonView(){
   shell(r.body, r.foot, r.fcls, true); bindLesson();
 }
 function scrTeach(c){
-  var it=c.item, kick=L.node.kind==='demo'?'See it':'Learn';
+  var it=c.item, kick=L.node.kind==='demo'?'See it':L.node.kind==='field'?'From the sources':'Learn';
   var b='<p class="kicker">'+kick+'</p><h1 class="bigt">'+esc(it.title)+'</h1>';
   if(it.blocks) b+='<div class="rich">'+it.blocks.map(blockHTML).join('')+'</div>';
   else {

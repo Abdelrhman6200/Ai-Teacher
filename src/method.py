@@ -3,6 +3,8 @@ Each session becomes: Warm-up (dynamic, from session 2) -> Guess first -> Learn 
 -> Practice -> Mixed practice -> Recall -> Mastery check -> Exercise -> Case -> Exit ticket -> Level checkpoint (gate sessions)."""
 import learn_content as LC
 import deep as DP
+import refs as RF
+import field as FL
 
 LETTERS = 'ABCD'
 
@@ -28,6 +30,12 @@ def apply(sessions):
     errs = LC.validate(Q, counts)
     assert not errs, errs[:5]
     DQ = DP.load()
+    RQ = RF.load()
+    FQ = FL.load()
+    ferrs = FL.validate(FQ, RQ)
+    assert not ferrs, ferrs[:5]
+    rerrs = RF.validate(RQ)
+    assert not rerrs, rerrs[:5]
     derrs = DP.validate(DQ)
     assert not derrs, derrs[:5]
     for s in sessions:
@@ -39,6 +47,7 @@ def apply(sessions):
         s['hook'] = dict(title=dq['hook'][0], text=dq['hook'][1])
         s['today'] = dq['today']
         s['bridge'] = dq['bridge']
+        s['refs'] = [dict(k=k, u=u, t=t_, w=w) for (k, u, t_, w) in RQ[n]]
         # sessions 4 to 24: authored worked example and case replace the generated ones
         if 'demo' in dq:
             W0 = by['W']
@@ -88,11 +97,31 @@ def apply(sessions):
             by['P2']['blurb'] = 'Five more questions. Three are from this session and two come from earlier ones, mixed in so you practise choosing the method, not only recalling it.'
             by['P2']['mixed'] = True
 
+        # from the sources: lesson cards and questions built from the reference pages
+        fq = FQ.get(n)
+        L3 = None
+        if fq:
+            fitems = []
+            for st in fq['steps']:
+                iid = '%s-L3-%d' % (sid, len(fitems) + 1)
+                if isinstance(st, dict):
+                    blocks = [dict(t='p', text=x) for x in st.get('paras', [])]
+                    if st.get('stats'): blocks.append(dict(t='stats', items=[dict(n=a, l=b) for a, b in st['stats']]))
+                    if st.get('quote'): blocks.append(dict(t='quote', text=st['quote'][0], by=st['quote'][1]))
+                    if st.get('bullets'): blocks.append(dict(t='list', items=list(st['bullets'])))
+                    if st.get('viz'): blocks.append(dict(t='diagram', **st['viz']))
+                    for sr in (st['src'] if isinstance(st['src'], list) else [st['src']]): blocks.append(dict(t='src', title=sr[0], url=sr[1]))
+                    fitems.append(dict(id=iid, type='teach', title=st['title'], blocks=blocks))
+                else:
+                    stem, opts, why = st
+                    fitems.append(dict(id=iid, type='mcq', stem=stem, options=[dict(k=LETTERS[j], t=t_) for j, t_ in enumerate(opts)], key='A', why=why, kicker='From the source'))
+            L3 = node('L3', 'field', 'From the sources', 'What Anthropic\'s own documents and engineering notes add to this session, with the real numbers.', fitems)
+
         order = []
         if n > 1:
             order.append(node('U', 'warmup', 'Warm-up',
                               'Retrieval before anything new: questions from earlier sessions that are due again. Answer from memory, then rate how sure you were.', dyn='warmup'))
-        order += [PR, by['L1'], by['L2'], by['W'], AP, by['P1'], by['P2'], by['R'], CK]
+        order += [PR, by['L1'], by['L2']] + ([L3] if L3 else []) + [by['W'], AP, by['P1'], by['P2'], by['R'], CK]
         for k in ('X', 'C', 'Q'):
             if k in by: order.append(by[k])
         if s['kind_gate']:

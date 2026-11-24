@@ -251,7 +251,7 @@ async function journey(){
   await click('[data-tab="you"]'); await click('#prev'); // preview off
 
   // ---- finish a session: debrief, use-it-today, next
-  await playFirst('s01',11,false); await click(nodeBtn('s01-Q')); await playQuestion();
+  await playFirst('s01',D.sessions[0].nodes.length-1,false); await click(nodeBtn('s01-Q')); await playQuestion();
   const d=$('.debrief'); if(!d) throw new Error('no debrief after the last step of session 1');
   if(!/Session 1 complete/.test($('.bigt').textContent)) throw new Error('debrief title '+$('.bigt').textContent);
   if($$('.dbrow').length<3) throw new Error('debrief rows '+$$('.dbrow').length);
@@ -300,7 +300,7 @@ async function extras(){
   await click('#reset'); await click('#reset'); await sleep(5); log('after reset: '+$('.hero h1').textContent+' / '+$('.hero-m span').textContent); if(!/0 of/.test($('.hero-m span').textContent)) throw new Error('reset failed');
 }
 
-async function openNodeById(id){ if(!pvOn && SESS[NODE[id].sid].n>3){ await preview(); pvOn=true; } await toSession(NODE[id].sid); await click(nodeBtn(id)); }
+async function openNodeById(id){ if(!pvOn && SESS[NODE[id].sid].n>1){ await preview(); pvOn=true; } await toSession(NODE[id].sid); await click(nodeBtn(id)); }
 async function advanceUntil(pred,max){ for(let g=0;g<(max||120);g++){ if(pred()) return true; await step(true); } throw new Error('advanceUntil exhausted at '+screen()); }
 async function playFirst(sid,count,wrongFirst){
   const s=SESS[sid];
@@ -405,10 +405,16 @@ scenes.place=async()=>{ await scenes.ob5(); await click('#obplace'); };
 scenes.place_q=async()=>{ await scenes.place(); await click('#p2'); await click('#primary'); await click($$('.opt[data-k]')[0]); await click('#primary'); };
 scenes.place_done=async()=>{ await scenes.place(); await click('#p2'); await runPlacement(2); };
 scenes.hook=async()=>{ await click('#obSkip'); await preview(); await toSession('s09'); };
-scenes.debrief=async()=>{ await click('#obSkip'); await playFirst('s01',11,false); await click(nodeBtn('s01-Q')); await playQuestion(); };
+scenes.debrief=async()=>{ await click('#obSkip'); await playFirst('s01',D.sessions[0].nodes.length-1,false); await click(nodeBtn('s01-Q')); await playQuestion(); };
 scenes.sessdone=async()=>{ await scenes.debrief(); await click('#back'); window.scrollTo(0,document.body.scrollHeight); };
 scenes.you_setup=async()=>{ await scenes.ob5(); await click('#obgo'); await click('[data-tab="you"]'); };
 scenes.learn_ph=async()=>{ await scenes.ob5(); await click('#obgo'); };
+
+
+// ---- references
+scenes.shelf=async()=>{ await preview(); await toSession('s17'); const d=$('.shelf'); d.open=true; d.scrollIntoView(); };
+scenes.library=async()=>{ await click('[data-tab="sheets"]'); await click('#libGo'); };
+scenes.library_f=async()=>{ await scenes.library(); await click('[data-lk="deep"]'); await click('[data-ll="4"]'); $$('[data-ref]').forEach(a=>a.addEventListener('click',e=>e.preventDefault())); await click($$('[data-ref]')[0]); };
 
 scenes.duetest=async()=>{
   await playFirst('s01',12,true); window.__skew+=2*DAY; await click('[data-tab="learn"]');
@@ -430,6 +436,7 @@ try{
   if(scene==='full') await full();
   else if(scene==='extras') await extras();
   else if(scene==='onboard') await journey();
+  else if(/^fld_s\d\d_\d+$/.test(scene)){ const [,sid,ix]=/^fld_(s\d\d)_(\d+)$/.exec(scene); const nd=SESS[sid].nodes.find(n=>n.k==='L3'); const cards=nd.items.filter(i=>i.type==='teach'); const title=cards[+ix].title; await openNodeById(nd.id); await advanceUntil(()=>screen()==='teach'&&$('h1.bigt').textContent===title); await sleep(60); document.getAnimations().forEach(a=>{ try{ if(a.effect.getComputedTiming().iterations!==Infinity) a.finish(); }catch(e){} }); window.scrollTo(0,0); await sleep(60); }
   else if(scenes[scene]){ await scenes[scene](); if(!/^(due|you2|sheetdg)/.test(scene)) window.scrollTo(0,0); await sleep(60); document.getAnimations().forEach(a=>{ try{ if(a.effect.getComputedTiming().iterations!==Infinity) a.finish(); }catch(e){} }); await sleep(30); log('scene '+scene+' screen='+screen()); }
   else if(scene==='smoke'){
     log('scards '+$$('.scard').length+' levels '+$$('.level').length+' gaterows '+$$('.gaterow').length+' hero '+$('.hero h1').textContent);

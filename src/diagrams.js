@@ -1,4 +1,4 @@
-/* ================= diagrams: flow, loop, stack, compare, bars, tree, quad. HTML and SVG, animated on appear, with a Replay button ================= */
+/* ================= diagrams: flow, loop, stack, compare, bars, tree, quad, swim, rings, delta, matrix, ladder, timeline. HTML and SVG, animated on appear, with a Replay button ================= */
 function dgWrap(t, x, y, maxc, lh){
   // wrap a short caption into centred SVG lines of at most maxc characters
   var words=String(t).split(/\s+/).filter(Boolean), lines=[], cur='';
@@ -41,6 +41,34 @@ function dgHTML(b){
     h+='<div class="dg-treew"><div class="dg-root" style="--i:0">'+esc(b.root)+'</div><div class="dg-kids" style="--n:'+b.kids.length+'">'+b.kids.map(function(x,i){ return '<div class="dg-kid" style="--i:'+(i+1)+'"><b>'+esc(x.h)+'</b>'+(x.s?'<span>'+esc(x.s)+'</span>':'')+'</div>'; }).join('')+'</div></div>';
   } else if(k==='quad'){
     h+='<div class="dg-quadw"><span class="dg-ax dg-axy">'+esc(b.y||'')+'</span><div class="dg-qgrid">'+b.cells.map(function(c,i){ return '<div class="dg-cell q'+i+'" style="--i:'+i+'"><b>'+esc(c.h)+'</b>'+(c.s?'<span>'+esc(c.s)+'</span>':'')+'</div>'; }).join('')+'</div><span class="dg-ax dg-axx">'+esc(b.x||'')+'</span></div>';
+  } else if(k==='swim'){
+    var L=b.lanes, n=L.length, W=320, pad=n===2?64:44, gap=(W-2*pad)/(n-1), top=46, step=42, H=top+b.msgs.length*step+10;
+    h+='<svg class="dg-swim" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(b.title||'Sequence')+'">';
+    L.forEach(function(name,i){ var x=pad+i*gap; h+='<g class="dgs-lane"><line x1="'+x+'" y1="34" x2="'+x+'" y2="'+(H-4)+'"/><rect x="'+(x-46)+'" y="6" width="92" height="26" rx="13"/><text x="'+x+'" y="23" text-anchor="middle">'+esc(name)+'</text></g>'; });
+    b.msgs.forEach(function(m,i){
+      var y=top+i*step+16, x1=pad+m.from*gap, x2=pad+m.to*gap, d=x2>x1?1:-1, mx=(x1+x2)/2;
+      h+='<g class="dgs-msg'+(m.back?' back':'')+(m.warn?' warn':'')+'" style="--i:'+i+'"><line x1="'+x1+'" y1="'+y+'" x2="'+(x2-d*6)+'" y2="'+y+'"'+(m.back?' stroke-dasharray="5 4"':'')+'/><path d="M'+x2+' '+y+' L'+(x2-d*8)+' '+(y-4.500)+' L'+(x2-d*8)+' '+(y+4.500)+' Z"/>'
+        +'<text x="'+mx+'" y="'+(y-7)+'" text-anchor="middle">'+esc(m.t)+'</text></g>';
+    });
+    h+='</svg>';
+  } else if(k==='rings'){
+    var R=b.layers, n=R.length, cx=160, cy=112, mx=104, mn=30;
+    h+='<svg class="dg-rings" viewBox="0 0 320 224" role="img" aria-label="'+esc(b.title||'Layers')+'">';
+    R.forEach(function(l,i){ var r=n===1?mx:mx-(mx-mn)*(i/(n-1)); h+='<circle class="dgr c'+(i%6)+'" cx="'+cx+'" cy="'+cy+'" r="'+r.toFixed(1)+'" style="--i:'+i+'"/>'; });
+    h+='<text class="dg-mid" x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle">'+esc(b.center||'')+'</text></svg>'
+      +'<ol class="dg-legend">'+R.map(function(l,i){ return '<li style="--i:'+i+'"><span class="sw c'+(i%6)+'"></span><span><b>'+esc(l.h)+'</b>'+(l.s?' '+esc(l.s):'')+'</span></li>'; }).join('')+'</ol>';
+  } else if(k==='delta'){
+    h+='<div class="dg-delta">'+b.rows.map(function(r,i){ return '<div class="dgd'+(r.bad?' bad':'')+'" style="--i:'+i+'"><span class="dgd-l">'+esc(r.h)+'</span><div class="dgd-v"><b class="from">'+esc(r.from)+'</b><span class="dgd-a" aria-hidden="true">'+ic('arrow')+'</span><b class="to">'+esc(r.to)+'</b></div>'+(r.s?'<span class="dgd-n">'+esc(r.s)+'</span>':'')+'</div>'; }).join('')+'</div>';
+  } else if(k==='matrix'){
+    h+='<div class="tbl dg-mxw" tabindex="0" role="region" aria-label="'+esc(b.title||'Matrix')+'"><table class="dg-mx"><thead><tr><th scope="col"></th>'+b.cols.map(function(c){ return '<th scope="col">'+esc(c)+'</th>'; }).join('')+'</tr></thead><tbody>'
+      +b.rows.map(function(r,ri){ return '<tr><th scope="row">'+esc(r.h)+'</th>'+r.v.map(function(v,ci){ return '<td style="--i:'+(ri*b.cols.length+ci)+'"><span class="mxd m'+v+'" role="img" aria-label="'+esc((b.legend||['No','Possible','Best fit'])[v])+'"></span></td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>'
+      +'<p class="dg-key"><span class="mxd m0"></span>'+esc((b.legend||['No','Possible','Best fit'])[0])+' <span class="mxd m1"></span>'+esc((b.legend||['No','Possible','Best fit'])[1])+' <span class="mxd m2"></span>'+esc((b.legend||['No','Possible','Best fit'])[2])+'</p>';
+  } else if(k==='ladder'){
+    var S=b.steps, n=S.length;
+    h+='<ol class="dg-lad" role="img" aria-label="'+esc(b.title||'Ladder')+'">'+S.map(function(s,i){ return '<li class="'+(b.mark===i?'mark':'')+'" style="--i:'+(n-1-i)+';--w:'+Math.round(34+66*(n-1-i)/(n-1||1))+'"><span class="dgl-bar"><b>'+esc(s.h)+'</b></span>'+(s.s?'<span class="dgl-s">'+esc(s.s)+'</span>':'')+'</li>'; }).join('')+'</ol>'
+      +(b.axis?'<p class="dg-total">'+esc(b.axis)+'</p>':'');
+  } else if(k==='timeline'){
+    h+='<ol class="dg-tl">'+b.events.map(function(e,i){ return '<li'+(e.warn?' class="warn"':'')+' style="--i:'+i+'"><span class="dgt-dot"></span><span class="dgt-b"><b>'+esc(e.h)+'</b>'+(e.s?'<span>'+esc(e.s)+'</span>':'')+'</span></li>'; }).join('')+'</ol>';
   }
   if(b.note) h+='<p class="dg-note">'+inl(b.note)+'</p>';
   return h+'</figure>';
