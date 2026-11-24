@@ -10,6 +10,9 @@ function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+/* theme: follow the device unless the learner picks one */
+function applyTheme(){ var t=(S.theme==='light'||S.theme==='dark')?S.theme:''; if(t) document.documentElement.setAttribute('data-theme',t); else document.documentElement.removeAttribute('data-theme'); }
+applyTheme();
 
 /* ================= helpers ================= */
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -235,8 +238,45 @@ function checkBadges(){
 /* ================= router ================= */
 var view = {name:(!S.profile.done && !S.xp && !Object.keys(S.done).length) ? 'onboard' : 'learn'}, L = null, lastLevelUp = null;
 function go(v){ view=v; render(); window.scrollTo(0,0); }
+var TBLN=0;
 function render(){
+  TBLN=0;
   ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView})[view.name]();
+  armGuard();
+}
+
+/* ---- the browser's Back button stays inside the app ---- */
+var guardOn=false;
+function armGuard(){ if(!guardOn && view.name!=='learn' && view.name!=='onboard' && view.name!=='place'){ try{ history.pushState({z:1},''); guardOn=true; }catch(e){} } }
+function backInApp(){
+  var m=$('.modal');
+  if(m){ var x=$('#noteX',m)||$('#stay',m); if(x) x.click(); else if(m.parentNode) m.parentNode.removeChild(m); return; }
+  var n=view.name;
+  if(n==='lesson'||n==='task'||n==='kase'||n==='question'||n==='gate'){ var q=$('#quit'); if(q) q.click(); else leave(); return; }
+  if(n==='onboard'||n==='place') return; // setup and placement are not interrupted by Back
+  go({name:n==='sheet'?'sheets':'learn'});
+}
+window.addEventListener('popstate',function(){
+  var atRoot=view.name==='learn' && !$('.modal');
+  guardOn=false;
+  if(atRoot){ try{ history.back(); }catch(e){} return; }
+  backInApp(); armGuard();
+});
+/* a dialog keeps Tab inside itself, closes on Escape, hides the page behind it and gives focus back */
+function trapFocus(m, close){
+  var prev=document.activeElement;
+  function key(e){
+    if(e.key==='Escape'){ e.stopPropagation(); close(); return; }
+    if(e.key!=='Tab') return;
+    var f=$$('button,input,textarea,select,[tabindex]:not([tabindex="-1"])',m).filter(function(x){ return !x.disabled && x.offsetParent!==null; });
+    if(!f.length) return;
+    var a=document.activeElement;
+    if(!m.contains(a)){ e.preventDefault(); f[0].focus(); }
+    else if(e.shiftKey && a===f[0]){ e.preventDefault(); f[f.length-1].focus(); }
+    else if(!e.shiftKey && a===f[f.length-1]){ e.preventDefault(); f[0].focus(); }
+  }
+  document.addEventListener('keydown',key); APP.inert=true;
+  return function release(){ document.removeEventListener('keydown',key); APP.inert=false; try{ if(prev&&prev.focus&&document.contains(prev)) prev.focus(); }catch(e){} };
 }
 function setPage(html, tab, lv){
   var rev=S.missed.filter(function(id){ return ITEMS[id]; }).length;
@@ -271,7 +311,7 @@ function learnView(){
       +'<button class="btn big" id="cont">'+(tot?'Continue':'Start')+ic('arrow')+'</button>';
   } else h+='<div class="hero-t"><span class="eyebrow">'+(S.startAt>1?'Course complete from your start':'Course complete')+'</span><h1>'+(S.startAt>1?'Everything from here is done':'Every step is done')+'</h1><p>'+(S.startAt>1?'The sessions you skipped stay open if you want them. Or review your weak spots.':'Review your weak spots or reread a study sheet.')+'</p></div>';
   h+=miniTrail();
-  h+='<div class="hero-m"><div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="'+all+'" aria-valuenow="'+tot+'"><i style="width:'+Math.round(tot/all*100)+'%"></i></div><span>'+tot+' of '+all+' steps</span></div></section>';
+  h+='<div class="hero-m"><div class="meter" role="progressbar" aria-label="Steps done in the course" aria-valuemin="0" aria-valuemax="'+all+'" aria-valuenow="'+tot+'"><i style="width:'+Math.round(tot/all*100)+'%"></i></div><span>'+tot+' of '+all+' steps</span></div></section>';
   // side
   h+='<aside class="side">';
   h+=questsCard();
@@ -294,7 +334,7 @@ function learnView(){
     lv.sessionObjs.forEach(function(s){
       var p=sessProg(s), open=sessOpen(s), comp=sessComplete(s), ns=sessNodes(s.id);
       var segs=ns.map(function(n){ var st=isDone(n.id)?(starsOf(n.id)===3?' gold':' on'):''; return '<i class="seg'+st+'"></i>'; }).join('');
-      h+='<button class="scard'+(comp?' comp':'')+(open?'':' locked')+'" data-sess="'+s.id+'" aria-label="Session '+s.n+': '+esc(s.title)+', '+(open?p.done+' of '+p.total+' steps done':'locked')+'">'
+      h+='<button class="scard'+(comp?' comp':'')+(open?'':' locked')+'" data-sess="'+s.id+'"'+(open?'':' aria-disabled="true"')+' aria-label="Session '+s.n+': '+esc(s.title)+', '+(open?p.done+' of '+p.total+' steps done':'locked')+'">'
         +'<span class="sn'+(nx&&nx.sid===s.id?' here':'')+'">'+(comp?ic('check'):(nx&&nx.sid===s.id?zed(lv.n,'wink',40):(open?s.n:ic('lock'))))+'</span><span class="sb"><b>'+esc(s.title)+'</b><span class="sd">'+esc(s.deliverable)+'</span><span class="segs">'+segs+'</span></span>'
         +'<span class="sx">'+(open?(comp?(S.mast[s.id]&&S.mast[s.id].passed?'Mastered':'Done'):(s.n<S.startAt&&!p.done?'Skipped':p.done+'/'+p.total)):'Locked')+'</span></button>';
     });
@@ -316,7 +356,7 @@ var EXPS=[['Brand new','I have barely used AI tools, or never.'],['I chat with A
 var GOALS=[[20,'Light','A short step most days.'],[30,'Steady','A couple of steps a day.'],[50,'Serious','A full session most days.']];
 var ob={step:0};
 function obShell(inner, foot, step){
-  APP.innerHTML='<div class="player" data-lv="1"><header class="phead"><span class="combo ghost"></span><div class="pmid"><span class="plabel">Set up'+(step<5?' · '+(step+1)+' of 5':'')+'</span><div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="'+step+'"><i style="width:'+Math.round(Math.min(step,5)/5*100)+'%"></i></div></div><span class="combo ghost"></span></header>'
+  APP.innerHTML='<div class="player" data-lv="1"><header class="phead"><span class="combo ghost"></span><div class="pmid"><span class="plabel">Set up'+(step<5?' · '+(step+1)+' of 5':'')+'</span><div class="meter" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="5" aria-valuenow="'+step+'"><i style="width:'+Math.round(Math.min(step,5)/5*100)+'%"></i></div></div><span class="combo ghost"></span></header>'
     +'<main class="pbody"><div class="pin">'+inner+'</div></main><footer class="pfoot"><div class="pfin">'+foot+'</div></footer></div>';
 }
 function obChoices(list, cur, attr){
@@ -484,11 +524,10 @@ function openNote(id){
   body+='<p class="nsrc">Extracted from '+esc(n.t)+' ('+esc(n.p)+', as of 24 November 2026). Short extracts only. The lessons in this app are written from notes like this one.'
     +(n.s&&n.s.length?' Used in '+n.s.map(function(x){ return 'session '+x; }).join(', ')+'.':'')+'</p>';
   var m=document.createElement('div'); m.className='modal notem'; m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true'); m.setAttribute('aria-label','Source note: '+n.t);
-  m.innerHTML='<div class="card notec"><header class="noteh"><span class="rk '+r.k+'">'+ic(REFI[r.k]||'doc')+'</span><div><small class="np">'+esc(n.p)+' · '+esc(NOTEKIND[r.k]||'')+'</small><h2>'+esc(n.t)+'</h2></div><button type="button" class="icon-btn" id="noteX" aria-label="Close this note">'+ic('close')+'</button></header><div class="nbody">'+body+'</div><footer class="notef"><button type="button" class="btn wide" id="noteDone">'+(first?'Done: +2 XP':'Done')+'</button></footer></div>';
+  m.innerHTML='<div class="card notec"><header class="noteh"><span class="rk '+r.k+'">'+ic(REFI[r.k]||'doc')+'</span><div><small class="np">'+esc(n.p)+' · '+esc(NOTEKIND[r.k]||'')+'</small><h2>'+esc(n.t)+'</h2></div><button type="button" class="icon-btn" id="noteX" aria-label="Close this note">'+ic('close')+'</button></header><div class="nbody" tabindex="0" role="region" aria-label="Note text">'+body+'</div><footer class="notef"><button type="button" class="btn wide" id="noteDone">'+(first?'Done: +2 XP':'Done')+'</button></footer></div>';
   document.body.appendChild(m);
-  function close(){ document.removeEventListener('keydown',esc2); if(m.parentNode) m.parentNode.removeChild(m); refreshNoteUI(); try{ if(prevFocus&&prevFocus.focus) prevFocus.focus(); }catch(e){} }
-  function esc2(e){ if(e.key==='Escape'){ e.stopPropagation(); close(); } }
-  document.addEventListener('keydown',esc2);
+  var release=trapFocus(m,function(){ close(); });
+  function close(){ release(); if(m.parentNode) m.parentNode.removeChild(m); refreshNoteUI(); }
   m.addEventListener('click',function(e){ if(e.target===m) close(); });
   m.querySelector('#noteX').onclick=close; m.querySelector('#noteDone').onclick=close;
   m.querySelector('#noteX').focus();
@@ -633,7 +672,7 @@ function openNode(id){
 
 /* ================= SHEETS ================= */
 function blockHTML(b){
-  if(b.t==='table') return '<div class="tbl'+(b.headers.length>3?' wide':'')+'" tabindex="0" role="region" aria-label="Table"><table><thead><tr>'+b.headers.map(function(x){ return '<th scope="col">'+esc(x)+'</th>'; }).join('')+'</tr></thead><tbody>'+b.rows.map(function(r){ return '<tr>'+r.map(function(c){ return '<td>'+inl(c)+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>';
+  if(b.t==='table') return '<div class="tbl'+(b.headers.length>3?' wide':'')+'" tabindex="0" role="region" aria-label="Table '+(++TBLN)+': '+esc(b.headers.join(', '))+'"><table><thead><tr>'+b.headers.map(function(x){ return '<th scope="col">'+esc(x)+'</th>'; }).join('')+'</tr></thead><tbody>'+b.rows.map(function(r){ return '<tr>'+r.map(function(c){ return '<td>'+inl(c)+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>';
   if(b.t==='list') return '<ul class="blist">'+b.items.map(function(i){ return '<li>'+inl(i)+'</li>'; }).join('')+'</ul>';
   if(b.t==='olist') return '<ol class="blist">'+b.items.map(function(i){ return '<li>'+inl(i)+'</li>'; }).join('')+'</ol>';
   if(b.t==='diagram') return dgHTML(b);
@@ -749,17 +788,44 @@ function youView(){
     +learnHealth()+'<h2 class="sh">Badges <span class="cnt">'+earned+' of '+BADGES.length+'</span></h2><div class="bgrid">'
     +BADGES.map(function(b){ var e=S.badges[b.id], hv=Math.min(b.have(),b.need); return '<div class="badge'+(e?' on':'')+'"'+(b.level?' data-lv="'+b.level+'"':'')+'><span class="bi">'+ic(b.icon)+'</span><b>'+esc(b.name)+'</b><span class="bd">'+esc(b.desc)+'</span>'+(e?'<span class="bs">Earned '+e+'</span>':'<span class="bs">'+hv+' of '+b.need+'</span>')+'</div>'; }).join('')+'</div>'
     +'<h2 class="sh">Settings</h2><section class="card set"><div class="tr"><span>Daily goal</span><span class="segctl" role="group" aria-label="Daily goal in XP">'+[20,30,50].map(function(g){ return '<button data-goal="'+g+'" aria-pressed="'+(S.goal===g)+'">'+g+' XP</button>'; }).join('')+'</span></div>'
+    +'<div class="tr"><span>Theme<small>Follows your device unless you choose.</small></span><span class="segctl" role="group" aria-label="Theme">'+[['auto','Auto'],['light','Light'],['dark','Dark']].map(function(o){ var on=(S.theme||'auto')===o[0]; return '<button data-theme-set="'+o[0]+'" aria-pressed="'+on+'">'+o[1]+'</button>'; }).join('')+'</span></div>'
     +'<div class="tr"><span>Preview mode<small>Unlock every session. For instructors and for reading ahead.</small></span><button class="seg1" id="prev" aria-pressed="'+S.preview+'">'+(S.preview?'On':'Off')+'</button></div>'
     +'<div class="tr"><span>Progress report<small>Copy a summary to send to your instructor.</small></span><button class="btn ghost" id="rep">Copy report</button></div><div id="repbox"></div>'
+    +'<div class="tr"><span>Back up<small>Progress lives in this browser. Copy a backup code to keep it safe, or paste one to restore it here or on another device.</small></span><span class="duo"><button class="btn ghost" id="bkCopy">Copy code</button><button class="btn ghost" id="bkOpen">Restore</button></span></div><div id="bkbox"></div>'
     +'<div class="tr"><span>Reset<small>Erases XP, streak, badges and your logs in this browser.</small></span><button class="btn ghost danger" id="reset">Reset progress</button></div>'
     +'<p class="fine">'+(canSave?'Progress saves in this browser only.':'Progress is not saved in this view.')+' XP, stars and badges are practice. Course points come from your instructor.</p></section></div>';
   setPage(h,'you');
   $$('[data-goal]').forEach(function(b){ b.onclick=function(){ S.goal=+b.getAttribute('data-goal'); save(); youView(); }; });
+  $$('[data-theme-set]').forEach(function(b){ b.onclick=function(){ S.theme=b.getAttribute('data-theme-set'); save(); applyTheme(); youView(); }; });
   var oe=$('#obEdit'); if(oe) oe.onclick=function(){ ob.step=0; go({name:'onboard'}); };
   var pg2=$('#plGo'); if(pg2) pg2.onclick=function(){ go({name:'place'}); };
   $('#prev').onclick=function(){ S.preview=!S.preview; save(); youView(); };
   $('#rep').onclick=function(){ copyText(reportText(), $('#repbox')); };
-  var rs=$('#reset'); rs.onclick=function(){ if(rs.getAttribute('data-sure')!=='1'){ rs.setAttribute('data-sure','1'); rs.textContent='Tap again to erase'; return; } S=blank(); save(); go({name:'learn'}); };
+  $('#bkCopy').onclick=function(){ copyText(backupCode(), $('#bkbox')); };
+  $('#bkOpen').onclick=function(){
+    var bx=$('#bkbox'); bx.innerHTML='<div class="bkr"><label for="bkIn">Paste your backup code</label><textarea id="bkIn" class="copybox" spellcheck="false" autocomplete="off"></textarea><p class="hint" id="bkMsg" role="status"></p><button class="btn" id="bkGo">Restore progress</button></div>';
+    $('#bkIn').focus();
+    $('#bkGo').onclick=function(){
+      var msg=$('#bkMsg'), v=$('#bkIn').value;
+      if(S.xp>0 && $('#bkGo').getAttribute('data-sure')!=='1'){ $('#bkGo').setAttribute('data-sure','1'); $('#bkGo').textContent='Tap again to replace what is here'; msg.textContent='This replaces the progress in this browser.'; return; }
+      var err=restoreFrom(v); if(err){ msg.textContent=err; $('#bkGo').removeAttribute('data-sure'); $('#bkGo').textContent='Restore progress'; return; }
+      toast('Progress restored'); go({name:'learn'});
+    };
+  };
+  var rs=$('#reset'); rs.onclick=function(){ if(rs.getAttribute('data-sure')!=='1'){ rs.setAttribute('data-sure','1'); rs.textContent='Tap again to erase'; return; } S=blank(); save(); applyTheme(); go({name:'learn'}); };
+}
+
+
+/* ---- back up and restore progress (it lives in this browser only) ---- */
+function b64enc(s){ var b=new TextEncoder().encode(s), r=''; for(var i=0;i<b.length;i++) r+=String.fromCharCode(b[i]); return btoa(r); }
+function b64dec(s){ var r=atob(s), b=new Uint8Array(r.length); for(var i=0;i<r.length;i++) b[i]=r.charCodeAt(i); return new TextDecoder().decode(b); }
+function backupCode(){ return 'Z100.1.'+b64enc(JSON.stringify(S)); }
+function restoreFrom(code){
+  var m=/^\s*Z100\.1\.([A-Za-z0-9+\/=]+)\s*$/.exec(code||'');
+  if(!m) return 'That is not a backup code. A code starts with Z100.1.';
+  var o; try{ o=JSON.parse(b64dec(m[1])); }catch(e){ return 'The code is damaged. Copy it again, all of it.'; }
+  if(!o || typeof o!=='object' || typeof o.xp!=='number' || !o.done || typeof o.done!=='object' || Array.isArray(o.done)) return 'That code does not hold progress from this course.';
+  S=Object.assign(blank(),o); save(); applyTheme(); return '';
 }
 
 /* ================= LESSON ENGINE ================= */
@@ -863,7 +929,7 @@ function shell(inner, foot, footCls, showProg){
   var pct = L.phase==='q' ? progressPct() : (L.phase==='done'?100:0);
   var label = L.review ? (L.due?'Due for review':'Review') : (L.node.sid ? 'Session '+SBY[L.node.sid].n+' · '+L.node.title : L.node.title);
   var head='<header class="phead"><button class="icon-btn" id="quit" aria-label="'+(L.phase==='q'?'Quit this step':'Back')+'">'+ic('close')+'</button><div class="pmid"><span class="plabel">'+esc(label)+'</span>'
-    +(showProg?'<div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><i style="width:'+pct+'%"></i></div>':'')+'</div>'
+    +(showProg?'<div class="meter" role="progressbar" aria-label="Progress in this step" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><i style="width:'+pct+'%"></i></div>':'')+'</div>'
     +(showProg&&L.combo>=3?'<span class="combo" title="Right answers in a row">'+ic('bolt')+'x'+L.combo+'</span>':'<span class="combo ghost"></span>')+'</header>';
   var key=L.phase+':'+(L.phase==='q'&&L.cur?L.cur.id:''), enter=(L.animKey!==key); L.animKey=key;
   APP.innerHTML='<div class="player" data-lv="'+playerCSS()+'">'+head+'<main class="pbody"><div class="pin'+(enter?' enter':'')+'">'+inner+'</div></main><footer class="pfoot '+(footCls||'')+'" aria-live="polite"><div class="pfin">'+foot+'</div></footer></div>';
@@ -874,7 +940,9 @@ function confirmQuit(){
   var m=document.createElement('div'); m.className='modal'; m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true'); m.setAttribute('aria-label','Quit this step');
   m.innerHTML='<div class="card"><h2>Quit this step?</h2><p>You lose the progress in this step. Questions you missed stay on your review list.</p><button class="btn wide" id="stay">Keep going</button><button class="btn ghost wide" id="quitok">Quit</button></div>';
   document.body.appendChild(m);
-  $('#stay').onclick=function(){ m.remove(); }; $('#quitok').onclick=function(){ m.remove(); leave(); }; $('#stay').focus();
+  var release=trapFocus(m,function(){ stay(); });
+  function stay(){ release(); m.remove(); }
+  $('#stay').onclick=stay; $('#quitok').onclick=function(){ release(); m.remove(); leave(); }; $('#stay').focus();
 }
 function lessonView(){
   if(L.phase==='intro') return intro();
@@ -1146,7 +1214,7 @@ function scrExplain(c){
     +'<p class="hint">Write two to four sentences, as if to a colleague who missed this session. No notes. Then compare with the model answer.</p>'
     +'<div class="fld"><label for="expl">Your explanation</label><textarea id="expl"'+(c.revealed?' readonly':'')+'>'+esc(c.text)+'</textarea></div>';
   if(!c.revealed) return {body:body+'<p class="hint" id="wc"></p>', foot:'<button class="btn wide" id="primary" disabled>Show the model answer</button>'};
-  body+='<div class="model"><h3>Model answer</h3><p>'+esc(it.model)+'</p></div><h2 class="sh">What did your answer cover?</h2><div class="gatelist">'
+  body+='<div class="model"><h2>Model answer</h2><p>'+esc(it.model)+'</p></div><h2 class="sh">What did your answer cover?</h2><div class="gatelist">'
     +it.points.map(function(p,i){ return '<label class="chk"><input type="checkbox" data-pt="'+i+'"'+(c.pts[i]?' checked':'')+'><div><b>'+esc(p)+'</b></div></label>'; }).join('')+'</div>'
     +'<p class="hint">Anything unticked is a gap. Note it, then look at it again in the study sheet.</p>';
   return {body:body, foot:'<button class="btn wide" id="primary">Continue</button>'};
@@ -1293,7 +1361,7 @@ function caseView(){
   var n=view.node, C=n.case, cs=(S.cases[n.id]=S.cases[n.id]||{text:'',revealed:false,checks:[]});
   var inner='<p class="quote">'+esc(C.scenario)+'</p><div class="fld"><label for="ans">Your answer, in your own words</label><textarea id="ans"'+(cs.revealed?' readonly':'')+'>'+esc(cs.text)+'</textarea></div>'+(cs.revealed?'':'<p class="hint" id="wc"></p>');
   if(cs.revealed){
-    inner+='<div class="model"><h3>Course answer</h3><p>'+esc(C.model)+'</p></div><h2 class="sh">What did your answer cover?</h2>'
+    inner+='<div class="model"><h2>Course answer</h2><p>'+esc(C.model)+'</p></div><h2 class="sh">What did your answer cover?</h2>'
       +C.checks.map(function(x,i){ return '<label class="chk"><input type="checkbox" data-i="'+i+'"'+(cs.checks[i]?' checked':'')+'><div><b>'+esc(x)+'</b></div></label>'; }).join('')
       +'<p class="hint">Anything unticked is a gap. Write down what you would change before you move on.</p>';
   }

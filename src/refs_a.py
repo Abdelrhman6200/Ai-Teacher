@@ -19,7 +19,7 @@ Q[1] = [
 ]
 
 Q[2] = [
- ('docs', H + '8114491', 'Get started with Claude', 'Account, apps and first steps, for the surface you will use most.'),
+ ('docs', H + '8114491', 'Get started with Claude', 'First questions answered in plain words: where Claude is available, what a prompt is, which model you are talking to and what the usage limits mean.'),
  ('docs', C + 'overview', 'Claude Code overview', 'What the coding agent is, and where it runs: terminal, IDE, desktop and browser.'),
  ('docs', C + 'platforms', 'Platforms and integrations', 'Which Claude Code surface fits which job.'),
  ('docs', P + 'build-with-claude/overview', 'Features overview (API)', 'Everything the API offers, grouped by what you want to do.'),
@@ -39,7 +39,7 @@ Q[3] = [
  ('docs', H + '8664678', 'Change the model, effort and thinking settings', 'Where the controls live in the app.'),
  ('docs', H + '11095361', 'When to use web search, extended thinking and research', 'Three switches that are easy to confuse.'),
  ('docs', P + 'about-claude/models/optimizing-for-cost-and-intelligence', 'Optimizing for cost and intelligence', 'The trade-off between cheap and capable, with levers to pull.'),
- ('deep', A + 'research/statistical-approach-to-model-evals', 'A statistical approach to model evaluations', 'Why a bake-off needs repeats and error bars before you trust a gap.'),
+ ('deep', A + 'research/statistical-approach-to-model-evals', 'A statistical approach to model evaluations', 'Why a bake-off needs standard errors, paired comparisons and enough questions before you trust a gap.'),
  ('try', P + 'test-and-evaluate/develop-tests', 'Define success and build evaluations', 'Write the rubric before the bake-off, as the gate sheet asks.'),
 ]
 
@@ -47,7 +47,7 @@ Q[4] = [
  ('docs', P + 'build-with-claude/prompt-engineering/claude-prompting-best-practices', 'Prompting best practices', 'The official techniques: clear, direct, examples, tags, role, long-context order.'),
  ('docs', P + 'test-and-evaluate/develop-tests', 'Define success and build evaluations', 'Criteria first. This is the page behind your before-and-after scores.'),
  ('docs', P + 'build-with-claude/prompt-engineering/prompting-claude-sonnet-5-5', 'Prompting Claude Sonnet 5.5', 'Model-specific advice. Each model likes slightly different prompts.'),
- ('docs', P + 'build-with-claude/prompt-engineering/prompting-claude-haiku-5-5', 'Prompting Claude Haiku 5.5', 'Smaller models may need more explicit guidance. See what changes.'),
+ ('docs', P + 'build-with-claude/prompt-engineering/prompting-claude-haiku-5-5', 'Prompting Claude Haiku 5.5', 'Haiku 5.5\'s own patterns: effort, giving search a date, verifying code changes and stopping early.'),
  ('docs', H + '7996853', 'Introduction to prompt design', 'A short, plain primer if the best-practices page feels dense.'),
  ('docs', H + '7996857', 'My prompt isn\'t giving me a helpful answer', 'A troubleshooting list to run before you blame the model.'),
  ('deep', A + 'news/prompt-engineering-for-business-performance', 'Prompt engineering for business performance', 'A real case: few-shot examples and prompt chaining raised accuracy by 20%.'),
@@ -135,7 +135,7 @@ Q[11] = [
  ('docs', P + 'build-with-claude/batch-processing', 'Batch processing', 'When a workflow does not need an answer right now.'),
  ('docs', P + 'agents-and-tools/tool-use/overview', 'Tool use overview', 'How Claude calls tools inside a workflow.'),
  ('docs', P + 'about-claude/use-case-guides/ticket-routing', 'Ticket routing', 'A worked classify-then-act workflow, close to your welcome-email flow.'),
- ('docs', P + 'about-claude/use-case-guides/customer-support-chat', 'Customer support agent', 'Human approval and escalation in a real design.'),
+ ('docs', P + 'about-claude/use-case-guides/customer-support-chat', 'Customer support agent', 'Success criteria for a support bot, including how to measure escalating the right conversations to a human.'),
  ('deep', A + 'engineering/building-effective-agents', 'Building effective AI agents', 'Workflows versus agents, and the five patterns. Start simple.'),
  ('try', P + 'get-started', 'Quickstart', 'Make your first API call.'),
  ('try', P + 'agents-and-tools/tool-use/build-a-tool-using-agent', 'Tutorial: build a tool-using agent', 'A guided build from one call to a loop.'),

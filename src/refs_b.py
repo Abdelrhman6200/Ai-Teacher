@@ -124,7 +124,7 @@ Q[21] = [
  ('docs', P + 'agents-and-tools/mcp-connector', 'MCP connector', 'Call remote servers from the API.'),
  ('docs', C + 'managed-mcp', 'Control MCP server access for your organization', 'Allow and deny lists for servers.'),
  ('docs', C + 'plugins/create', 'Create a Claude Code plugin', 'Package skills, agents, hooks and servers.'),
- ('docs', C + 'plugins/publish', 'Publish and distribute a plugin', 'Versioning, release and rollback.'),
+ ('docs', C + 'plugins/publish', 'Publish and distribute a plugin', 'Preparing a plugin for release: the marketplace file, shipping updates, version tags and what a rename does.'),
  ('docs', C + 'plugins/security', 'Plugin security and trust', 'Review before you list.'),
  ('docs', P + 'agents-and-tools/agent-skills/enterprise', 'Skills for enterprise', 'Govern skills across a company.'),
  ('docs', H + '13119606', 'Provision and manage skills for your organization', 'Roll a skill out to a team.'),

@@ -188,7 +188,9 @@ async function full(){
   await click('[data-tab="you"]');
   log('you: kpis '+$$('.kpi').map(k=>k.textContent).join(' / '));
   log('badges earned: '+$$('.badge.on').length+' of '+$$('.badge').length+' => '+$$('.badge.on b').map(b=>b.textContent).join(', '));
-  await click('#rep'); log('report box or toast ok: '+(!!$('#repbox textarea')||!!$('#toast span')));
+  try{ Object.defineProperty(navigator,'clipboard',{value:{writeText:()=>Promise.reject(new Error('blocked'))},configurable:true}); }catch(e){}
+  await click('#rep'); await sleep(60); if(!$('#repbox textarea')) throw new Error('a blocked clipboard did not fall back to a box to copy from');
+  log('report box or toast ok: true');
 }
 
 const stored=()=>JSON.parse(localStorage.getItem('z100-practice-v4')||'{}');
@@ -355,6 +357,40 @@ async function quest(){
   await click('[data-lk="all"]'); await click('[data-ll="5"]'); const l5=$$('[data-note].ref').length; if(!(l5>0&&l5<all)) throw new Error('level filter broke');
   await click('[data-ll="0"]'); setv($('#lq'),'cache_creation_input_tokens'); await sleep(5); const hit=$$('[data-note].ref').length; if(!(hit>0&&hit<all)) throw new Error('search broke: '+hit);
   const sheetHit=(()=>{ return true; })();
+
+  // ---- keyboard and Back: a dialog traps focus, the Back button stays in the app, progress backs up and restores
+  const opener=$('[data-note].ref'); opener.focus(); await click(opener);
+  if(!$('.notem')) throw new Error('note did not open'); if(!document.getElementById('app').inert) throw new Error('the page behind a note is not inert');
+  const kd=(k,sh)=>document.dispatchEvent(new KeyboardEvent('keydown',{key:k,shiftKey:!!sh,bubbles:true}));
+  $('#noteDone').focus(); kd('Tab'); if(document.activeElement.id!=='noteX') throw new Error('Tab did not wrap to the first control');
+  kd('Tab',true); if(document.activeElement.id!=='noteDone') throw new Error('Shift+Tab did not wrap to the last control');
+  kd('Escape'); await sleep(5); if($('.notem')||document.getElementById('app').inert) throw new Error('Escape did not close the note and free the page behind it');
+  if(document.activeElement!==opener) throw new Error('focus did not return to the control that opened the note');
+  const pop=async()=>{ window.dispatchEvent(new PopStateEvent('popstate')); await sleep(10); };
+  await pop(); if(!$('[data-tab="learn"].on')) throw new Error('Back from the library did not return to Learn');
+  await toSession('s01'); await pop(); if(!$('[data-tab="learn"].on')) throw new Error('Back from a session did not return to Learn');
+  await openNodeById('s01-P1'); await advanceUntil(()=>screen()==='mcq'); await pop();
+  if(!$('.modal')) throw new Error('Back inside a question should ask before quitting'); await pop();
+  if($('.modal')||screen()!=='mcq') throw new Error('Back should close the quit prompt and stay in the question');
+  await pop(); await click('#quitok'); if($('.pbody')) throw new Error('quitting from the prompt did not leave the question');
+  log('keyboard and Back ok: focus trap, Escape, focus returned, Back from library, session and question');
+  await toLearn(); await click('[data-tab="you"]');
+  const xpB=xpNow(), raw=localStorage.getItem('z100-practice-v4'); if(!raw||xpB<1) throw new Error('nothing to back up');
+  const bytes=new TextEncoder().encode(raw); let bin=''; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]); const code='Z100.1.'+btoa(bin);
+  await click('#bkCopy'); await sleep(5);
+  const rs=$('#reset'); await click(rs); await click(rs); await sleep(5); if(xpNow()!==0) throw new Error('reset did not clear XP');
+  await click('[data-tab="you"]'); await click('#bkOpen'); setv($('#bkIn'),'not a code'); await click('#bkGo');
+  if(!/not a backup code/.test($('#bkMsg').textContent)) throw new Error('a wrong code was not refused: '+$('#bkMsg').textContent);
+  setv($('#bkIn'),'Z100.1.%%%'); await click('#bkGo'); if(!/not a backup code/.test($('#bkMsg').textContent)) throw new Error('a garbled code was not refused');
+  setv($('#bkIn'),'Z100.1.AAAA'); await click('#bkGo'); if(!$('#bkMsg').textContent) throw new Error('a code with no progress in it was not refused');
+  setv($('#bkIn'),code); await click('#bkGo'); await sleep(5);
+  if(xpNow()!==xpB) throw new Error('restore gave '+xpNow()+' XP, expected '+xpB); if(localStorage.getItem('z100-practice-v4')===null) throw new Error('restore did not save');
+  log('backup ok: code restores '+xpB+' XP after a reset; wrong codes are refused');
+  await click('[data-tab="you"]'); await click('[data-theme-set="dark"]'); if(document.documentElement.getAttribute('data-theme')!=='dark') throw new Error('dark theme did not apply');
+  if($('[data-theme-set="dark"]').getAttribute('aria-pressed')!=='true') throw new Error('theme control does not show the choice');
+  await click('[data-theme-set="light"]'); if(document.documentElement.getAttribute('data-theme')!=='light') throw new Error('light theme did not apply');
+  await click('[data-theme-set="auto"]'); if(document.documentElement.hasAttribute('data-theme')) throw new Error('auto theme should follow the device');
+  log('theme ok: auto, light and dark');
   log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf

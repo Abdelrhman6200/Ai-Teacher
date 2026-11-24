@@ -48,6 +48,9 @@ def slug(u): return re.sub(r'[^a-z0-9]+', '_', u.replace('https://', '').lower()
 
 nid = refs.nid
 
+# Pages whose extract would be a random fragment (a changelog's latest entry): the lead line says what the page is, and that is all.
+NO_PTS = {'code.claude.com/docs/en/changelog'}
+
 # Lead lines for pages whose automatic lead would mislead: an index page whose first sentence belongs to one post, an author byline,
 # a plan-availability sentence. Each one restates something the page itself says (see that note's sections).
 LEAD_FIX = {
@@ -202,7 +205,7 @@ def extract(raw):
             for s in sentences(re.sub(r'^[-*]\s+.*$', '', para.strip(), flags=re.M)):
                 if good(s): cands.append((s, False))
         if not cands: continue
-        ranked = sorted(range(len(cands)), key=lambda i: -score(cands[i][0], cands[i][1]))[:2]
+        ranked = sorted(range(len(cands)), key=lambda i: -score(cands[i][0], cands[i][1]))[:(4 if h.lower() == 'abstract' else 2)]
         picked = [trim(cands[i][0]) for i in sorted(ranked) if score(cands[i][0], cands[i][1]) > 0]
         if not picked: continue
         picked = [s for s in picked if s != lead and not lead.startswith(s[:60])]
@@ -232,9 +235,11 @@ def main():
     for u, e in sorted(entries.items()):
         i = nid(u)
         first, pts, tbls = extract(pages.get(u, ''))
-        if not pts and i in old:
+        key = re.sub(r'^https://', '', u)
+        if key in NO_PTS: pts, tbls = [], []
+        if not pts and i in old and key not in NO_PTS:
             notes.append(old[i]); continue
-        first = LEAD_FIX.get(re.sub(r'^https://', '', u), first)
+        first = LEAD_FIX.get(key, first)
         if len(pts) < 2: thin.append(u)
         notes.append(dict(id=i, u=re.sub(r'^https://', '', u), t=e['t'], k=e['k'], p=publisher(u), w=e['w'], lead=first, pts=pts, tbl=tbls, s=sorted(set(e['s']))))
     json.dump(dict(built='2026-11-24', notes=notes), open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))

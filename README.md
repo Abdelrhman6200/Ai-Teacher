@@ -29,6 +29,14 @@ Progress is saved in the browser (`localStorage`), per device.
    Explorer and Deep diver badges. **Nothing in the app is a link:** no addresses, no new tabs.
 9. Sessions 4 to 24 use an authored worked example (three "predict, then see" scenarios) and an authored case with three specific
    self-check points, in the same style as sessions 1 to 3.
+10. **Comfort and safety.**
+    - The browser's Back button stays in the app: it closes a dialog, asks before quitting a question, and goes up one level
+      (question, session, Learn). At the Learn screen it leaves the page as usual.
+    - Dialogs trap keyboard focus, close on Escape, hide the page behind them and give focus back.
+    - **Back up** (You, Settings): copy a backup code, paste it to restore on this or another device. Progress lives in the browser
+      only, so this is the way to keep it across browsers, devices or a cleared cache.
+    - **Theme** (You, Settings): Auto follows the device; Light and Dark override it.
+    - An axe-core pass over 50 screens in light and dark, at phone and desktop width, is clean (see Test).
 
 ## Where the content comes from
 
@@ -98,10 +106,16 @@ tests/run.sh duetest          # spaced review: due, answer, reschedule
 tests/run.sh shot dg_loop 420 900          # screenshot of a scene (see scenes in tests/test_driver.js)
 ```
 
+Optional accessibility check (axe-core, light and dark, any scenes): `npm i playwright axe-core` then
+`node tests/axe_check.js smoke you2 library note case_rev` (`WIDTHS=420,1100` for both widths). It exits 1 on any violation.
+
 Expected: the output ends with `OK` and contains no `FAIL` or `WARN` lines.
 
 ## Notes
 
 - If the repo is public, learners can read the answers in the page source and in `references/`. Use a private repo or keep it to instructors.
-- Time-sensitive facts (model names, prices, plan limits) are as of 16 November 2026. Re-check them each month.
+- Time-sensitive facts (model names, prices, plan limits) are as of 16 November 2026. Re-check them each month. A spot check on
+  24 November 2026 compared prices, effort defaults, batch limits, cache figures, skill limits, the hook exit code, the Sonnet 4.5
+  retirement date and several research figures with the source pages. Two claims were reworded (the tokenizer note and the
+  Fable 5.2 and Mythos 5.2 relationship); the rest matched.
 - Gates are graded by the instructor, not by the app.
