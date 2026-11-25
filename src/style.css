@@ -691,3 +691,16 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .cal-n{font-weight:800} .cal-v{color:var(--ink-2);font-weight:600}
 .cal-b{display:grid;gap:3px;height:18px;align-content:center} .cal-b i{height:7px}
 @media (max-width:420px){ .cal-l li{grid-template-columns:70px 1fr} .cal-v{grid-column:1/-1} }
+
+/* ---------- recall the rule: the flip card ---------- */
+.recallc{display:grid;gap:10px}
+.flip{perspective:1100px;margin:6px 0}
+.flip-in{position:relative;display:grid;transition:transform .75s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip .face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flip .face.back{transform:rotateY(180deg)}
+.flip .rcard{min-height:200px;align-content:center}
+.rc-ask{font-style:italic;color:var(--ink-2)!important;padding-top:6px}
+.rates{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.rc-mem{display:flex;gap:3px;margin-top:4px} .rc-mem i{width:16px;height:5px;border-radius:3px;background:var(--line-2)} .rc-mem i.on{background:var(--good)}
+.recall .stem{font-size:24px}

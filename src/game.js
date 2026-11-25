@@ -162,19 +162,21 @@ function shopView(){
 function albumView(){
   var own=ownedCards().length, h='<div class="narrow"><h1 class="ph">Rule cards</h1><section class="card"><div class="revc-h">'+ic('card')+'<h2>'+own+' of '+CARDS.length+' found</h2></div>'
     +'<div class="meter" role="progressbar" aria-label="Cards found" aria-valuemin="0" aria-valuemax="'+CARDS.length+'" aria-valuenow="'+own+'"><i style="width:'+Math.round(own/CARDS.length*100)+'%"></i></div>'
+    +(cardDue().length?'<button class="btn" id="albumRecall">'+ic('card')+'Recall '+cardDue().length+(cardDue().length===1?' card':' cards')+'</button>':'')
     +'<p class="sub">Each card is one rule from the course. A finished session gives its core card. Chests and the shop give drop cards. A handed-in gate gives an epic card. Read them again before you work.</p></section>';
   LEVELS.forEach(function(lv){
     var cs=CARDS.filter(function(c){ return c.k==='epic' ? c.n===lv.n : SESSIONS[c.n-1].level===lv.n; });
     cs.sort(function(a,b){ var ka=a.k==='epic'?2:0, kb=b.k==='epic'?2:0; return (ka-kb)||(a.n-b.n)||(a.k==='core'?-1:1); });
     var have=cs.filter(function(c){ return S.cards[c.id]; }), lack=cs.filter(function(c){ return !S.cards[c.id]; });
     h+='<h2 class="sh">Level '+lv.n+': '+esc(lv.name)+' <span class="cnt">'+have.length+' of '+cs.length+'</span></h2>'
-      +(have.length?'<div class="cardgrid" data-lv="'+lv.n+'">'+have.map(function(c){ return cardHTML(c,true); }).join('')+'</div>':'<p class="sub">No cards from this level yet.</p>')
+      +(have.length?'<div class="cardgrid" data-lv="'+lv.n+'">'+have.map(function(c){ return cardHTML(c,true).replace(/<\/small><\/div>$/, '</small>'+memDots(c.id)+'</div>'); }).join('')+'</div>':'<p class="sub">No cards from this level yet.</p>')
       +(lack.length?'<details class="lackl"><summary>Still to find: '+lack.length+'</summary><ul>'+lack.map(function(c){ return '<li><span class="lk-r r-'+c.r+'">'+RARITY[c.r]+'</span>'+esc(cardWhere(c))+'</li>'; }).join('')+'</ul></details>':'');
   });
   h+='<div class="duo"><button class="btn ghost" data-go-shop="1">'+ic('shop')+'Shop</button><button class="btn ghost" data-tab-go="you">Back to You</button></div></div>';
   setPage(h,'you');
   $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; });
   var sg=$('[data-go-shop]'); if(sg) sg.onclick=function(){ go({name:'shop'}); };
+  var ar=$('#albumRecall'); if(ar) ar.onclick=recallStart;
 }
 
 /* the You page gets a collection and a shop card */

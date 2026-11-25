@@ -6,7 +6,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true, sur:{}, calib:[]}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true, sur:{}, calib:[], cardSrs:{}}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -253,7 +253,7 @@ function go(v){ view=v; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
-  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView})[view.name]();
+  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView, recall:recallView})[view.name]();
   armGuard();
   showPending();
 }
@@ -265,7 +265,7 @@ function backInApp(){
   var m=$('.modal');
   if(m){ var x=$('#noteX',m)||$('#stay',m)||$('#celeDone',m); if(x) x.click(); else if(m.parentNode) m.parentNode.removeChild(m); return; }
   var n=view.name;
-  if(n==='blitz'){ var bq=$('#quit'); if(bq) bq.click(); else go({name:'review'}); return; }
+  if(n==='blitz'||n==='recall'){ var bq=$('#quit'); if(bq) bq.click(); else go({name:'review'}); return; }
   if(n==='lesson'||n==='task'||n==='kase'||n==='question'||n==='gate'){ var q=$('#quit'); if(q) q.click(); else leave(); return; }
   if(n==='onboard'||n==='place') return; // setup and placement are not interrupted by Back
   go({name:n==='sheet'?'sheets':(n==='shop'||n==='album'||n==='playbook'||n==='cert')?'you':'learn'});
@@ -773,12 +773,13 @@ function reviewView(){
       +Object.keys(by).sort().map(function(k){ var s=SBY[k]; return '<div class="rrow" data-lv="'+s.level+'"><span class="sn">'+s.n+'</span><span class="sb"><b>'+esc(s.title)+'</b></span><span class="sx">'+by[k]+'</span></div>'; }).join('')+'</div>';
   }
   h+=dueSection();
-  h+=blitzCard()+spacingCard();
+  h+=recallCardBox()+blitzCard()+spacingCard();
   h+='<p class="fine">Wiped so far: '+(S.cleared||0)+'.</p></div>';
   setPage(h,'review');
   var g=$('#go'); if(g) g.onclick=function(){ startReview(); };
   var dg=$('#dueGo'); if(dg) dg.onclick=startDue;
   var bg=$('#blitzGo'); if(bg) bg.onclick=blitzStart;
+  var rg=$('#recallGo'); if(rg) rg.onclick=recallStart;
 }
 
 /* ================= YOU ================= */
@@ -1464,5 +1465,6 @@ document.addEventListener('keydown',function(e){
 /*FX*/
 /*BOOK*/
 /*SCIENCE*/
+/*RECALL*/
 render();
 })();

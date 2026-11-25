@@ -702,6 +702,19 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .cal-b{display:grid;gap:3px;height:18px;align-content:center} .cal-b i{height:7px}
 @media (max-width:420px){ .cal-l li{grid-template-columns:70px 1fr} .cal-v{grid-column:1/-1} }
 
+/* ---------- recall the rule: the flip card ---------- */
+.recallc{display:grid;gap:10px}
+.flip{perspective:1100px;margin:6px 0}
+.flip-in{position:relative;display:grid;transition:transform .75s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip .face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flip .face.back{transform:rotateY(180deg)}
+.flip .rcard{min-height:200px;align-content:center}
+.rc-ask{font-style:italic;color:var(--ink-2)!important;padding-top:6px}
+.rates{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.rc-mem{display:flex;gap:3px;margin-top:4px} .rc-mem i{width:16px;height:5px;border-radius:3px;background:var(--line-2)} .rc-mem i.on{background:var(--good)}
+.recall .stem{font-size:24px}
+
 /* ================= diagrams and motion ================= */
 :root{--c0:#0070C0;--c1:#70AD47;--c2:#FFC000;--c3:#C00000;--c4:#595959;--c5:#7A3E9D}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--c0:#4DA6EC;--c1:#8CCB5E;--c2:#FFC000;--c3:#FF6B6B;--c4:#BDBDBD;--c5:#C79CE0} }
@@ -992,7 +1005,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true, sur:{}, calib:[]}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true, sur:{}, calib:[], cardSrs:{}}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -1603,7 +1616,7 @@ function go(v){ view=v; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
-  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView})[view.name]();
+  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView, recall:recallView})[view.name]();
   armGuard();
   showPending();
 }
@@ -1615,7 +1628,7 @@ function backInApp(){
   var m=$('.modal');
   if(m){ var x=$('#noteX',m)||$('#stay',m)||$('#celeDone',m); if(x) x.click(); else if(m.parentNode) m.parentNode.removeChild(m); return; }
   var n=view.name;
-  if(n==='blitz'){ var bq=$('#quit'); if(bq) bq.click(); else go({name:'review'}); return; }
+  if(n==='blitz'||n==='recall'){ var bq=$('#quit'); if(bq) bq.click(); else go({name:'review'}); return; }
   if(n==='lesson'||n==='task'||n==='kase'||n==='question'||n==='gate'){ var q=$('#quit'); if(q) q.click(); else leave(); return; }
   if(n==='onboard'||n==='place') return; // setup and placement are not interrupted by Back
   go({name:n==='sheet'?'sheets':(n==='shop'||n==='album'||n==='playbook'||n==='cert')?'you':'learn'});
@@ -2123,12 +2136,13 @@ function reviewView(){
       +Object.keys(by).sort().map(function(k){ var s=SBY[k]; return '<div class="rrow" data-lv="'+s.level+'"><span class="sn">'+s.n+'</span><span class="sb"><b>'+esc(s.title)+'</b></span><span class="sx">'+by[k]+'</span></div>'; }).join('')+'</div>';
   }
   h+=dueSection();
-  h+=blitzCard()+spacingCard();
+  h+=recallCardBox()+blitzCard()+spacingCard();
   h+='<p class="fine">Wiped so far: '+(S.cleared||0)+'.</p></div>';
   setPage(h,'review');
   var g=$('#go'); if(g) g.onclick=function(){ startReview(); };
   var dg=$('#dueGo'); if(dg) dg.onclick=startDue;
   var bg=$('#blitzGo'); if(bg) bg.onclick=blitzStart;
+  var rg=$('#recallGo'); if(rg) rg.onclick=recallStart;
 }
 
 /* ================= YOU ================= */
@@ -2972,19 +2986,21 @@ function shopView(){
 function albumView(){
   var own=ownedCards().length, h='<div class="narrow"><h1 class="ph">Rule cards</h1><section class="card"><div class="revc-h">'+ic('card')+'<h2>'+own+' of '+CARDS.length+' found</h2></div>'
     +'<div class="meter" role="progressbar" aria-label="Cards found" aria-valuemin="0" aria-valuemax="'+CARDS.length+'" aria-valuenow="'+own+'"><i style="width:'+Math.round(own/CARDS.length*100)+'%"></i></div>'
+    +(cardDue().length?'<button class="btn" id="albumRecall">'+ic('card')+'Recall '+cardDue().length+(cardDue().length===1?' card':' cards')+'</button>':'')
     +'<p class="sub">Each card is one rule from the course. A finished session gives its core card. Chests and the shop give drop cards. A handed-in gate gives an epic card. Read them again before you work.</p></section>';
   LEVELS.forEach(function(lv){
     var cs=CARDS.filter(function(c){ return c.k==='epic' ? c.n===lv.n : SESSIONS[c.n-1].level===lv.n; });
     cs.sort(function(a,b){ var ka=a.k==='epic'?2:0, kb=b.k==='epic'?2:0; return (ka-kb)||(a.n-b.n)||(a.k==='core'?-1:1); });
     var have=cs.filter(function(c){ return S.cards[c.id]; }), lack=cs.filter(function(c){ return !S.cards[c.id]; });
     h+='<h2 class="sh">Level '+lv.n+': '+esc(lv.name)+' <span class="cnt">'+have.length+' of '+cs.length+'</span></h2>'
-      +(have.length?'<div class="cardgrid" data-lv="'+lv.n+'">'+have.map(function(c){ return cardHTML(c,true); }).join('')+'</div>':'<p class="sub">No cards from this level yet.</p>')
+      +(have.length?'<div class="cardgrid" data-lv="'+lv.n+'">'+have.map(function(c){ return cardHTML(c,true).replace(/<\/small><\/div>$/, '</small>'+memDots(c.id)+'</div>'); }).join('')+'</div>':'<p class="sub">No cards from this level yet.</p>')
       +(lack.length?'<details class="lackl"><summary>Still to find: '+lack.length+'</summary><ul>'+lack.map(function(c){ return '<li><span class="lk-r r-'+c.r+'">'+RARITY[c.r]+'</span>'+esc(cardWhere(c))+'</li>'; }).join('')+'</ul></details>':'');
   });
   h+='<div class="duo"><button class="btn ghost" data-go-shop="1">'+ic('shop')+'Shop</button><button class="btn ghost" data-tab-go="you">Back to You</button></div></div>';
   setPage(h,'you');
   $$('[data-tab-go]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab-go')}); }; });
   var sg=$('[data-go-shop]'); if(sg) sg.onclick=function(){ go({name:'shop'}); };
+  var ar=$('#albumRecall'); if(ar) ar.onclick=recallStart;
 }
 
 /* the You page gets a collection and a shop card */
@@ -3382,6 +3398,75 @@ function calibCard(){
   var line=!st?'Make a few more predictions to see your pattern.':Math.abs(st.avg)<8?'On average you predict about what you score. That is well calibrated.':st.avg>0?'On average you expect about '+st.avg+' points more than you score. Slow down on the checks and use the Revisit list.':'On average you score about '+(-st.avg)+' points more than you expect. You can trust yourself a little more.';
   return '<section class="card calibc"><div class="revc-h">'+ic('target')+'<h2>Know what you know</h2></div><p class="sub">'+esc(line)+'</p><ul class="cal-l">'
     +last.map(function(x){ var s=SBY[x.s]; return '<li><span class="cal-n">Session '+(s?s.n:'?')+'</span><span class="cal-b" aria-hidden="true"><i class="exp" style="--p:'+Math.round(x.p/x.n*100)+'"></i><i class="got" style="--p:'+Math.round(x.a/x.n*100)+'"></i></span><span class="cal-v">'+x.p+' expected, '+x.a+' got</span></li>'; }).join('')+'</ul></section>';
+}
+
+/* ================= RECALL THE RULE: the rule cards as a spaced retrieval deck =================
+   Read the name, say the rule, flip the card, then rate yourself. The same boxes and intervals as the questions: right pushes a card out, a miss brings it back. */
+var RC=null;
+function cardMem(id){ var r=(S.cardSrs||{})[id]; return r?r.b:0; }
+function cardDue(){ var t=today(); return ownedCards().filter(function(c){ var r=(S.cardSrs||{})[c.id]; return !r || r.due<=t; }); }
+function memDots(id){
+  var b=cardMem(id), h='<span class="rc-mem" role="img" aria-label="Memory strength '+b+' of 5">';
+  for(var i=1;i<=5;i++) h+='<i class="'+(i<=b?'on':'')+'"></i>';
+  return h+'</span>';
+}
+function recallCardBox(){
+  var n=cardDue().length;
+  return '<section class="card recallc"><div class="revc-h">'+ic('card')+'<h2>Recall the rules</h2></div><p class="sub">'+(n?n+(n===1?' rule card is':' rule cards are')+' ready to recall. Read the name, say the rule out loud or in your head, then flip to check.':'No rule cards are due. New ones appear when you earn them, and each one returns on a schedule.')+'</p>'+(n?'<button class="btn" id="recallGo">'+ic('card')+'Start recall</button>':'')+'</section>';
+}
+function recallStart(){
+  var due=shuffle(cardDue()).slice(0,8);
+  if(!due.length) return toast('No rule cards are due.');
+  RC={items:due, i:0, flipped:false, res:[], xp:0, done:false};
+  go({name:'recall'});
+}
+function recallView(){
+  if(!RC) return go({name:'review'});
+  var n=RC.items.length, head='<header class="phead"><button class="icon-btn" id="quit" aria-label="Leave the recall round">'+ic('close')+'</button><div class="pmid"><span class="plabel">Recall the rules</span><div class="meter" role="progressbar" aria-label="Cards done" aria-valuemin="0" aria-valuemax="'+n+'" aria-valuenow="'+RC.i+'"><i style="width:'+Math.round(RC.i/n*100)+'%"></i></div></div><span class="combo ghost"></span></header>';
+  var inner, foot;
+  if(RC.done){
+    var got=RC.res.filter(function(r){ return r===2; }).length, near=RC.res.filter(function(r){ return r===1; }).length, miss=RC.res.filter(function(r){ return r===0; }).length;
+    inner='<div class="center done"><span class="zhero">'+zed(zLv(), got>=n*0.7?'cheer':'happy', 120, 'hop')+'</span><h1 class="bigt">'+(got===n?'Every rule recalled':'Round done')+'</h1><p class="lede">'+got+' recalled, '+near+' nearly, '+miss+' to see again soon.</p>'
+      +'<div class="facts"><div class="fact"><b>+'+RC.xp+'</b><span>XP</span></div><div class="fact"><b>+'+RC.sp+'</b><span>Sparks</span></div></div><p class="hint">Cards you recalled wait longer before they come back. The ones you missed return first.</p></div>';
+    foot='<button class="btn wide" id="recallBack">Back to Review</button>';
+  } else {
+    var c=RC.items[RC.i], s=c.k==='epic'?null:SESSIONS[c.n-1];
+    inner='<p class="kicker">Card '+(RC.i+1)+' of '+n+'</p><h1 class="stem">Say the rule</h1>'
+      +'<div class="flip'+(RC.flipped?' on':'')+'" id="flip"><div class="flip-in">'
+      +'<div class="face front" aria-hidden="'+RC.flipped+'"><div class="rcard r-'+c.r+'" data-lv="'+(s?s.level:c.n)+'"><div class="rc-top"><span class="rc-ic">'+ic(c.i)+'</span><span class="rc-r">'+RARITY[c.r]+'</span></div><b class="rc-t">'+esc(c.t)+'</b><small>'+(s?'Session '+s.n+' · '+esc(s.title):'Level '+c.n+' · '+esc(LEVELS[c.n-1].name))+'</small><p class="rc-ask">What is the rule? Say it before you flip.</p></div></div>'
+      +'<div class="face back" aria-hidden="'+!RC.flipped+'">'+cardHTML(c,true)+'</div></div></div>';
+    foot=RC.flipped
+      ?'<div class="rates" role="group" aria-label="How did you do?"><button class="btn bad" data-rate="0">Missed</button><button class="btn ghost" data-rate="1">Nearly</button><button class="btn good" data-rate="2">Got it</button></div>'
+      :'<button class="btn wide" id="flipBtn">'+ic('refresh')+'Flip the card</button>';
+  }
+  APP.innerHTML='<div class="player recall" data-lv="'+zLv()+'">'+head+'<main class="pbody"><div class="pin">'+inner+'</div></main><footer class="pfoot" aria-live="polite"><div class="pfin">'+foot+'</div></footer></div>';
+  $('#quit').onclick=function(){ RC=null; go({name:'review'}); };
+  var fb=$('#flipBtn'); if(fb) fb.onclick=function(){ RC.flipped=true; var f=$('#flip'); if(f) f.classList.add('on'); recallFootRates(); if(typeof sfx==='function') sfx('tick'); };
+  $$('[data-rate]').forEach(function(b){ b.onclick=function(){ recallRate(+b.getAttribute('data-rate')); }; });
+  var rb=$('#recallBack'); if(rb) rb.onclick=function(){ RC=null; go({name:'review'}); };
+}
+/* the flip itself is a transition, so the footer changes in place instead of re-drawing the card */
+function recallFootRates(){
+  var f=$('.pfin'); if(!f) return;
+  f.innerHTML='<div class="rates" role="group" aria-label="How did you do?"><button class="btn bad" data-rate="0">Missed</button><button class="btn ghost" data-rate="1">Nearly</button><button class="btn good" data-rate="2">Got it</button></div>';
+  $$('[data-rate]').forEach(function(b){ b.onclick=function(){ recallRate(+b.getAttribute('data-rate')); }; });
+  $$('.face',$('#flip')).forEach(function(x,i){ x.setAttribute('aria-hidden', i===0?'true':'false'); });
+}
+function recallRate(r){
+  var c=RC.items[RC.i], rec=(S.cardSrs=S.cardSrs||{})[c.id]||(S.cardSrs[c.id]={b:0,due:today(),seen:0,ok:0});
+  rec.seen++;
+  if(r===2){ rec.ok++; rec.b=Math.min(5,rec.b+1); RC.xp+=3; }
+  else if(r===1){ RC.xp+=1; }
+  else rec.b=0;
+  rec.due=addDays(INT[rec.b]);
+  RC.res.push(r); RC.i++; RC.flipped=false;
+  if(r===2 && typeof sfx==='function') sfx('good');
+  if(RC.i>=RC.items.length){
+    RC.done=true; RC.sp=RC.res.filter(function(x){ return x===2; }).length>=5?2:RC.res.some(function(x){ return x===2; })?1:0;
+    if(RC.xp) addXP(RC.xp); S.sparks=(S.sparks||0)+RC.sp; markAct('practice'); checkBadges(); save();
+    if(typeof sfx==='function') sfx('win');
+  } else save();
+  recallView(); showPending();
 }
 
 render();

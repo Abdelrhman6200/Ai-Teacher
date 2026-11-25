@@ -617,6 +617,23 @@ async function quest(){
   if(!(stored().calib||[]).length) throw new Error('the prediction was not kept');
   await click('#back'); await click('[data-tab="you"]'); if(!$('.calibc .cal-l li')) throw new Error('You should show the calibration history');
   log('learning science ok: prediction kept, surprise cue, early review flag, re-ask after three others');
+
+  // ---- recall the rule: the cards as a spaced deck, with a flip
+  await click('[data-tab="review"]'); if(!$('#recallGo')) throw new Error('earned rule cards should be ready to recall');
+  const dueN0=+/(\d+) rule card/.exec($('.recallc .sub').textContent)[1];
+  await click('#recallGo'); if(!$('#flip')) throw new Error('recall did not open');
+  let rated=0;
+  while($('#flip')){
+    if($('#flip').classList.contains('on')) throw new Error('a card should start face up with only its name');
+    await click('#flipBtn'); if(!$('#flip').classList.contains('on')||!$('[data-rate]')) throw new Error('flipping should show the rule and the rating buttons');
+    await click('[data-rate="'+(rated===0?0:2)+'"]'); rated++; if(rated>9) throw new Error('recall did not end');
+  }
+  if(!$('.center.done')||!/\+(\d+)XP/.test($$('.fact').map(f=>f.textContent).join(' '))) throw new Error('recall should end on a summary with its reward');
+  const csr=stored().cardSrs||{}; if(Object.keys(csr).length!==rated) throw new Error('every card recalled should be scheduled: '+Object.keys(csr).length+' of '+rated);
+  await click('#recallBack'); const mm=/(\d+) rule card/.exec(($('.recallc .sub')||{textContent:''}).textContent); const dueN1=mm?+mm[1]:0;
+  const want=Math.max(1, dueN0-Math.min(8,dueN0)+1); if(dueN1!==want) throw new Error('after a round the missed card is due again and the rest wait: '+dueN1+' vs '+want);
+  await click('[data-tab="you"]'); await click('.gamec [data-go-album]'); if(!$('.rcard .rc-mem')) throw new Error('album cards should show memory strength');
+  log('recall ok: '+rated+' cards flipped and rated, scheduled, memory strength shown');
   log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf
