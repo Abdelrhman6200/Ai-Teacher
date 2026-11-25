@@ -6,7 +6,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true, sur:{}, calib:[]}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -126,7 +126,9 @@ function srsUpdate(it, ok, conf, hinted){
   var r=S.srs[id]||(S.srs[id]={b:0,due:today(),seen:0,ok:0,last:''}), t=today();
   if(ok && r.last && r.last!==t) S.recalled=(S.recalled||0)+1;
   r.seen++; r.last=t;
-  if(ok){ r.ok++; r.b=(conf==='guess'||hinted)?Math.max(r.b,1):Math.min(5,r.b+1); } else r.b=0;
+  if(ok){ r.ok++; r.b=(conf==='guess'||hinted)?Math.max(r.b,1):Math.min(5,r.b+1); if(S.sur&&S.sur[id]) delete S.sur[id]; }
+  else if(conf==='sure'){ r.b=0; (S.sur=S.sur||{})[id]=t; }     // a confident error is the most useful miss: due today, first in line
+  else r.b=Math.max(0, r.b-2);                                    // an ordinary lapse drops two boxes, not all the way
   r.due=addDays(INT[r.b]);
 }
 function srsDueIds(beforeN){
@@ -136,7 +138,7 @@ function srsDueIds(beforeN){
     var sn=SBY[sidOf(id)].n; if(beforeN&&sn>=beforeN) return;
     out.push({id:id,b:r.b,due:r.due,sn:sn});
   });
-  out.sort(function(a,b){ return a.b-b.b || (a.due<b.due?-1:a.due>b.due?1:0) || a.sn-b.sn; });
+  out.sort(function(a,b){ return ((S.sur&&S.sur[a.id])?0:1)-((S.sur&&S.sur[b.id])?0:1) || a.b-b.b || (a.due<b.due?-1:a.due>b.due?1:0) || a.sn-b.sn; });
   return out;
 }
 function dueCount(){ return srsDueIds(0).length; }
@@ -797,7 +799,7 @@ function youView(){
   var cl=currentLevel(), tot=totalDone(), stars=NODES.reduce(function(a,n){ return a+starsOf(n.id); },0), earned=BADGES.filter(function(b){ return S.badges[b.id]; }).length;
   var h='<div class="narrow"><h1 class="ph">You</h1>'
     +'<section class="card rank" data-lv="'+cl.n+'"><span class="rk-z">'+zed(cl.n,'happy',96,'bob')+'</span><div><span class="eyebrow">'+ZNAME[cl.n]+'</span><h2>Level '+cl.n+': '+esc(cl.name)+'</h2><p class="sub">'+esc(cl.range)+(cl.n===5?'':' points')+'. '+levelProg(cl).done+' of '+levelProg(cl).total+' sessions complete.</p></div></section>'
-    +gameYouCard()+skillsCard()+workCard()+setupCard()
+    +gameYouCard()+skillsCard()+calibCard()+workCard()+setupCard()
     +'<div class="kpis"><div class="kpi"><b>'+S.xp+'</b><span>Practice XP</span></div><div class="kpi"><b>'+tot+'</b><span>Steps done</span></div><div class="kpi"><b>'+stars+'</b><span>Stars</span></div><div class="kpi"><b>'+(S.streak.best||0)+'</b><span>Best streak</span></div></div>'
     +'<h2 class="sh">Zed forms <span class="cnt">'+cl.n+' of 5</span></h2><div class="cast">'+LEVELS.map(function(lv){ var on=lv.n<=cl.n; return '<div class="cast-i'+(on?' on':' off')+(lv.n===cl.n?' cur':'')+'" data-lv="'+lv.n+'">'+(on?zed(lv.n,'happy',58):zed(lv.n,'sleep',58,'zlock'))+'<b>Level '+lv.n+'</b><span>'+esc(lv.name)+'</span></div>'; }).join('')+'</div>'
     +learnHealth()+'<h2 class="sh">Badges <span class="cnt">'+earned+' of '+BADGES.length+'</span></h2><div class="bgrid">'
@@ -896,8 +898,7 @@ function award(c, firstTry){
 function wrongAnswer(c){
   L.mistakes++; L.combo=0; recordMiss(c.id);
   L.tries[c.id]=(L.tries[c.id]||0)+1;
-  if(L.tries[c.id]===1 && !L.review) L.queue.push(c.item);
-  else if(L.review && L.tries[c.id]===1) L.queue.push(c.item);
+  if(L.tries[c.id]===1) L.queue.splice(Math.min(L.queue.length, 3), 0, c.item);   // expanding retrieval: ask again after three others
 }
 function check(){
   var c=L.cur, it=c.item; if(c.checked) return;
@@ -1145,10 +1146,12 @@ function intro(){
     +(STAR_KINDS[k]?'<li>Stars: 3 for 90% right the first time, 2 for 70%.</li>':'')+(k==='apply'?'<li>A hint is available on each scenario. It halves the XP.</li>':'');
   var body='<div class="introz"><div><p class="kicker">'+esc(kicker)+'</p><h1 class="bigt">'+esc(title)+'</h1></div>'+zed(n.level||zLv(), L.review?'think':'wink', 92)+'</div><p class="lede">'+esc(text)+'</p>'
     +'<ul class="facts-l">'+facts+'</ul>'
+    +(k==='master'?predHTML():'')
     +(s&&!L.review&&n.kind!=='placement'?phaseStrip(s):'')
     +(s?'<button class="btn ghost" id="sheet" style="justify-self:start">'+ic('doc')+'Study sheet</button>':'');
   shell(body,'<button class="btn wide" id="primary">Start</button>','',false);
   $('#primary').onclick=nextItem;
+  bindPred();
   var sb=$('#sheet'); if(sb) sb.onclick=function(){ go({name:'sheet', sid:s.id, from:{name:'session', sid:s.id}}); };
 }
 function nextStepFrom(n){ return n && n.sid && n.id!=='review' ? nextInSession(n.sid, n.id) : null; }
@@ -1215,7 +1218,7 @@ function masteryRecord(){
 }
 function calibLine(c){
   if(!c.conf) return '';
-  if(c.conf==='sure'&&!c.ok) return '<p class="calib">Sure, but wrong. That is the most useful kind of miss, so it comes back sooner.</p>';
+  if(c.conf==='sure'&&!c.ok) return '<p class="calib surprise"><span class="surp-tag">'+ic('bolt')+'Surprise</span> You were sure, and it was wrong. Confident mistakes are the easiest to fix once you see the answer, so read it twice. It comes back first.</p>';
   if(c.conf==='guess'&&c.ok) return '<p class="calib">Right, but a guess. It is not secure yet, so it comes back.</p>';
   if(c.conf==='sure'&&c.ok) return '<p class="calib good">Sure and right.</p>';
   return '';
@@ -1252,17 +1255,18 @@ function masterDone(){
   var pre=S.pre[s.id], post=S.post[s.id], facts=[['+'+(L.xpGot||0),'XP'],[acc+'%','First try']];
   if(pre&&post) facts.push([pre.a+' to '+post.a,'Guess-first, before and after']);
   if(L.expl) facts.push([L.expl.n+' of '+L.expl.of,'Teach-back points']);
+  var predNote=predResult(s);
   if(L.passed){
     var muddy='<div class="fld muddy"><label for="muddy">Muddiest point: what is still unclear? (optional)</label><textarea id="muddy" placeholder="Leave empty if nothing.">'+esc(S.muddy[s.id]||'')+'</textarea></div>';
     var foot=(nx?'<button class="btn wide" id="primary">Next: '+esc(nx.title)+'</button><button class="btn ghost wide" id="back">Back to session</button>':'<button class="btn wide" id="primary">Continue</button>');
-    shell(doneBlock({title:'Mastered', sub:'You got '+L.first+' of '+L.graded+' right on the first try. The questions come back later so it stays secure.', lv:n.level, mood:'cheer', facts:facts, extra:(L.firstTime?phaseNote(n):'')+objs+'<p class="todaynote"><b>Use it today.</b> '+esc(s.today)+'</p>'+muddy, badges:L.newBadges, confetti:true,
+    shell(doneBlock({title:'Mastered', sub:'You got '+L.first+' of '+L.graded+' right on the first try. The questions come back later so it stays secure.', lv:n.level, mood:'cheer', facts:facts, extra:(L.firstTime?phaseNote(n):'')+predNote+objs+'<p class="todaynote"><b>Use it today.</b> '+esc(s.today)+'</p>'+muddy, badges:L.newBadges, confetti:true,
       note:(L.firstTime?'':'Replay: XP is only awarded the first time.')}), foot, '', false);
     var mu=$('#muddy'); if(mu) mu.oninput=function(){ S.muddy[s.id]=mu.value; save(); };
     $('#primary').onclick=function(){ if(nx) openNode(nx.id); else leave(); };
     var b=$('#back'); if(b) b.onclick=leave;
   } else {
     var foot2='<button class="btn wide" id="primary">Try the check again</button><button class="btn ghost wide" id="sheet2">Review the study sheet</button>'+(rec.fails>=2?'<button class="btn ghost wide" id="skip">Continue anyway and revisit later</button>':'');
-    shell(doneBlock({title:'Not mastered yet', sub:'You got '+L.first+' of '+L.graded+' right on the first try. The pass mark is '+n.need+'. The outcomes below need another look, then try again.', lv:n.level, mood:'think', facts:facts, extra:objs,
+    shell(doneBlock({title:'Not mastered yet', sub:'You got '+L.first+' of '+L.graded+' right on the first try. The pass mark is '+n.need+'. The outcomes below need another look, then try again.', lv:n.level, mood:'think', facts:facts, extra:predNote+objs,
       note:rec.fails>=2?'You can continue now. What you missed returns in later warm-ups.':'Review the sheet, then try again. The questions are the same outcomes, with the answers in a new order.'}), foot2, '', false);
     $('#primary').onclick=function(){ startLesson(n); };
     $('#sheet2').onclick=function(){ go({name:'sheet', sid:s.id, from:{name:'session', sid:s.id}}); };
@@ -1459,5 +1463,6 @@ document.addEventListener('keydown',function(e){
 /*BLITZ*/
 /*FX*/
 /*BOOK*/
+/*SCIENCE*/
 render();
 })();

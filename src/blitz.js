@@ -8,7 +8,10 @@ function blitzPool(){
     if(it.type!=='mcq'||!it.core||it.post) return;
     (S.srs[it.id]?seen:fresh).push(it);
   }); }); });
-  var pool=shuffle(seen).slice(0,BLITZ_N);
+  // at risk first: confident errors, then the lowest boxes and the longest overdue
+  seen.forEach(function(it){ it._r=Math.random(); });
+  seen.sort(function(a,b){ var ra=S.srs[a.id], rb=S.srs[b.id]; return ((S.sur&&S.sur[a.id])?0:1)-((S.sur&&S.sur[b.id])?0:1) || ra.b-rb.b || (ra.due<rb.due?-1:ra.due>rb.due?1:0) || (a._r-b._r); });
+  var pool=seen.slice(0,BLITZ_N);
   if(pool.length<BLITZ_N) pool=pool.concat(shuffle(fresh).slice(0,BLITZ_N-pool.length));
   return pool;
 }

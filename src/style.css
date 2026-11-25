@@ -671,3 +671,23 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 
 .frozc{display:flex;gap:12px;align-items:flex-start;background:var(--l1s);border-color:var(--l1)} .frozc .i{flex:none;width:26px;height:26px;color:var(--l1i)} .frozc p{font-size:15.5px}
 .blitzt{display:grid;gap:10px}
+
+/* ---------- learning science: surprise cue, prediction, calibration ---------- */
+.calib.surprise{display:grid;gap:6px}
+.surp-tag{display:inline-flex;align-items:center;gap:5px;width:max-content;padding:3px 10px;border-radius:99px;background:var(--bad);color:var(--on-sig);font-size:12.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;animation:surpPop .5s cubic-bezier(.2,1.6,.4,1) both}
+.surp-tag .i{width:14px;height:14px}
+@keyframes surpPop{0%{transform:scale(.6) rotate(-6deg);opacity:0}100%{transform:none;opacity:1}}
+.predc{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.predq{font-size:15px;line-height:1.45} .predq .muted{color:var(--ink-2)}
+.preds{display:flex;flex-wrap:wrap;gap:8px} .preds .chip{min-width:44px;min-height:44px;justify-content:center;font-weight:800}
+.predr{display:grid;gap:8px;text-align:start;width:100%}
+.pr-bars{display:grid;gap:8px} .pr-r{display:grid;grid-template-columns:70px 1fr 24px;gap:10px;align-items:center;font-size:14px;font-weight:700}
+.pr-t{height:14px;border-radius:99px;background:var(--bg);border:1px solid var(--line);overflow:hidden;display:block}
+.pr-t i,.cal-b i{display:block;height:100%;width:calc(var(--p)*1%);border-radius:99px;transform-origin:left;animation:dgGrow .9s cubic-bezier(.2,.9,.3,1) both}
+.exp{background:var(--line-2)} .got{background:var(--lv)}
+.calibc{display:grid;gap:10px}
+.cal-l{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cal-l li{display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:center;font-size:13.5px}
+.cal-n{font-weight:800} .cal-v{color:var(--ink-2);font-weight:600}
+.cal-b{display:grid;gap:3px;height:18px;align-content:center} .cal-b i{height:7px}
+@media (max-width:420px){ .cal-l li{grid-template-columns:70px 1fr} .cal-v{grid-column:1/-1} }

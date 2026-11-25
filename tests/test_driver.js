@@ -597,6 +597,26 @@ async function quest(){
   await click('.dg-cache [data-xs="1"]'); await sleep(2600); if(!/0 of 5 blocks read/.test($('.ch-read').textContent)) throw new Error('editing a tool should invalidate everything: '+$('.ch-read').textContent);
   await click('#quit'); if($('#quitok')) await click('#quitok');
   log('explorable diagrams ok: curve, token sampler, context window, prompt cache');
+
+  // ---- learning science: a prediction before the mastery check, the surprise cue for a confident miss, a missed question that returns after three others
+  await openNodeById('s01-CK'); if(!$('.predc')) throw new Error('the mastery intro should ask for a prediction');
+  await click('[data-pred="2"]'); if($('[data-pred="2"]').getAttribute('aria-pressed')!=='true') throw new Error('the prediction chip did not take');
+  await click('#primary');
+  const stemA=$('.stem').textContent, qa=MCQ[stemA][0], badEl=$$('.opt[data-k]').find(o=>o.dataset.k!==qa.key);
+  await click(badEl); await click('[data-conf="sure"]'); await click('#primary');
+  if(!$('.calib.surprise')) throw new Error('a confident miss should show the surprise cue'); if(!/It comes back first/.test($('.calib.surprise').textContent)) throw new Error('surprise cue wording');
+  if(!Object.keys(stored().sur||{}).length) throw new Error('a confident miss should be flagged for early review');
+  await click('#primary'); const between=[]; let back=false;
+  for(let g=0;g<10&&!back;g++){
+    if(screen()==='mcq'){ const st=$('.stem').textContent; if(st===stemA){ back=true; break; } between.push(st); }
+    await step(true);
+  }
+  if(!back) throw new Error('the missed question never came back'); if(between.length!==3) throw new Error('the missed question should return after three others, not '+between.length);
+  await advanceUntil(()=>screen()==='done'); if(!$('.predr')) throw new Error('the mastery screen should compare the prediction with the result');
+  if(!/Expected/.test($('.predr').textContent)) throw new Error('prediction result wording');
+  if(!(stored().calib||[]).length) throw new Error('the prediction was not kept');
+  await click('#back'); await click('[data-tab="you"]'); if(!$('.calibc .cal-l li')) throw new Error('You should show the calibration history');
+  log('learning science ok: prediction kept, surprise cue, early review flag, re-ask after three others');
   log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf
