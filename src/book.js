@@ -22,6 +22,7 @@ function playbookSections(){
   if(tb.length) out.push({h:'In my own words', lines:tb.map(function(id){ return 'Session '+SBY[ITEMS[id].node.split('-')[0]].n+': '+S.expl[id].text.trim(); })});
   var mu=Object.keys(S.muddy).filter(function(k){ return SBY[k] && S.muddy[k] && S.muddy[k].trim(); }).sort();
   if(mu.length) out.push({h:'Still unclear', lines:mu.map(function(k){ return 'Session '+SBY[k].n+': '+S.muddy[k].trim(); })});
+  if(S.doctor && S.doctor.text && words(S.doctor.text)>=10) out.push({h:'My prompt', blocks:[{t:'Written in the Prompt Doctor (best '+(S.doctor.best||0)+' of 8 habits)', text:S.doctor.text}]});
   var td=Object.keys(S.today).filter(function(k){ return SBY[k] && S.today[k] && SBY[k].today; }).sort();
   if(td.length) out.push({h:'What I put to use', lines:td.map(function(k){ return 'Session '+SBY[k].n+': '+SBY[k].today; })});
   return out;

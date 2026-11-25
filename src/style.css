@@ -704,3 +704,26 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .rates{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
 .rc-mem{display:flex;gap:3px;margin-top:4px} .rc-mem i{width:16px;height:5px;border-radius:3px;background:var(--line-2)} .rc-mem i.on{background:var(--good)}
 .recall .stem{font-size:24px}
+
+/* ---------- glossary and tap-to-define ---------- */
+.term{font:inherit;color:inherit;background:none;border:0;padding:0;border-bottom:2px dotted var(--lv);cursor:help;min-height:0;font-weight:inherit} .term:hover,.term:focus-visible{background:var(--lv-soft);border-bottom-style:solid;outline:none;border-radius:3px}
+.termc{max-width:420px;display:grid;gap:12px} .tmean{font-size:17px;line-height:1.5} .think{font-size:15.5px;color:var(--ink-2);line-height:1.45} .think b{color:var(--lv-ink)}
+.gl{display:grid;gap:6px;padding:14px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--line)} .gl h2{font-size:18px;margin:0} .gl.seen h2::after{content:"looked up";margin-inline-start:10px;font:700 11.5px var(--font-body);color:var(--good);letter-spacing:.06em;text-transform:uppercase}
+#glist{display:grid;gap:10px} .gl-s{display:flex;flex-wrap:wrap;gap:6px} .gl-s .chip{min-height:36px;padding:4px 12px;font-size:13px}
+
+/* ---------- prompt doctor ---------- */
+.dtext{min-height:200px;font-family:var(--font-body);font-size:15.5px;line-height:1.5}
+.docc{display:grid;gap:12px}
+.doc-top{display:flex;gap:14px;align-items:center} .doc-top h2{font-size:21px;margin:0}
+.doc-ring{position:relative;display:grid;place-items:center;width:72px;height:72px;flex:none} .doc-ring svg{position:absolute;inset:0;width:100%;height:100%}
+.doc-ring .rt{stroke:var(--line)} .doc-ring .rg{stroke:var(--lv);animation:docRing .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes docRing{from{stroke-dashoffset:var(--full)}}
+.doc-ring b{position:relative;font-family:var(--font-display);font-size:24px} .doc-ring small{font-size:13px;color:var(--ink-2);font-weight:700}
+.doc-l{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.doc-l li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--line);transition:background .3s,border-color .3s}
+.doc-l li b{display:block;font-size:15px} .doc-l li small{display:block;font-size:13.5px;color:var(--ink-2);line-height:1.4} .doc-l li em{font-style:normal;font-weight:700;color:var(--ink-3)}
+.doc-i{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:2px solid var(--line-2);color:var(--on-sig)} .doc-i .i{width:15px;height:15px}
+.doc-l li.on{background:var(--good-bg);border-color:var(--good)} .doc-l li.on .doc-i{background:var(--good);border-color:var(--good)}
+.doc-l li.lit{animation:docLit .6s cubic-bezier(.2,1.4,.4,1) both} @keyframes docLit{0%{transform:scale(.96)}50%{transform:scale(1.03)}100%{transform:none}}
+.doc-l.bonus li.on{background:var(--l1s);border-color:var(--l1)} .doc-l.bonus li.on .doc-i{background:var(--l1);border-color:var(--l1)}
+.doc-w{margin:0;padding:10px 12px 10px 28px;border-radius:12px;background:var(--l3s);border:1px solid var(--gold);font-size:14.5px;display:grid;gap:4px}

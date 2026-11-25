@@ -6,7 +6,7 @@ var KEY = 'z100-practice-v4', OLDKEY = 'z100-practice-v3';
 
 /* ================= storage (per browser; the app works without it) ================= */
 var canSave = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
-function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true, sur:{}, calib:[], cardSrs:{}}; }
+function blank(){ return {xp:0, xpByDay:{}, goal:30, streak:{n:0,last:'',best:0}, goalDays:[], done:{}, missed:[], cleared:0, logs:{}, cases:{}, exits:{}, badges:{}, sheets:[], preview:false, profile:{name:'', role:'', exp:-1, task:'', done:false}, read:{}, act:{}, chest:{}, zedAt:0, zedNode:'', startAt:1, placed:null, today:{}, debrief:{}, srs:{}, mast:{}, obj:{}, pre:{}, post:{}, cp:{}, expl:{}, muddy:{}, conf:{sure:[0,0], think:[0,0], guess:[0,0]}, hints:0, recalled:0, sparks:0, freezes:0, boost:0, cards:{}, sdone:{}, plSeen:0, blitz:{best:0,runs:0,day:'',runsDay:0,bestCombo:0}, sound:false, haptics:true, sur:{}, calib:[], cardSrs:{}, terms:{}, doctor:{best:0,text:'',paid:false}}; }
 function load(){ try{ var r = canSave && (localStorage.getItem(KEY) || localStorage.getItem(OLDKEY)); return r ? Object.assign(blank(), JSON.parse(r)) : blank(); }catch(e){ return blank(); } }
 var S = load();
 function save(){ if(!canSave) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -229,6 +229,8 @@ var BADGES = [
   {id:'agent', icon:'mission', name:'Field agent', desc:'Finish five field missions.', have:function(){ return countKind('mission'); }, need:5},
   {id:'ace', icon:'star', name:'Mission ace', desc:'Earn three stars on five field missions.', have:function(){ return NODES.filter(function(n){ return n.kind==='mission' && starsOf(n.id)===3; }).length; }, need:5},
   {id:'blitz', icon:'bolt', name:'Quick draw', desc:'Score 150 points in one Blitz round.', have:function(){ return (S.blitz&&S.blitz.best)||0; }, need:150},
+  {id:'terms', icon:'doc', name:'Word nerd', desc:'Look up 15 terms in the glossary or in lessons.', have:function(){ return termsLooked(); }, need:15},
+  {id:'doctor', icon:'pen', name:'Prompt doctor', desc:'Show six of the eight habits in a prompt of your own.', have:function(){ return (S.doctor&&S.doctor.paid)?1:0; }, need:1},
   {id:'chests', icon:'chest', name:'Treasure hunter', desc:'Open 5 chests.', have:function(){ return Object.keys(S.chest).length; }, need:5},
   {id:'goal5', icon:'target', name:'Goal getter', desc:'Meet your daily goal on five different days.', have:function(){ return S.goalDays.length; }, need:5},
   {id:'xp500', icon:'bolt', name:'Five hundred', desc:'Earn 500 practice XP.', have:function(){ return S.xp; }, need:500},
@@ -253,7 +255,7 @@ function go(v){ view=v; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
-  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView, recall:recallView})[view.name]();
+  ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView, recall:recallView, glossary:glossaryView, doctor:doctorView})[view.name]();
   armGuard();
   showPending();
 }
@@ -263,12 +265,12 @@ var guardOn=false;
 function armGuard(){ if(!guardOn && view.name!=='learn' && view.name!=='onboard' && view.name!=='place'){ try{ history.pushState({z:1},''); guardOn=true; }catch(e){} } }
 function backInApp(){
   var m=$('.modal');
-  if(m){ var x=$('#noteX',m)||$('#stay',m)||$('#celeDone',m); if(x) x.click(); else if(m.parentNode) m.parentNode.removeChild(m); return; }
+  if(m){ var x=$('#noteX',m)||$('#stay',m)||$('#celeDone',m)||$('#termX',m); if(x) x.click(); else if(m.parentNode) m.parentNode.removeChild(m); return; }
   var n=view.name;
   if(n==='blitz'||n==='recall'){ var bq=$('#quit'); if(bq) bq.click(); else go({name:'review'}); return; }
   if(n==='lesson'||n==='task'||n==='kase'||n==='question'||n==='gate'){ var q=$('#quit'); if(q) q.click(); else leave(); return; }
   if(n==='onboard'||n==='place') return; // setup and placement are not interrupted by Back
-  go({name:n==='sheet'?'sheets':(n==='shop'||n==='album'||n==='playbook'||n==='cert')?'you':'learn'});
+  go({name:n==='sheet'?'sheets':(n==='shop'||n==='album'||n==='playbook'||n==='cert')?'you':(n==='glossary'||n==='library'||n==='doctor')?'sheets':'learn'});
 }
 window.addEventListener('popstate',function(){
   var atRoot=view.name==='learn' && !$('.modal');
@@ -695,12 +697,13 @@ function blockHTML(b){
   if(b.t==='stats') return '<div class="statrow">'+b.items.map(function(i){ return '<div class="stat3"><b>'+esc(i.n)+'</b><span>'+esc(i.l)+'</span></div>'; }).join('')+'</div>';
   if(b.t==='src') return NOTES[b.id] ? '<p class="srcn">Source note: <button type="button" class="srcb" data-note="'+esc(b.id)+'">'+esc(b.title)+'</button></p>' : '<p class="srcn">Source: '+esc(b.title)+'</p>';
   if(b.t==='quote') return '<blockquote class="bq">'+inl(b.text)+(b.by?'<small>'+esc(b.by)+'</small>':'')+'</blockquote>';
-  return '<p>'+inl(b.text)+'</p>';
+  return '<p>'+termize(inl(b.text))+'</p>';
 }
 function sheetsView(){
   var q=(view.q||'').toLowerCase().trim();
   var h='<div class="narrow"><div class="phz"><div><h1 class="ph">Study sheets</h1><p class="lead">One page per session: the cheat sheet, terms, tables and common mistakes. Open one before you practise.</p></div>'+zed(zLv(),'think',84)+'</div>'
     +'<button class="libgo" id="libGo"><span class="libi">'+ic('layers')+'</span><span><b>Source notes</b><small>'+Object.keys(REFU).length+' short notes from Anthropic\'s documentation and research, readable here. '+refsOpened()+' read.</small></span>'+ic('arrow')+'</button>'
+    +glossCard()+doctorCard()
     +'<div class="search">'+ic('search')+'<input id="q" type="search" placeholder="Search all 24 sheets" aria-label="Search study sheets" value="'+esc(view.q||'')+'" autocomplete="off"></div><div id="sl">';
   var any=false;
   LEVELS.forEach(function(lv){
@@ -715,13 +718,15 @@ function sheetsView(){
   var inp=$('#q'); inp.oninput=function(){ view.q=inp.value; var pos=inp.selectionStart; sheetsView(); var n=$('#q'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
   $$('[data-sheet]').forEach(function(b){ b.onclick=function(){ go({name:'sheet', sid:b.getAttribute('data-sheet'), from:{name:'sheets', q:view.q}}); }; });
   $('#libGo').onclick=function(){ go({name:'library'}); };
+  $('#glossGo').onclick=function(){ go({name:'glossary'}); };
+  $('#doctorGo').onclick=function(){ go({name:'doctor'}); };
 }
 function sheetView(){
   var s=SBY[view.sid]; if(S.sheets.indexOf(s.id)<0){ S.sheets.push(s.id); save(); var nb=checkBadges(); if(nb.length) toast('Badge earned: '+nb[0].name); }
   var h='<div class="narrow sheet"><button class="back" id="back">'+ic('back')+'<span>Back</span></button><p class="kicker">Session '+s.n+': '+esc(s.title)+'</p><h1 class="ph">Study sheet</h1>';
   s.sheet.forEach(function(sec){ h+='<section><h2>'+esc(sec.title)+'</h2>'+sec.blocks.map(blockHTML).join('')+'</section>'; });
   h+=refShelf(s,true)+'</div>';
-  setPage(h,view.from&&view.from.name==='sheets'?'sheets':'learn',s.level);
+  setPage(h,view.from&&(view.from.name==='sheets'||view.from.name==='glossary')?'sheets':'learn',s.level);
   bindRefs();
   $('#back').onclick=function(){ go(view.from||{name:'sheets'}); };
 }
@@ -970,14 +975,14 @@ function lessonView(){
   if(L.phase==='intro') return intro();
   if(L.phase==='done') return doneScreen();
   var c=L.cur, it=c.item, r=({teach:scrTeach, mcq:scrMcq, fill:scrFill, match:scrMatch, order:scrOrder, flash:scrFlash, explain:scrExplain, mission:scrMission})[it.type](c);
-  shell(r.body, r.foot, r.fcls, it.type!=='mission'); bindLesson(); if(it.type==='mission') bindMission(c);
+  shell(r.body, r.foot, r.fcls, it.type!=='mission'); bindLesson(); bindTerms(); if(it.type==='mission') bindMission(c);
 }
 function scrTeach(c){
   var it=c.item, kick=L.node.kind==='demo'?'See it':L.node.kind==='field'?'From the sources':'Learn';
   var b='<p class="kicker">'+kick+'</p><h1 class="bigt">'+esc(it.title)+'</h1>';
   if(it.blocks) b+='<div class="rich">'+it.blocks.map(blockHTML).join('')+'</div>';
   else {
-    if(it.paras) b+='<div class="paras">'+it.paras.map(function(p){ return '<p>'+inl(p)+'</p>'; }).join('')+'</div>';
+    if(it.paras) b+='<div class="paras">'+it.paras.map(function(p){ return '<p>'+termize(inl(p))+'</p>'; }).join('')+'</div>';
     if(it.flow) b+='<ol class="flow">'+it.flow.map(function(f){ return '<li>'+inl(f)+'</li>'; }).join('')+'</ol>';
     if(it.note) b+='<p class="figcap">'+inl(it.note)+'</p>';
     if(it.table) b+=blockHTML(Object.assign({t:'table'}, it.table));
@@ -1466,5 +1471,7 @@ document.addEventListener('keydown',function(e){
 /*BOOK*/
 /*SCIENCE*/
 /*RECALL*/
+/*GLOSS*/
+/*DOCTOR*/
 render();
 })();

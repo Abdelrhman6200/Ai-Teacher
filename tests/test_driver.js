@@ -280,6 +280,7 @@ async function gameChecks(){
   log('streak freeze ok: '+flame0+' -> '+flame1);
 }
 
+const DOC_OWN='You are an operations analyst writing for a busy director who reads on a phone, so the note must be brief. Use the weekly figures pasted below inside <data> tags. Write three bullets under 90 words, because the director only has a minute. If the figures do not cover a point, say so rather than guessing. Here is one example of the style: Revenue is up 4 percent on last week, driven by renewals. It is good when every number comes from the data and each bullet names one action.\n<data>\nthe weekly figures go here\n</data>';
 const stored=()=>JSON.parse(localStorage.getItem('z100-practice-v4')||'{}');
 async function runPlacement(passUpTo){ // answers right for levels up to passUpTo, wrong above it
   await click('#primary'); // intro Start
@@ -457,7 +458,7 @@ async function quest(){
   kd('Escape'); await sleep(5); if($('.notem')||document.getElementById('app').inert) throw new Error('Escape did not close the note and free the page behind it');
   if(document.activeElement!==opener) throw new Error('focus did not return to the control that opened the note');
   const pop=async()=>{ window.dispatchEvent(new PopStateEvent('popstate')); await sleep(10); };
-  await pop(); if(!$('[data-tab="learn"].on')) throw new Error('Back from the library did not return to Learn');
+  await pop(); if(!$('[data-tab="sheets"].on')) throw new Error('Back from the library did not return to Sheets');
   await toSession('s01'); await pop(); if(!$('[data-tab="learn"].on')) throw new Error('Back from a session did not return to Learn');
   await openNodeById('s01-P1'); await advanceUntil(()=>screen()==='mcq'); await pop();
   if(!$('.modal')) throw new Error('Back inside a question should ask before quitting'); await pop();
@@ -634,6 +635,35 @@ async function quest(){
   const want=Math.max(1, dueN0-Math.min(8,dueN0)+1); if(dueN1!==want) throw new Error('after a round the missed card is due again and the rest wait: '+dueN1+' vs '+want);
   await click('[data-tab="you"]'); await click('.gamec [data-go-album]'); if(!$('.rcard .rc-mem')) throw new Error('album cards should show memory strength');
   log('recall ok: '+rated+' cards flipped and rated, scheduled, memory strength shown');
+
+  // ---- glossary: built from the sheet tables, searchable, and tap-to-define inside lessons
+  await click('[data-tab="sheets"]'); await click('#glossGo'); const gn=$$('.gl').length; if(gn<150) throw new Error('the glossary lists only '+gn+' terms');
+  if(document.querySelector('a[href]')) throw new Error('a link in the glossary');
+  setv($('#gq'),'token'); await sleep(5); const gh=$$('.gl').length; if(!(gh>0&&gh<gn)) throw new Error('glossary search broke: '+gh+' of '+gn);
+  await click('[data-gs]'); if(!$('.sheet')) throw new Error('a session chip should open that study sheet'); await click('#back'); if(!$('#gq')) throw new Error('Back from a sheet should return to the glossary');
+  await toLearn(); await openNodeById('s01-L1'); await advanceUntil(()=>screen()==='teach'&&!!$('.term'),80);
+  const tb=$('.term'), tk=tb.dataset.term, xpT0=stored().xp;
+  await click(tb); if(!$('.termm')||!/In plain words/.test($('.termm').textContent)) throw new Error('tapping a term should open its definition');
+  if(stored().xp!==xpT0+1) throw new Error('the first look-up should pay 1 XP, paid '+(stored().xp-xpT0)); if(!stored().terms[tk]) throw new Error('the look-up was not kept');
+  await click('#termDone'); if($('.termm')) throw new Error('the definition did not close');
+  await click($('.term')); await click('#termX'); if(stored().xp!==xpT0+1) throw new Error('a second look-up of the same term should not pay again');
+  await click('#quit'); if($('#quitok')) await click('#quitok');
+  log('glossary ok: '+gn+' terms, search, session chips, tap-to-define pays once');
+
+  // ---- prompt doctor: the checklist reacts to the text, a skeleton fills the gaps, a real prompt pays once
+  await toLearn(); await click('[data-tab="sheets"]'); await click('#doctorGo'); if(!$('#dtext')) throw new Error('the Prompt Doctor did not open');
+  const score=()=>+/(\d) of 8 habits/.exec($('.doc-ring').getAttribute('aria-label'))[1];
+  if(score()!==0) throw new Error('an empty prompt should score 0');
+  await click('#exWeak'); const weak=score(); if(weak>3||!$('.doc-w')) throw new Error('the weak example should score low and warn, scored '+weak);
+  if(!/don't/i.test($('.doc-w').textContent)) throw new Error('the weak example should be flagged for negation');
+  await click('#exStrong'); const strong=score(); if(strong<7) throw new Error('the stronger example should score 7 or 8, scored '+strong);
+  const own=$('#dtext'); setv(own,'Write a short note for our new customers about the delivery delay, because they are worried. Use two paragraphs, under 80 words. It must name the new date.'); await sleep(5);
+  const mine=score(); if(mine<3||mine>=strong) throw new Error('a short sensible prompt should land in the middle, scored '+mine);
+  await click('#dskel'); if(!/\[/.test($('#dtext').value)||score()<=mine) throw new Error('the skeleton should add the missing parts and raise the score');
+  const xpD0=stored().xp; setv(own,DOC_OWN); await sleep(8); if(score()<6) throw new Error('the long own prompt should reach 6, scored '+score());
+  if(stored().xp!==xpD0+10) throw new Error('a real prompt at 6 of 8 should pay 10 XP once, paid '+(stored().xp-xpD0)); setv(own,DOC_OWN+' '); await sleep(8); if(stored().xp!==xpD0+10) throw new Error('the Doctor should pay only once');
+  if(!stored().doctor.paid||!stored().doctor.text) throw new Error('the prompt was not kept');
+  log('prompt doctor ok: weak '+weak+', stronger '+strong+', own '+mine+', skeleton, pays once');
   log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf
