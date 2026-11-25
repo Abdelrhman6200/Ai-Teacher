@@ -571,6 +571,32 @@ async function quest(){
   window.dispatchEvent(new PopStateEvent('popstate')); await sleep(10); if(!$('[data-tab="you"].on')||$('.playbook')) throw new Error('Back from the playbook should return to You');
   await click('#goCert'); if(!/Not yet/.test($('.narrow').textContent)) throw new Error('the certificate should wait for the first gate');
   log('playbook ok: rule cards listed, copy works, Back returns; certificate locked before the first gate');
+
+  // ---- explorable diagrams: forgetting curve, token sampler, context window, prompt cache
+  await click('[data-tab="review"]'); if(!$('.dg-curve .cv-svg')) throw new Error('the Review tab should explain spacing with the curve');
+  const cvr=$('.dg-curve input[type=range]'); setv(cvr,'0'); await sleep(5); if(!/On day 0, memory is about 100 percent/.test($('.cv-read').textContent)) throw new Error('curve at day 0: '+$('.cv-read').textContent);
+  setv(cvr,'14'); await sleep(5); const m14=/about (\d+) percent without review and about (\d+) percent with/.exec($('.cv-read').textContent); if(!m14||+m14[2]<=+m14[1]+40) throw new Error('spaced review should beat no review by a wide margin at day 14: '+$('.cv-read').textContent);
+  const lm=findTeach((i,n,s)=>s.id==='s01'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind==='tokens')); if(!lm) throw new Error('no token sampler in session 1');
+  await openNodeById(lm.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.dg-tokens')); await sleep(4200);
+  if(!$('.tk-out').textContent.trim()) throw new Error('the token sampler wrote nothing'); if(!/It wrote/.test($('.tk-verdict').textContent)) throw new Error('the sampler gave no verdict');
+  const first=$('.tk-out').textContent; let varied=false;
+  for(let g=0;g<14&&!varied;g++){ await click('[data-x="again"]'); await sleep(4200); if($('.tk-out').textContent!==first) varied=true; }
+  if(!varied) throw new Error('sampling again should sometimes give a different continuation');
+  await click('.dg-tokens [data-xs="1"]'); await sleep(4200); if($('.dg-tokens [data-xs="1"]').getAttribute('aria-pressed')!=='true') throw new Error('prompt version toggle did not move');
+  await click('#quit'); if($('#quitok')) await click('#quitok');
+  const wf=findTeach((i,n,s)=>n.k==='L3'&&s.id==='s01'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind==='window')); if(!wf) throw new Error('no window explorer in session 1');
+  await toSession('s01'); await openNodeById(wf.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.dg-window')); await sleep(1800);
+  const wr=$('.dg-window input[type=range]'); setv(wr,'0'); await sleep(5); if(!/Plenty of room/.test($('.wn-read').textContent)) throw new Error('an empty window should say there is room: '+$('.wn-read').textContent);
+  setv(wr,'30'); await sleep(5); if(!/Near the limit/.test($('.wn-read').textContent)) throw new Error('a full window should warn: '+$('.wn-read').textContent);
+  await click('[data-x="fresh"]'); await sleep(2200); if(+wr.value>3) throw new Error('summarise and start fresh should empty the window, left at '+wr.value);
+  await click('#quit'); if($('#quitok')) await click('#quitok');
+  const cf=findTeach((i,n,s)=>n.k==='L3'&&s.id==='s17'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind==='cache')); if(!cf) throw new Error('no cache explorer in session 17');
+  await toSession('s17'); await openNodeById(cf.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.dg-cache')); await sleep(2600);
+  if(!/2 of 5 blocks read/.test($('.ch-read').textContent)) throw new Error('with the time in the middle two blocks should hit: '+$('.ch-read').textContent);
+  await click('[data-x="move"]'); await sleep(2600); if(!/3 of 5 blocks read/.test($('.ch-read').textContent)) throw new Error('with the changing blocks last three blocks should hit: '+$('.ch-read').textContent);
+  await click('.dg-cache [data-xs="1"]'); await sleep(2600); if(!/0 of 5 blocks read/.test($('.ch-read').textContent)) throw new Error('editing a tool should invalidate everything: '+$('.ch-read').textContent);
+  await click('#quit'); if($('#quitok')) await click('#quitok');
+  log('explorable diagrams ok: curve, token sampler, context window, prompt cache');
   log('library ok: '+all+' entries, deep '+deep+', level 5 '+l5+', body search for a phrase inside a note '+hit);
 
   // ---- a source step plays through like any other, and the sheet carries the shelf

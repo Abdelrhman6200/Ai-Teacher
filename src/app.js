@@ -771,7 +771,7 @@ function reviewView(){
       +Object.keys(by).sort().map(function(k){ var s=SBY[k]; return '<div class="rrow" data-lv="'+s.level+'"><span class="sn">'+s.n+'</span><span class="sb"><b>'+esc(s.title)+'</b></span><span class="sx">'+by[k]+'</span></div>'; }).join('')+'</div>';
   }
   h+=dueSection();
-  h+=blitzCard();
+  h+=blitzCard()+spacingCard();
   h+='<p class="fine">Wiped so far: '+(S.cleared||0)+'.</p></div>';
   setPage(h,'review');
   var g=$('#go'); if(g) g.onclick=function(){ startReview(); };

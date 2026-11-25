@@ -69,6 +69,8 @@ function dgHTML(b){
       +(b.axis?'<p class="dg-total">'+esc(b.axis)+'</p>':'');
   } else if(k==='timeline'){
     h+='<ol class="dg-tl">'+b.events.map(function(e,i){ return '<li'+(e.warn?' class="warn"':'')+' style="--i:'+i+'"><span class="dgt-dot"></span><span class="dgt-b"><b>'+esc(e.h)+'</b>'+(e.s?'<span>'+esc(e.s)+'</span>':'')+'</span></li>'; }).join('')+'</ol>';
+  } else if(k==='tokens'||k==='window'||k==='cache'||k==='curve'){
+    h+=exploreHTML(b);
   }
   if(b.note) h+='<p class="dg-note">'+inl(b.note)+'</p>';
   return h+'</figure>';
@@ -76,6 +78,8 @@ function dgHTML(b){
 function bindDiagrams(){
   $$('[data-dg]').forEach(function(f){
     var bt=$('.dg-re',f); if(!bt) return;
-    bt.onclick=function(){ f.classList.remove('play'); void f.offsetWidth; f.classList.add('play'); var a=$('animateMotion',f); try{ if(a&&a.beginElement) a.beginElement(); }catch(e){} };
+    if(!f._xb && $('[data-xid]',f)){ f._xb=1; exploreBind(f); }
+    bt.onclick=function(){ f.classList.remove('play'); void f.offsetWidth; f.classList.add('play'); var a=$('animateMotion',f); try{ if(a&&a.beginElement) a.beginElement(); }catch(e){} var xe=$('[data-xid]',f); if(xe&&xe._replay) xe._replay(); };
   });
 }
+/*EXPLORE*/

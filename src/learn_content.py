@@ -14,7 +14,7 @@ def load():
             Q[k] = v
     return Q
 
-KINDS = {'flow', 'loop', 'stack', 'compare', 'bars', 'tree', 'quad'}
+KINDS = {'flow', 'loop', 'stack', 'compare', 'bars', 'tree', 'quad', 'tokens', 'window', 'cache', 'curve'}
 
 def validate(Q, outcome_counts):
     """outcome_counts: {session_number: number_of_outcomes}"""

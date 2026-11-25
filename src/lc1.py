@@ -67,6 +67,18 @@ Q[1] = dict(
   dict(kind='loop', title='How one answer is written', center='next token', center2='no fact check in the loop',
        steps=[dict(h='Read', s='your text is cut into tokens.'), dict(h='Score', s='every possible next token gets a score.'),
               dict(h='Pick', s='one token is chosen.'), dict(h='Append', s='it joins the text, and the loop repeats until it stops.')]),
+  dict(kind='tokens', title='Pick, not look up', prompt='Our Q3 revenue grew by',
+       note='Illustrative weights, not real model output. The shape is the point: one piece at a time, chosen by weight, with no fact check in the loop.',
+       variants=[
+           dict(label='Plain question', warn=['12', '8', '15', '7'],
+                says={'I do not know': 'This time it said it does not know. Without permission and a source, that is the unlikely pick.',
+                      '*': 'It picked a number because a number fits the sentence. Nothing in the loop checked a ledger. If the figure matters, give Claude the report and open it.'},
+                steps=[dict(c=[['12', 30], ['8', 25], ['15', 20], ['7', 15], ['I do not know', 10, 'end']]), dict(c=[['percent', 70], ['million', 20], ['times', 10]])]),
+           dict(label='Source missing, permission to say so', warn=['12', '8', '15', '7'],
+                says={'I do not know': 'With permission to say so and no source, "I do not know" became the most likely piece. That is a cheap guard against invented numbers.',
+                      '*': 'Even with permission, a number can still win a sample. Giving it the report is the real fix.'},
+                steps=[dict(c=[['I do not know', 60, 'end'], ['12', 15], ['8', 10], ['15', 10], ['7', 5]]), dict(c=[['percent', 70], ['million', 20], ['times', 10]])]),
+       ]),
   dict(kind='tree', title='Where an answer comes from', root='Every answer',
        kids=[dict(h='Training', s='Stopped on one day, the cutoff'), dict(h='Context', s='Everything it sees right now'), dict(h='Instructions', s='The brief you give it')]),
  ])
