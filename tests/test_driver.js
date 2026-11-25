@@ -600,6 +600,24 @@ async function quest(){
   await click('#quit'); if($('#quitok')) await click('#quitok');
   log('explorable diagrams ok: curve, token sampler, context window, prompt cache');
 
+  // ---- two more explorables: the cost of a month, and the dangerous combination
+  const cc=findTeach((i,n,s)=>s.id==='s03'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind==='cost')); if(!cc) throw new Error('no cost explorer in session 3');
+  await toSession('s03'); await openNodeById(cc.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.dg-cost'),60);
+  const cs=()=>$$('.cs-r b').map(b=>b.textContent);
+  if(cs().join(' ')!=='$120 $60 $30 $1.50') throw new Error('the default month should match the lesson table: '+cs().join(' '));
+  await click('[data-cs="batch"]'); if(cs()[0]!=='$60') throw new Error('Batch should halve the cost: '+cs().join(' ')); await click('[data-cs="batch"]');
+  setv($('.dg-cost input[type=range]'),'10000'); await sleep(5); if(cs()[0]!=='$1,200') throw new Error('ten times the runs should cost ten times: '+cs().join(' '));
+  if(!/80 times/.test($('.cs-read').textContent)&&!/times the cheapest/.test($('.cs-read').textContent)) throw new Error('cost reading');
+  await click('#quit'); if($('#quitok')) await click('#quitok');
+  const tfm=findTeach((i,n,s)=>s.id==='s22'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind==='trifecta')); if(!tfm) throw new Error('no combination explorer in session 22');
+  await toSession('s22'); await openNodeById(tfm.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.dg-trifecta'),60);
+  if(!$('.tf-read.bad')) throw new Error('all three legs should read as dangerous');
+  await click('[data-fixi="2"]'); if(!/Two of three/.test($('.tf-read').textContent)||!$('.tf-read.mid')) throw new Error('removing a leg should lower the risk: '+$('.tf-read').textContent);
+  await click('.dg-trifecta [data-xs="2"]'); if(!$('.tf-read.mid')) throw new Error('the drafter preset has two legs');
+  await click('.dg-trifecta .tf-t'); if(!$('.tf-read.good')) throw new Error('one leg should read as low risk');
+  await click('#quit'); if($('#quitok')) await click('#quitok');
+  log('explorables 5 and 6 ok: cost calculator matches the lesson table, remove-a-leg security explorer');
+
   // ---- learning science: a prediction before the mastery check, the surprise cue for a confident miss, a missed question that returns after three others
   await openNodeById('s01-CK'); if(!$('.predc')) throw new Error('the mastery intro should ask for a prediction');
   await click('[data-pred="2"]'); if($('[data-pred="2"]').getAttribute('aria-pressed')!=='true') throw new Error('the prediction chip did not take');

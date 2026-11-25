@@ -113,8 +113,11 @@ Q[22] = dict(
      "I threat-model the untrusted inputs, powerful tools and reachable data and look for the dangerous combination of private data, untrusted content and an outbound action, removing at least one. I rely on enforced defences, not prompts: least-privilege tools, deny rules, hooks, an OS-level sandbox with a network allowlist and human approval for irreversible actions. I test with planted injections and roll out through managed settings with logging, spend limits and an audit trail.",
      ["Threat model and the dangerous combination", "Enforced defences, not prompt lines", "Injection test passes when a control stops it", "Rollout with managed settings and an audit trail"]),
  dg=[
-  dict(kind='quad', title='The dangerous combination', y='What the agent can do', x='What it touches',
-       cells=[dict(h='Private data', s='Isolate it'), dict(h='Untrusted content', s='Keep it from privileged agents'), dict(h='Outward action', s='Block egress, add approval'), dict(h='All three together', s='Remove at least one')]),
+  dict(kind='trifecta', title='The dangerous combination',
+       legs=[dict(h='Private data', s='Records, files, secrets'), dict(h='Untrusted content', s='Emails, web pages, tool results'), dict(h='Can act or send', s='Send mail, post, run commands')],
+       presets=[dict(label='Support agent', on=[1, 1, 1]), dict(label='Inbox reader, read-only', on=[1, 1, 0]), dict(label='Drafter on trusted notes', on=[1, 0, 1]), dict(label='Web summariser, no secrets', on=[0, 1, 1])],
+       fixes=['Isolate the data from this agent', 'Keep untrusted content away from it', 'Block egress and require approval to send'],
+       note='A model can be fooled, so design so that a fooled agent cannot finish the job. Remove at least one leg.'),
   dict(kind='flow', title='Layers, each assuming the one before can fail', steps=[dict(h='Screen input', s='Known attack patterns.'), dict(h='Least privilege', s='Limit damage.'), dict(h='Deny and hooks', s='Named actions.'), dict(h='Sandbox', s='Files and network.'), dict(h='Approval and logs', s='Irreversible actions.')]),
  ])
 
@@ -155,6 +158,9 @@ Q[23] = dict(
   dict(kind='compare', title='Free wins and trade-offs', leftTone='good', rightTone='neutral', left=dict(h='Free wins: no quality loss', items=['Prompt caching', 'Tidy prompts and outputs', 'Batch for non-urgent work: half price']),
        right=dict(h='Trade-offs: test each one', items=['A smaller model', 'Lower effort', 'Output caps and session budgets'])),
   dict(kind='flow', title='Retry safely', steps=[dict(h='Error', s='Rate limit or overload.'), dict(h='Back off', s='Wait longer each time.'), dict(h='Cap', s='Stop after a few tries.'), dict(h='Fallback', s='Another model or a person.')]),
+  dict(kind='cost', title='Free wins, in dollars', runs=20000, tin=6000, tout=500, batch=True, cache=True,
+       models=[dict(h='Fable 5.2', i=8, o=40, c=0.025), dict(h='Opus 5.5', i=4, o=20, c=0.05), dict(h='Sonnet 5.5', i=2, o=10, c=0.05), dict(h='Haiku 5.5', i=0.10, o=0.50, c=0.1)],
+       note='Switch the two boxes off and on to see what each free win takes off. A cache read costs a fraction of the base input price, and cache hits inside a batch are best effort. Prices as of 16 November 2026.'),
  ])
 
 Q[24] = dict(

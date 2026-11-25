@@ -194,8 +194,9 @@ Q[3] = dict(
      "I start from a tier that fits, either capability-first on Opus 5.5 or efficiency-first on Haiku 5.5, and write a rubric before I run anything. I test on my own inputs, tune effort before switching model, and move up or down only when scores say so. I compare cost per finished task and check the model's lifecycle before depending on it.",
      ["Picks a starting approach and a tier", "Writes the rubric before running the test", "Changes model because of scores, after tuning effort", "Looks at cost per finished task or lifecycle"]),
  dg=[
-  dict(kind='bars', title='Cost per 1,000 requests', unit='10,000 tokens in and 1,000 out per request. As of the course notes, 16 November 2026.',
-       rows=[dict(h='Fable 5.2', v=120, label='$120'), dict(h='Opus 5.5', v=60, label='$60'), dict(h='Sonnet 5.5', v=30, label='$30'), dict(h='Haiku 5.5', v=1.5, label='$1.50')]),
+  dict(kind='cost', title='Cost per month', runs=1000, tin=10000, tout=1000,
+       models=[dict(h='Fable 5.2', i=8, o=40, c=0.025), dict(h='Opus 5.5', i=4, o=20, c=0.05), dict(h='Sonnet 5.5', i=2, o=10, c=0.05), dict(h='Haiku 5.5', i=0.10, o=0.50, c=0.1)],
+       note='Dollars per million tokens as of the course notes, 16 November 2026: Fable 5.2 $8 in and $40 out, Opus 5.5 $4 and $20, Sonnet 5.5 $2 and $10, Haiku 5.5 from $0.10 and $0.50. Batch takes 50 percent off. Prices change, so check the pricing page.'),
   dict(kind='flow', title='A bake-off in four moves',
        steps=[dict(h='Write the rubric', s='Before any run.'), dict(h='Run every model', s='On the same inputs.'), dict(h='Score', s='Against the rubric.'), dict(h='Move on scores', s='Up, down, or tune effort first.')]),
  ])

@@ -23,6 +23,13 @@ function exploreHTML(b){
       +'<div class="ch-rows"><div class="ch-row"><span class="ch-l">Request 1</span><div class="ch-blocks" data-r="1"></div></div><div class="ch-row"><span class="ch-l">Request 2</span><div class="ch-blocks" data-r="2"></div></div></div>'
       +'<p class="ch-read" role="status" aria-live="polite"></p>'
       +'<div class="x-ctl"><button class="btn ghost small" type="button" data-x="send">'+ic('arrow')+'Send request 2</button><button class="btn ghost small" type="button" data-x="move"></button></div>';
+  } else if(k==='cost'){
+    h+=csHTML(b,id);
+  } else if(k==='trifecta'){
+    h+=xSeg('Try a design', b.presets.map(function(p){ return p.label; }), -1)
+      +'<div class="tf-tg">'+b.legs.map(function(l){ return '<button type="button" class="tf-t" aria-pressed="true"><b>'+esc(l.h)+'</b><small>'+esc(l.s)+'</small></button>'; }).join('')+'</div>'
+      +'<svg class="tf-svg" viewBox="0 0 320 190" role="img" aria-label="Three overlapping circles: private data, untrusted content and the ability to act"><circle class="tf-c a" cx="122" cy="76" r="58"/><circle class="tf-c b" cx="198" cy="76" r="58"/><circle class="tf-c c" cx="160" cy="128" r="58"/><circle class="tf-core" cx="160" cy="94" r="16"/><text class="tf-l" x="100" y="68" text-anchor="middle">Private data</text><text class="tf-l" x="224" y="68" text-anchor="middle">Untrusted</text><text class="tf-l" x="160" y="162" text-anchor="middle">Can act or send</text></svg>'
+      +'<p class="tf-read" role="status" aria-live="polite"></p><div class="tf-fix x-ctl"></div>';
   } else if(k==='curve'){
     h+='<svg class="cv-svg" viewBox="0 0 320 204" role="img" aria-label="Memory strength over 30 days, with and without spaced review"></svg>'
       +'<div class="cv-ctl"><label for="'+id+'r">Days since you learned it: <b class="cv-d"></b></label><input id="'+id+'r" type="range" min="0" max="30" value="'+(b.day||10)+'"></div>'
@@ -34,7 +41,7 @@ function exploreBind(f){
   var x=$('[data-xid]',f); if(!x) return;
   var b=XREG[x.getAttribute('data-xid')], k=b.kind;
   x._run=(x._run||0)+1;
-  if(k==='tokens') tokBind(x,b); else if(k==='window') wnBind(x,b); else if(k==='cache') chBind(x,b); else if(k==='curve') cvBind(x,b);
+  if(k==='tokens') tokBind(x,b); else if(k==='window') wnBind(x,b); else if(k==='cache') chBind(x,b); else if(k==='curve') cvBind(x,b); else if(k==='cost') csBind(x,b); else if(k==='trifecta') tfBind(x,b);
 }
 
 /* the Review tab explains why reviews are spaced, with the curve to scrub */
@@ -191,4 +198,56 @@ function cvBind(x,b){
   rng.oninput=function(){ paint(+rng.value, false); };
   x._replay=function(){ paint(+rng.value, !xReduce()); };
   paint(+rng.value, !xReduce());
+}
+
+/* ---- cost: what a month costs on each tier, and what the free wins take off ---- */
+function csMoney(v){ return '$'+(v>=100?Math.round(v).toLocaleString('en-US'):v>=10?v.toFixed(0):v.toFixed(2)); }
+function csHTML(b, id){
+  return '<div class="cs-ctl"><label for="'+id+'a">Runs a month: <b class="cs-a"></b></label><input id="'+id+'a" type="range" min="1000" max="100000" step="1000" value="'+b.runs+'">'
+    +'<label for="'+id+'b">Input tokens per run: <b class="cs-b"></b></label><input id="'+id+'b" type="range" min="500" max="20000" step="500" value="'+b.tin+'">'
+    +'<label for="'+id+'c">Output tokens per run: <b class="cs-c"></b></label><input id="'+id+'c" type="range" min="100" max="4000" step="100" value="'+b.tout+'"></div>'
+    +'<label class="chk"><input type="checkbox" data-cs="batch"'+(b.batch?' checked':'')+'><div><b>Not urgent: use the Batch API</b><span>50 percent off input and output.</span></div></label>'
+    +'<label class="chk"><input type="checkbox" data-cs="cache"'+(b.cache?' checked':'')+'><div><b>Cache the stable 80 percent of the input</b><span>Reads cost a fraction of the base price.</span></div></label>'
+    +'<div class="cs-rows"></div><p class="cs-read" role="status" aria-live="polite"></p>';
+}
+function csBind(x,b){
+  var id=x.getAttribute('data-xid'), A=$('#'+id+'a',x), B=$('#'+id+'b',x), C=$('#'+id+'c',x), rows=$('.cs-rows',x), read=$('.cs-read',x);
+  var bt=$('[data-cs="batch"]',x), ca=$('[data-cs="cache"]',x);
+  function cost(m,r,ti,to,batch,cache){
+    var cached=cache?0.8:0, inC=(ti*(1-cached)*m.i + ti*cached*m.i*m.c)/1e6, outC=to*m.o/1e6;
+    return (inC+outC)*(batch?0.5:1)*r;
+  }
+  function paint(){
+    var r=+A.value, ti=+B.value, to=+C.value, batch=bt.checked, cache=ca.checked;
+    $('.cs-a',x).textContent=r.toLocaleString('en-US'); $('.cs-b',x).textContent=ti.toLocaleString('en-US'); $('.cs-c',x).textContent=to.toLocaleString('en-US');
+    var vals=b.models.map(function(m){ return cost(m,r,ti,to,batch,cache); }), mx=Math.max.apply(null,vals), mn=Math.min.apply(null,vals);
+    rows.innerHTML=b.models.map(function(m,i){ return '<div class="cs-r"><span class="cs-n">'+esc(m.h)+'</span><span class="cs-bar"><i style="width:'+Math.max(1.5,vals[i]/mx*100).toFixed(1)+'%"></i></span><b>'+csMoney(vals[i])+'</b></div>'; }).join('');
+    var full=Math.max.apply(null,b.models.map(function(m){ return cost(m,r,ti,to,false,false); }));
+    read.textContent='The top tier costs about '+Math.round(mx/mn)+' times the cheapest for this job. '+((batch||cache)?'Your free wins take the top tier from '+csMoney(full)+' to '+csMoney(mx)+' a month. ':'')+'Compare cost per finished task, and test whether the cheaper tier passes your rubric.';
+  }
+  [A,B,C].forEach(function(el){ el.oninput=paint; }); bt.onchange=paint; ca.onchange=paint;
+  x._replay=function(){ A.value=b.runs; B.value=b.tin; C.value=b.tout; bt.checked=!!b.batch; ca.checked=!!b.cache; paint(); };
+  paint();
+}
+
+/* ---- trifecta: three things make an agent dangerous together; remove one ---- */
+function tfBind(x,b){
+  var on=[1,1,1], btns=$$('.tf-t',x), res=$('.tf-read',x), svg=$('.tf-svg',x), fixes=$('.tf-fix',x), pre=$$('[data-xs]',x);
+  function clearPre(){ pre.forEach(function(p){ p.setAttribute('aria-pressed','false'); }); }
+  function paint(){
+    btns.forEach(function(bt,i){ bt.setAttribute('aria-pressed', !!on[i]); });
+    $$('.tf-c',svg).forEach(function(c,i){ c.classList.toggle('on', !!on[i]); });
+    var n=on.reduce(function(a,v){ return a+v; },0), all=n===3;
+    $('.tf-core',svg).classList.toggle('on', all);
+    res.className='tf-read '+(all?'bad':n===2?'mid':'good');
+    res.textContent=all?'All three are present. A fooled agent could read private data and send it out. Remove one leg.'
+      :n===2?'Two of three. A fooled agent cannot finish a leak by itself. Keep it that way, and watch what could add the third leg back.'
+      :'One or none. The risk is low here. Add a capability and check the combination again.';
+    fixes.innerHTML=all?b.legs.map(function(l,i){ return '<button type="button" class="chip" data-fixi="'+i+'">'+esc(b.fixes[i])+'</button>'; }).join(''):'';
+    $$('[data-fixi]',x).forEach(function(f){ f.onclick=function(){ on[+f.getAttribute('data-fixi')]=0; clearPre(); paint(); }; });
+  }
+  btns.forEach(function(bt,i){ bt.onclick=function(){ on[i]=on[i]?0:1; clearPre(); paint(); }; });
+  pre.forEach(function(p,pi){ p.onclick=function(){ on=b.presets[pi].on.slice(); clearPre(); p.setAttribute('aria-pressed','true'); paint(); }; });
+  x._replay=function(){ on=[1,1,1]; clearPre(); paint(); };
+  paint();
 }

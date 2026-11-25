@@ -32,7 +32,7 @@ function dgHTML(b){
       +(b.total?'<p class="dg-total">'+esc(b.total)+'</p>':'')
       +'<ul class="dg-leg">'+b.parts.map(function(p,i){ return '<li style="--i:'+i+'"><span class="sw c'+(i%6)+'"></span><span><b>'+esc(p.h)+'</b>'+(p.s?' '+esc(p.s):'')+'</span></li>'; }).join('')+'</ul>';
   } else if(k==='compare'){
-    function col(c,cls){ return '<div class="dg-col '+cls+'"><h4>'+esc(c.h)+'</h4><ul>'+c.items.map(function(x,i){ return '<li style="--i:'+i+'">'+inl(x)+'</li>'; }).join('')+'</ul></div>'; }
+    function col(c,cls){ return '<div class="dg-col '+cls+'"><p class="dg-h">'+esc(c.h)+'</p><ul>'+c.items.map(function(x,i){ return '<li style="--i:'+i+'">'+inl(x)+'</li>'; }).join('')+'</ul></div>'; }
     h+='<div class="dg-cmp">'+col(b.left,b.leftTone||'bad')+'<span class="dg-vs" aria-hidden="true">vs</span>'+col(b.right,b.rightTone||'good')+'</div>';
   } else if(k==='bars'){
     var mx=Math.max.apply(null,b.rows.map(function(r){ return r.v; }));
@@ -69,7 +69,7 @@ function dgHTML(b){
       +(b.axis?'<p class="dg-total">'+esc(b.axis)+'</p>':'');
   } else if(k==='timeline'){
     h+='<ol class="dg-tl">'+b.events.map(function(e,i){ return '<li'+(e.warn?' class="warn"':'')+' style="--i:'+i+'"><span class="dgt-dot"></span><span class="dgt-b"><b>'+esc(e.h)+'</b>'+(e.s?'<span>'+esc(e.s)+'</span>':'')+'</span></li>'; }).join('')+'</ol>';
-  } else if(k==='tokens'||k==='window'||k==='cache'||k==='curve'){
+  } else if(k==='tokens'||k==='window'||k==='cache'||k==='curve'||k==='cost'||k==='trifecta'){
     h+=exploreHTML(b);
   }
   if(b.note) h+='<p class="dg-note">'+inl(b.note)+'</p>';

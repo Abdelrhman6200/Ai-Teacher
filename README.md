@@ -60,9 +60,9 @@ Progress is saved in the browser (`localStorage`), per device.
       ("Know what you know") with a plain reading of whether you tend to over- or under-estimate.
     - **Rule cards are a deck.** "Recall the rules" shows a card's name, you say the rule, flip the card, then rate yourself. The same boxes and
       intervals apply, and the album shows each card's memory strength.
-18. **Explorable animations.** Four diagrams you can poke, each labelled as illustrative: a **token sampler** (a model picks by weight, it does not look
+18. **Explorable animations.** Six diagrams you can poke, each labelled as illustrative: a **token sampler** (a model picks by weight, it does not look
     a fact up; sample another, and toggle a "say I do not know" prompt), a **context window** you fill with a slider, a **prompt cache** where changing a block
-    breaks everything after it (move the changing blocks last), and a **forgetting curve** on the Review tab with spaced reviews. They animate on appear and
+    breaks everything after it (move the changing blocks last), and a **forgetting curve** on the Review tab with spaced reviews. Two more: a **cost calculator** (runs, input and output tokens, Batch and cache toggles; its defaults match the lesson table, and the prices were checked against the pricing page) in sessions 3 and 23, and a **remove-a-leg** explorer for the dangerous combination in session 22. They animate on appear and
     on Replay and show the end state at once for reduced motion. Elsewhere: numbers count up on finished screens, the XP bar slides from its last value, a
     chest opens, a right answer floats its XP, meters glide in missions, and Zed reacts to each call.
 19. **Glossary and Prompt Doctor.** The glossary lists 175 terms built from the study-sheet tables, searchable, with a comparison for each. Each session's new
@@ -125,7 +125,7 @@ python3 build.py        # writes index.html from src/ and references/
   and exactly 4 questions per session, a diagram in each). `python3 src/field.py` checks them on its own.
 - `src/cards.py`: the 53 rule cards and their validator. `src/mission.py` with `src/missions_a.py`, `missions_b.py`, `missions_c.py`: the 24 field missions.
 - `src/game.js` (player level, Sparks, shop, cards, rewards, skill profile), `src/missions.js` (the mission player), `src/blitz.js`, `src/fx.js` (sound and
-  vibration), `src/book.js` (playbook and certificate), `src/explore.js` (the four explorable diagrams), `src/science.js` (prediction and calibration),
+  vibration), `src/book.js` (playbook and certificate), `src/explore.js` (the six explorable diagrams), `src/science.js` (prediction and calibration),
   `src/recall.js` (the card deck), `src/glossary.js`, `src/doctor.js` and `src/motion.js` (count-up, bar and chest animation) are joined into the app by `build.py`.
 - `src/diagrams.js`: 13 diagram types, including swim (sequence between actors), rings (defence in layers), delta (before and after),
   matrix, ladder and timeline.
