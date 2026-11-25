@@ -1,6 +1,7 @@
 (async()=>{
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const D=JSON.parse(document.getElementById('course-data').textContent);
+window.__noMotion=true;
 window.__cele=[]; new MutationObserver(ms=>{ for(const m of ms) for(const a of m.addedNodes){ if(a.nodeType===1&&a.classList.contains('cele')){ const h=a.querySelector('h2'); window.__cele.push(h?h.textContent:'?'); } } }).observe(document.body,{childList:true});
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const out=[]; let pre=null;

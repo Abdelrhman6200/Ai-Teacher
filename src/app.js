@@ -251,12 +251,14 @@ function checkBadges(){
 
 /* ================= router ================= */
 var view = {name:(!S.profile.done && !S.xp && !Object.keys(S.done).length) ? 'onboard' : 'learn'}, L = null, lastLevelUp = null;
-function go(v){ view=v; render(); window.scrollTo(0,0); }
+var ENTER=false;
+function go(v){ view=v; ENTER=true; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
   ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView, recall:recallView, glossary:glossaryView, doctor:doctorView})[view.name]();
   armGuard();
+  motionAfter();
   showPending();
 }
 
@@ -300,7 +302,7 @@ function setPage(html, tab, lv){
   APP.innerHTML='<div class="shell"'+(lv?' data-lv="'+lv+'"':'')+'><header class="bar"><div class="bar-in"><div class="brand">'+logoMark(32)+'<span class="wm"><b>Zero</b> <i>to</i> <b>100</b></span></div>'
     +'<div class="stats"><span class="stat flame" title="Day streak">'+ic('flame')+'<b>'+streakNow()+'</b><span class="sr"> day streak</span></span><span class="stat xp" title="Practice XP">'+ic('bolt')+'<b>'+S.xp+'</b><span class="sr"> XP</span></span></div></div>'
     +'<nav class="tabs" aria-label="Sections"><div class="tabs-in">'+tabs.map(function(t){ return '<button class="tab'+(t[0]===tab?' on':'')+'" data-tab="'+t[0]+'"'+(t[0]===tab?' aria-current="page"':'')+'>'+ic(t[2])+'<span>'+t[1]+'</span>'+(t[0]==='review'&&rev?'<i class="dot">'+rev+'</i>':'')+'</button>'; }).join('')+'</div></nav></header>'
-    +'<main class="page">'+hudHTML()+html+'</main></div>';
+    +'<main class="page'+(ENTER?' enter':'')+'">'+hudHTML()+html+'</main></div>'; ENTER=false;
   $$('[data-tab]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab')}); }; });
   $$('[data-hud]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-hud')}); }; });
   bindDiagrams(); showPending();
@@ -898,7 +900,7 @@ function baseXP(it){
 }
 function award(c, firstTry){
   var id=c.id, base=baseXP(c.item), full=firstTry&&!c.hinted;
-  if(!L.correct[id]){ L.correct[id]=1; L.xp += L.review?3:(full?base:Math.ceil(base/2)); if(firstTry && GRADED[c.item.type]) L.first++; L.combo++; L.best=Math.max(L.best,L.combo); }
+  if(!L.correct[id]){ L.correct[id]=1; c.gain=L.review?3:(full?base:Math.ceil(base/2)); L.xp += c.gain; if(firstTry && GRADED[c.item.type]) L.first++; L.combo++; L.best=Math.max(L.best,L.combo); }
   if(firstTry || L.review){ if(S.missed.indexOf(id)>=0){ S.missed=S.missed.filter(function(m){ return m!==id; }); S.cleared=(S.cleared||0)+1; L.cleared++; } }
 }
 function wrongAnswer(c){
@@ -998,7 +1000,7 @@ function fbz(ok){
 }
 function feedback(c, why, ans){
   var tries=L.tries[c.id];
-  return {fcls:c.ok?'good':'bad', foot:'<div class="fb">'+fbz(c.ok)+'<div class="verdict"><strong>'+(c.ok?(L.combo>=3?'Correct, '+L.combo+' in a row':'Correct'):'Not quite')+'</strong>'
+  return {fcls:c.ok?'good':'bad', foot:'<div class="fb">'+fbz(c.ok)+(c.ok&&c.gain?'<span class="xpf" aria-hidden="true">+'+c.gain+' XP</span>':'')+'<div class="verdict"><strong>'+(c.ok?(L.combo>=3?'Correct, '+L.combo+' in a row':'Correct'):'Not quite')+'</strong>'
     +(c.ok||!ans?'':'<p class="ans">Answer: '+esc(ans)+'</p>')+(why?'<p>'+esc(why)+'</p>':'')+calibLine(c)
     +(!c.ok&&tries===1?'<p class="again">It comes back once before this step ends.</p>':'')+'</div></div><button class="btn '+(c.ok?'good':'bad')+' wide" id="primary">Continue</button>'};
 }
@@ -1473,5 +1475,6 @@ document.addEventListener('keydown',function(e){
 /*RECALL*/
 /*GLOSS*/
 /*DOCTOR*/
+/*MOTION*/
 render();
 })();

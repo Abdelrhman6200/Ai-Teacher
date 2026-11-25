@@ -738,6 +738,35 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;back
 .doc-l.bonus li.on{background:var(--l1s);border-color:var(--l1)} .doc-l.bonus li.on .doc-i{background:var(--l1);border-color:var(--l1)}
 .doc-w{margin:0;padding:10px 12px 10px 28px;border-radius:12px;background:var(--l3s);border:1px solid var(--gold);font-size:14.5px;display:grid;gap:4px}
 
+/* ---------- motion polish ---------- */
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.page.enter{animation:pageIn .28s cubic-bezier(.2,.8,.2,1) both}
+@keyframes flicker{0%,100%{transform:scale(1) rotate(-3deg)}35%{transform:scale(1.14) rotate(3deg)}65%{transform:scale(.96) rotate(-1deg)}}
+.stat.flame .i{transform-origin:50% 90%;animation:flicker 2.6s ease-in-out infinite}
+.fb{position:relative}
+.xpf{position:absolute;right:12px;top:-30px;z-index:2;font:800 15px var(--font-display);color:var(--xp);background:var(--surface);border:1px solid var(--line);padding:2px 11px;border-radius:99px;pointer-events:none;animation:xpRise 1.2s ease-out both}
+@keyframes xpRise{0%{opacity:0;transform:translateY(12px) scale(.8)}18%{opacity:1;transform:none}78%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
+.mres-h{display:flex;align-items:center;gap:10px} .mz{display:grid;place-items:center;flex:none}
+.hud-bar i{transition:width .9s cubic-bezier(.2,.8,.2,1)}
+/* the chest */
+.chestsvg{width:150px;height:150px;overflow:visible}
+.chestsvg .ch-body{fill:var(--gold);stroke:#262626;stroke-width:3} .chestsvg .ch-band{fill:none;stroke:#262626;stroke-width:3;stroke-linecap:round}
+.chestsvg .ch-lock{fill:#262626}
+.chestsvg .ch-lid path:first-child{fill:var(--gold);stroke:#262626;stroke-width:3;stroke-linejoin:round}
+.chestsvg .ch-lid{transform-origin:14px 46px;transition:transform .7s cubic-bezier(.3,1.5,.5,1)}
+.cele.opened .chestsvg .ch-lid{transform:rotate(-38deg) translateY(-4px)}
+.chestsvg .ch-glow{fill:var(--gold);opacity:0;transition:opacity .5s .2s}
+.cele.opened .chestsvg .ch-glow{opacity:.45}
+.chestsvg .ch-rays line{stroke:var(--gold);stroke-width:4;stroke-linecap:round;opacity:0;transform-origin:48px 34px;transform:scale(.4);transition:opacity .4s .25s,transform .6s .25s cubic-bezier(.2,1.4,.4,1)}
+.cele.opened .chestsvg .ch-rays line{opacity:.9;transform:none}
+.chestsvg .ch-card rect{fill:var(--surface);stroke:#262626;stroke-width:2.5} .chestsvg .ch-card path{stroke:var(--line-2);stroke-width:2.5;fill:none;stroke-linecap:round}
+.chestsvg .ch-card{transform:translateY(18px);opacity:0;transition:transform .7s .3s cubic-bezier(.2,1.4,.4,1),opacity .3s .3s}
+.cele.opened .chestsvg .ch-card{transform:translateY(-6px);opacity:1}
+.chestsvg .ch-sp circle{fill:var(--gold);opacity:0}
+.cele.opened .chestsvg .ch-sp circle{animation:spark 1.4s ease-out .4s both} .cele.opened .chestsvg .ch-sp circle:nth-child(2){animation-delay:.55s} .cele.opened .chestsvg .ch-sp circle:nth-child(3){animation-delay:.7s} .cele.opened .chestsvg .ch-sp circle:nth-child(4){animation-delay:.85s}
+@keyframes spark{0%{opacity:0;transform:scale(.2)}30%{opacity:1;transform:scale(1.6)}100%{opacity:0;transform:translateY(-14px) scale(.6)}}
+.cele.chesty .rcard{animation-delay:.75s}
+
 /* ================= diagrams and motion ================= */
 :root{--c0:#0070C0;--c1:#70AD47;--c2:#FFC000;--c3:#C00000;--c4:#595959;--c5:#7A3E9D}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--c0:#4DA6EC;--c1:#8CCB5E;--c2:#FFC000;--c3:#FF6B6B;--c4:#BDBDBD;--c5:#C79CE0} }
@@ -1637,12 +1666,14 @@ function checkBadges(){
 
 /* ================= router ================= */
 var view = {name:(!S.profile.done && !S.xp && !Object.keys(S.done).length) ? 'onboard' : 'learn'}, L = null, lastLevelUp = null;
-function go(v){ view=v; render(); window.scrollTo(0,0); }
+var ENTER=false;
+function go(v){ view=v; ENTER=true; render(); window.scrollTo(0,0); }
 var TBLN=0;
 function render(){
   TBLN=0;
   ({learn:learnView, session:sessionView, review:reviewView, sheets:sheetsView, you:youView, sheet:sheetView, lesson:lessonView, task:taskView, kase:caseView, question:questionView, gate:gateView, levelup:levelupView, onboard:onboardView, place:placeView, library:libraryView, shop:shopView, album:albumView, blitz:blitzView, playbook:playbookView, cert:certView, recall:recallView, glossary:glossaryView, doctor:doctorView})[view.name]();
   armGuard();
+  motionAfter();
   showPending();
 }
 
@@ -1686,7 +1717,7 @@ function setPage(html, tab, lv){
   APP.innerHTML='<div class="shell"'+(lv?' data-lv="'+lv+'"':'')+'><header class="bar"><div class="bar-in"><div class="brand">'+logoMark(32)+'<span class="wm"><b>Zero</b> <i>to</i> <b>100</b></span></div>'
     +'<div class="stats"><span class="stat flame" title="Day streak">'+ic('flame')+'<b>'+streakNow()+'</b><span class="sr"> day streak</span></span><span class="stat xp" title="Practice XP">'+ic('bolt')+'<b>'+S.xp+'</b><span class="sr"> XP</span></span></div></div>'
     +'<nav class="tabs" aria-label="Sections"><div class="tabs-in">'+tabs.map(function(t){ return '<button class="tab'+(t[0]===tab?' on':'')+'" data-tab="'+t[0]+'"'+(t[0]===tab?' aria-current="page"':'')+'>'+ic(t[2])+'<span>'+t[1]+'</span>'+(t[0]==='review'&&rev?'<i class="dot">'+rev+'</i>':'')+'</button>'; }).join('')+'</div></nav></header>'
-    +'<main class="page">'+hudHTML()+html+'</main></div>';
+    +'<main class="page'+(ENTER?' enter':'')+'">'+hudHTML()+html+'</main></div>'; ENTER=false;
   $$('[data-tab]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-tab')}); }; });
   $$('[data-hud]').forEach(function(b){ b.onclick=function(){ go({name:b.getAttribute('data-hud')}); }; });
   bindDiagrams(); showPending();
@@ -2284,7 +2315,7 @@ function baseXP(it){
 }
 function award(c, firstTry){
   var id=c.id, base=baseXP(c.item), full=firstTry&&!c.hinted;
-  if(!L.correct[id]){ L.correct[id]=1; L.xp += L.review?3:(full?base:Math.ceil(base/2)); if(firstTry && GRADED[c.item.type]) L.first++; L.combo++; L.best=Math.max(L.best,L.combo); }
+  if(!L.correct[id]){ L.correct[id]=1; c.gain=L.review?3:(full?base:Math.ceil(base/2)); L.xp += c.gain; if(firstTry && GRADED[c.item.type]) L.first++; L.combo++; L.best=Math.max(L.best,L.combo); }
   if(firstTry || L.review){ if(S.missed.indexOf(id)>=0){ S.missed=S.missed.filter(function(m){ return m!==id; }); S.cleared=(S.cleared||0)+1; L.cleared++; } }
 }
 function wrongAnswer(c){
@@ -2384,7 +2415,7 @@ function fbz(ok){
 }
 function feedback(c, why, ans){
   var tries=L.tries[c.id];
-  return {fcls:c.ok?'good':'bad', foot:'<div class="fb">'+fbz(c.ok)+'<div class="verdict"><strong>'+(c.ok?(L.combo>=3?'Correct, '+L.combo+' in a row':'Correct'):'Not quite')+'</strong>'
+  return {fcls:c.ok?'good':'bad', foot:'<div class="fb">'+fbz(c.ok)+(c.ok&&c.gain?'<span class="xpf" aria-hidden="true">+'+c.gain+' XP</span>':'')+'<div class="verdict"><strong>'+(c.ok?(L.combo>=3?'Correct, '+L.combo+' in a row':'Correct'):'Not quite')+'</strong>'
     +(c.ok||!ans?'':'<p class="ans">Answer: '+esc(ans)+'</p>')+(why?'<p>'+esc(why)+'</p>':'')+calibLine(c)
     +(!c.ok&&tries===1?'<p class="again">It comes back once before this step ends.</p>':'')+'</div></div><button class="btn '+(c.ok?'good':'bad')+' wide" id="primary">Continue</button>'};
 }
@@ -2904,10 +2935,11 @@ function dropCard(){
   var c=bag[Math.floor(Math.random()*bag.length)]; grantCard(c.id); return c;
 }
 function openChest(xp, sparks, label){
+  var mark=PEND.length;   // the chest shows before any level-up its XP caused
   addXP(xp); S.sparks=(S.sparks||0)+sparks;
   var card=dropCard(), extra=0; if(!card){ extra=10; S.sparks+=extra; }
   var nb=checkBadges(); save();
-  PEND.push({t:'chest', xp:xp, sp:sparks+extra, card:card, badge:nb[0]||null, label:label, none:!card});
+  PEND.splice(mark, 0, {t:'chest', xp:xp, sp:sparks+extra, card:card, badge:nb[0]||null, label:label, none:!card});
 }
 
 /* rewards that follow progress: a finished session pays Sparks and its core card; a handed-in gate pays its epic card */
@@ -2951,7 +2983,7 @@ function celebrate(p){
     title='Epic card unlocked'; hero=zed(p.n,'cheer',120,'hop');
     body='<p class="kick">Level '+p.n+' gate handed in</p>'+cardHTML(p.card,true);
   } else if(p.t==='chest'){
-    title='Chest opened'; hero='<span class="chest-big">'+ic('chest')+'</span>';
+    title='Chest opened'; hero=chestAnim();
     if(p.xp) chips.unshift('<span class="chip-r xp">'+ic('bolt')+'+'+p.xp+' XP</span>');
     body=(p.card?'<p class="kick">You found a rule card</p>'+cardHTML(p.card,true):'<p class="lede">Every card you can find is already in your collection. Here are bonus Sparks instead.</p>')
       +(p.badge?'<p class="kick">Badge: '+esc(p.badge.name)+'</p>':'');
@@ -2959,13 +2991,15 @@ function celebrate(p){
     title='Streak saved'; hero='<span class="chest-big ice">'+ic('ice')+'</span>';
     body='<p class="lede">You missed a day, so a streak freeze covered it. Your streak carries on.</p>';
   } else if(p.t==='mystery'){
-    title='Mystery chest'; hero='<span class="chest-big">'+ic('chest')+'</span>';
+    title='Mystery chest'; hero=chestAnim();
     body='<p class="kick">Your rule card</p>'+cardHTML(p.card,true);
   }
   m.innerHTML='<div class="card celec">'+(p.t==='epic'||p.t==='level'?confetti():'')+'<div class="cele-hero">'+hero+'</div><h2>'+esc(title)+'</h2>'+(chips.length?'<div class="chips-r">'+chips.join('')+'</div>':'')+body
     +'<button type="button" class="btn wide" id="celeDone">'+(PEND.length?'Next reward':'Continue')+'</button></div>';
   m.setAttribute('aria-label', title);
+  if(p.t==='chest'||p.t==='mystery') m.classList.add('chesty');
   document.body.appendChild(m);
+  if(p.t==='chest'||p.t==='mystery') setTimeout(function(){ m.classList.add('opened'); }, motionOff()?0:140);
   var release=trapFocus(m,function(){ close(); });
   function close(){ release(); if(m.parentNode) m.parentNode.removeChild(m); showPending(); }
   m.querySelector('#celeDone').onclick=close; m.querySelector('#celeDone').focus();
@@ -2974,9 +3008,9 @@ function celebrate(p){
 
 /* ---- the HUD strip under the tabs ---- */
 function hudHTML(){
-  var p=plInfo();
+  var p=plInfo(), w=hudWidths(p);
   return '<div class="hud"><button class="hud-lv" data-hud="you" aria-label="Player level '+p.n+', '+esc(p.title)+'. Open your profile">Lv <b>'+p.n+'</b><span>'+esc(p.title)+'</span></button>'
-    +'<div class="hud-bar" role="progressbar" aria-label="XP towards level '+(p.n+1)+'" aria-valuemin="0" aria-valuemax="'+p.span+'" aria-valuenow="'+p.into+'"><i style="width:'+p.pct+'%"></i></div>'
+    +'<div class="hud-bar" role="progressbar" aria-label="XP towards level '+(p.n+1)+'" aria-valuemin="0" aria-valuemax="'+p.span+'" aria-valuenow="'+p.into+'"><i data-from="'+w.from+'" data-to="'+w.to+'" style="width:'+w.from+'%"></i></div>'
     +'<span class="hud-xp">'+p.into+'/'+p.span+'</span>'
     +'<button class="hud-sp" data-hud="shop" aria-label="'+(S.sparks||0)+' Sparks. Open the shop">'+ic('spark')+'<b>'+(S.sparks||0)+'</b></button></div>';
 }
@@ -3091,8 +3125,8 @@ function missionStars(it,m){ var p=m.pts/(2*it.steps.length); return p>=0.85?3:p
 var MRATE=[['Costly move','r0'],['Workable, with a cost','r1'],['Strong move','r2']];
 function missionMeters(it,m){
   return '<div class="mmeters">'+it.meters.map(function(x){
-    var v=m.meters[x[1]], d=(m.last&&m.last.d[x[1]])||0;
-    return '<div class="mm"><span class="mm-l">'+esc(x[0])+'</span><div class="mm-bar" role="progressbar" aria-label="'+esc(x[0])+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+v+'"><i style="width:'+v+'%"></i></div><b>'+v+(d?'<em class="'+(d>0?'up':'dn')+'">'+(d>0?'+':'')+d+'</em>':'')+'</b></div>';
+    var v=m.meters[x[1]], d=(m.last&&m.last.d[x[1]])||0, from=(m.stage==='result'&&m.prev&&!motionOff())?m.prev[x[1]]:v;
+    return '<div class="mm"><span class="mm-l">'+esc(x[0])+'</span><div class="mm-bar" role="progressbar" aria-label="'+esc(x[0])+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+v+'"><i style="width:'+from+'%"'+(m.stage==='result'?' data-to="'+v+'"':'')+'></i></div><b>'+v+(d?'<em class="'+(d>0?'up':'dn')+'">'+(d>0?'+':'')+d+'</em>':'')+'</b></div>';
   }).join('')+'</div>';
 }
 function scrMission(c){
@@ -3117,13 +3151,14 @@ function scrMission(c){
     }).join('')+'</div>';
   if(m.stage==='ask') return {body:body, foot:'<p class="mfoot">Pick one. You see what it costs straight away.</p>'};
   var ch=st.choices[m.pick], best=st.choices.filter(function(x){ return x.r===2; })[0], rate=MRATE[ch.r];
-  body+='<div class="mres '+rate[1]+'" role="status"><h3>'+esc(rate[0])+'</h3><p>'+esc(ch.say)+'</p><p class="mwhy"><b>Why.</b> '+esc(ch.why)+'</p>'
+  body+='<div class="mres '+rate[1]+'" role="status"><div class="mres-h"><span class="mz" aria-hidden="true">'+zed(L.node.level, ch.r===2?'cheer':ch.r===0?'oops':'think', 46, ch.r===2?'hop':'')+'</span><h3>'+esc(rate[0])+'</h3></div><p>'+esc(ch.say)+'</p><p class="mwhy"><b>Why.</b> '+esc(ch.why)+'</p>'
     +(ch.r<2?'<p class="mbest"><b>The strong move was:</b> '+esc(best.t)+'</p>':'')+'</div>';
   return {body:body, foot:'<button class="btn wide" id="primary">'+(m.i+1<n?'Next decision':'See the outcome')+'</button>'};
 }
 function missionPick(c,k){
   var it=c.item, m=c.m; if(m.stage!=='ask') return;
   var st=it.steps[m.i], ci=m.ord[m.i][k], ch=st.choices[ci], d={};
+  m.prev=Object.assign({}, m.meters);
   Object.keys(ch.fx).forEach(function(key){ var v=m.meters[key], nv=Math.max(0,Math.min(100,v+ch.fx[key])); d[key]=nv-v; m.meters[key]=nv; });
   m.pick=ci; m.stage='result'; m.pts+=ch.r; m.picks.push({i:m.i, ci:ci, r:ch.r}); m.last={d:d, r:ch.r};
   if(typeof sfx==='function') sfx(ch.r===2?'good':ch.r===0?'bad':'tick');
@@ -3673,6 +3708,53 @@ function docUpdate(){
 }
 function doctorCard(){
   return '<button class="libgo" id="doctorGo"><span class="libi">'+ic('doctor')+'</span><span><b>Prompt Doctor</b><small>Write a prompt and see which habits it shows. Best so far: '+((S.doctor&&S.doctor.best)||0)+' of 8.</small></span>'+ic('arrow')+'</button>';
+}
+
+/* ================= MOTION: the small things that make progress feel real =================
+   Numbers count up, the XP bar fills from where it was, meters glide, a chest opens, a right answer floats its XP.
+   Everything here is decoration over real values: reduced motion, and the test driver, get the final numbers at once. */
+function motionOff(){ return xReduce() || window.__noMotion; }
+var HUDP={n:0, pct:0, set:false};
+
+function countUp(){
+  if(motionOff()) return;
+  $$('.center.done .fact b').forEach(function(b){
+    var txt=b.textContent, m=/^([+x]?)(\d+)(.*)$/.exec(txt); if(!m) return;
+    var to=+m[2], pre=m[1], post=m[3]; if(to<2 || b.getAttribute('data-counted')) return;
+    b.setAttribute('data-counted','1'); b.setAttribute('aria-label', txt);
+    var t0=null, dur=Math.min(900, 380+to*6);
+    b.textContent=pre+'0'+post;
+    (function f(t){
+      if(!b.isConnected) return; if(t0===null) t0=t;
+      var p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+      b.textContent=pre+Math.round(to*e)+post;
+      if(p<1) requestAnimationFrame(f); else b.textContent=txt;
+    })(performance.now());
+  });
+}
+
+/* the bar under the tabs starts at the last value it showed and slides to the new one */
+function hudWidths(p){
+  var from=(HUDP.set && HUDP.n===p.n) ? HUDP.pct : (HUDP.set && HUDP.n<p.n ? 0 : p.pct);
+  HUDP={n:p.n, pct:p.pct, set:true};
+  return motionOff() ? {from:p.pct, to:p.pct} : {from:from, to:p.pct};
+}
+function motionAfter(){
+  if($('.center.done .fact b')) countUp();
+  var bar=$('.hud-bar i[data-to]');
+  if(bar && bar.getAttribute('data-from')!==bar.getAttribute('data-to')){ requestAnimationFrame(function(){ requestAnimationFrame(function(){ bar.style.width=bar.getAttribute('data-to')+'%'; }); }); }
+  $$('.mm-bar i[data-to]').forEach(function(i){ requestAnimationFrame(function(){ requestAnimationFrame(function(){ i.style.width=i.getAttribute('data-to')+'%'; }); }); });
+}
+
+/* a chest that opens: lid, glow, rays, sparkles. The classes are added a moment after it appears so the transitions run. */
+function chestAnim(){
+  var rays='';
+  for(var i=0;i<10;i++){ var a=-Math.PI/2+(i-4.5)*0.32; rays+='<line x1="'+(48+16*Math.cos(a)).toFixed(1)+'" y1="'+(34+16*Math.sin(a)).toFixed(1)+'" x2="'+(48+40*Math.cos(a)).toFixed(1)+'" y2="'+(34+40*Math.sin(a)).toFixed(1)+'"/>'; }
+  return '<svg class="chestsvg" viewBox="0 0 96 96" aria-hidden="true"><g class="ch-rays">'+rays+'</g><circle class="ch-glow" cx="48" cy="40" r="26"/>'
+    +'<g class="ch-card"><rect x="34" y="26" width="28" height="36" rx="5"/><path d="M40 36h16M40 42h16M40 48h10"/></g>'
+    +'<rect class="ch-body" x="14" y="46" width="68" height="36" rx="8"/><path class="ch-band" d="M14 60h68M48 46v36"/><rect class="ch-lock" x="42" y="54" width="12" height="12" rx="3"/>'
+    +'<g class="ch-lid"><path d="M14 46V40a14 14 0 0114-14h40a14 14 0 0114 14v6z"/><path class="ch-band" d="M48 26v20"/></g>'
+    +'<g class="ch-sp"><circle cx="18" cy="26" r="2.5"/><circle cx="80" cy="22" r="3"/><circle cx="66" cy="12" r="2"/><circle cx="30" cy="12" r="2"/></g></svg>';
 }
 
 render();

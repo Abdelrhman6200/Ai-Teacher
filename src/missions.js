@@ -10,8 +10,8 @@ function missionStars(it,m){ var p=m.pts/(2*it.steps.length); return p>=0.85?3:p
 var MRATE=[['Costly move','r0'],['Workable, with a cost','r1'],['Strong move','r2']];
 function missionMeters(it,m){
   return '<div class="mmeters">'+it.meters.map(function(x){
-    var v=m.meters[x[1]], d=(m.last&&m.last.d[x[1]])||0;
-    return '<div class="mm"><span class="mm-l">'+esc(x[0])+'</span><div class="mm-bar" role="progressbar" aria-label="'+esc(x[0])+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+v+'"><i style="width:'+v+'%"></i></div><b>'+v+(d?'<em class="'+(d>0?'up':'dn')+'">'+(d>0?'+':'')+d+'</em>':'')+'</b></div>';
+    var v=m.meters[x[1]], d=(m.last&&m.last.d[x[1]])||0, from=(m.stage==='result'&&m.prev&&!motionOff())?m.prev[x[1]]:v;
+    return '<div class="mm"><span class="mm-l">'+esc(x[0])+'</span><div class="mm-bar" role="progressbar" aria-label="'+esc(x[0])+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+v+'"><i style="width:'+from+'%"'+(m.stage==='result'?' data-to="'+v+'"':'')+'></i></div><b>'+v+(d?'<em class="'+(d>0?'up':'dn')+'">'+(d>0?'+':'')+d+'</em>':'')+'</b></div>';
   }).join('')+'</div>';
 }
 function scrMission(c){
@@ -36,13 +36,14 @@ function scrMission(c){
     }).join('')+'</div>';
   if(m.stage==='ask') return {body:body, foot:'<p class="mfoot">Pick one. You see what it costs straight away.</p>'};
   var ch=st.choices[m.pick], best=st.choices.filter(function(x){ return x.r===2; })[0], rate=MRATE[ch.r];
-  body+='<div class="mres '+rate[1]+'" role="status"><h3>'+esc(rate[0])+'</h3><p>'+esc(ch.say)+'</p><p class="mwhy"><b>Why.</b> '+esc(ch.why)+'</p>'
+  body+='<div class="mres '+rate[1]+'" role="status"><div class="mres-h"><span class="mz" aria-hidden="true">'+zed(L.node.level, ch.r===2?'cheer':ch.r===0?'oops':'think', 46, ch.r===2?'hop':'')+'</span><h3>'+esc(rate[0])+'</h3></div><p>'+esc(ch.say)+'</p><p class="mwhy"><b>Why.</b> '+esc(ch.why)+'</p>'
     +(ch.r<2?'<p class="mbest"><b>The strong move was:</b> '+esc(best.t)+'</p>':'')+'</div>';
   return {body:body, foot:'<button class="btn wide" id="primary">'+(m.i+1<n?'Next decision':'See the outcome')+'</button>'};
 }
 function missionPick(c,k){
   var it=c.item, m=c.m; if(m.stage!=='ask') return;
   var st=it.steps[m.i], ci=m.ord[m.i][k], ch=st.choices[ci], d={};
+  m.prev=Object.assign({}, m.meters);
   Object.keys(ch.fx).forEach(function(key){ var v=m.meters[key], nv=Math.max(0,Math.min(100,v+ch.fx[key])); d[key]=nv-v; m.meters[key]=nv; });
   m.pick=ci; m.stage='result'; m.pts+=ch.r; m.picks.push({i:m.i, ci:ci, r:ch.r}); m.last={d:d, r:ch.r};
   if(typeof sfx==='function') sfx(ch.r===2?'good':ch.r===0?'bad':'tick');

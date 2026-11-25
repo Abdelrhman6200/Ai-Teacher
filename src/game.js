@@ -52,10 +52,11 @@ function dropCard(){
   var c=bag[Math.floor(Math.random()*bag.length)]; grantCard(c.id); return c;
 }
 function openChest(xp, sparks, label){
+  var mark=PEND.length;   // the chest shows before any level-up its XP caused
   addXP(xp); S.sparks=(S.sparks||0)+sparks;
   var card=dropCard(), extra=0; if(!card){ extra=10; S.sparks+=extra; }
   var nb=checkBadges(); save();
-  PEND.push({t:'chest', xp:xp, sp:sparks+extra, card:card, badge:nb[0]||null, label:label, none:!card});
+  PEND.splice(mark, 0, {t:'chest', xp:xp, sp:sparks+extra, card:card, badge:nb[0]||null, label:label, none:!card});
 }
 
 /* rewards that follow progress: a finished session pays Sparks and its core card; a handed-in gate pays its epic card */
@@ -99,7 +100,7 @@ function celebrate(p){
     title='Epic card unlocked'; hero=zed(p.n,'cheer',120,'hop');
     body='<p class="kick">Level '+p.n+' gate handed in</p>'+cardHTML(p.card,true);
   } else if(p.t==='chest'){
-    title='Chest opened'; hero='<span class="chest-big">'+ic('chest')+'</span>';
+    title='Chest opened'; hero=chestAnim();
     if(p.xp) chips.unshift('<span class="chip-r xp">'+ic('bolt')+'+'+p.xp+' XP</span>');
     body=(p.card?'<p class="kick">You found a rule card</p>'+cardHTML(p.card,true):'<p class="lede">Every card you can find is already in your collection. Here are bonus Sparks instead.</p>')
       +(p.badge?'<p class="kick">Badge: '+esc(p.badge.name)+'</p>':'');
@@ -107,13 +108,15 @@ function celebrate(p){
     title='Streak saved'; hero='<span class="chest-big ice">'+ic('ice')+'</span>';
     body='<p class="lede">You missed a day, so a streak freeze covered it. Your streak carries on.</p>';
   } else if(p.t==='mystery'){
-    title='Mystery chest'; hero='<span class="chest-big">'+ic('chest')+'</span>';
+    title='Mystery chest'; hero=chestAnim();
     body='<p class="kick">Your rule card</p>'+cardHTML(p.card,true);
   }
   m.innerHTML='<div class="card celec">'+(p.t==='epic'||p.t==='level'?confetti():'')+'<div class="cele-hero">'+hero+'</div><h2>'+esc(title)+'</h2>'+(chips.length?'<div class="chips-r">'+chips.join('')+'</div>':'')+body
     +'<button type="button" class="btn wide" id="celeDone">'+(PEND.length?'Next reward':'Continue')+'</button></div>';
   m.setAttribute('aria-label', title);
+  if(p.t==='chest'||p.t==='mystery') m.classList.add('chesty');
   document.body.appendChild(m);
+  if(p.t==='chest'||p.t==='mystery') setTimeout(function(){ m.classList.add('opened'); }, motionOff()?0:140);
   var release=trapFocus(m,function(){ close(); });
   function close(){ release(); if(m.parentNode) m.parentNode.removeChild(m); showPending(); }
   m.querySelector('#celeDone').onclick=close; m.querySelector('#celeDone').focus();
@@ -122,9 +125,9 @@ function celebrate(p){
 
 /* ---- the HUD strip under the tabs ---- */
 function hudHTML(){
-  var p=plInfo();
+  var p=plInfo(), w=hudWidths(p);
   return '<div class="hud"><button class="hud-lv" data-hud="you" aria-label="Player level '+p.n+', '+esc(p.title)+'. Open your profile">Lv <b>'+p.n+'</b><span>'+esc(p.title)+'</span></button>'
-    +'<div class="hud-bar" role="progressbar" aria-label="XP towards level '+(p.n+1)+'" aria-valuemin="0" aria-valuemax="'+p.span+'" aria-valuenow="'+p.into+'"><i style="width:'+p.pct+'%"></i></div>'
+    +'<div class="hud-bar" role="progressbar" aria-label="XP towards level '+(p.n+1)+'" aria-valuemin="0" aria-valuemax="'+p.span+'" aria-valuenow="'+p.into+'"><i data-from="'+w.from+'" data-to="'+w.to+'" style="width:'+w.from+'%"></i></div>'
     +'<span class="hud-xp">'+p.into+'/'+p.span+'</span>'
     +'<button class="hud-sp" data-hud="shop" aria-label="'+(S.sparks||0)+' Sparks. Open the shop">'+ic('spark')+'<b>'+(S.sparks||0)+'</b></button></div>';
 }

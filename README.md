@@ -50,7 +50,26 @@ Progress is saved in the browser (`localStorage`), per device.
     teach-backs, doubts, actions) and can be copied or printed. The certificate unlocks with the Level 1 gate, grows with each level and
     prints or saves as a PDF. Both are local to the page.
 16. **Sound and touch.** Optional synthesised tones (off by default) and a small vibration tap on phones (on by default), under You, Settings.
-17. **Comfort and safety.**
+17. **Learning science.** The engine uses what the research says works, and says so in the app.
+    - **Retrieval before teaching** (guess-first questions), **spacing** (boxes at 1, 3, 7, 14 and 30 days), **interleaving** (mixed practice, warm-ups
+      and checkpoints), **confidence ratings** and **teach-backs** were already in place.
+    - **Hypercorrection.** A "sure, but wrong" answer gets a Surprise cue, is flagged, goes to the front of the review queue and is also the first
+      thing Blitz asks about. **Expanding retrieval:** a missed question returns after three others, not at the end. **Gentler lapses:** an
+      ordinary miss drops a question two boxes instead of to zero.
+    - **Calibration.** Before a mastery check you can predict your first-try score; afterwards the app shows the gap, and You keeps a history
+      ("Know what you know") with a plain reading of whether you tend to over- or under-estimate.
+    - **Rule cards are a deck.** "Recall the rules" shows a card's name, you say the rule, flip the card, then rate yourself. The same boxes and
+      intervals apply, and the album shows each card's memory strength.
+18. **Explorable animations.** Four diagrams you can poke, each labelled as illustrative: a **token sampler** (a model picks by weight, it does not look
+    a fact up; sample another, and toggle a "say I do not know" prompt), a **context window** you fill with a slider, a **prompt cache** where changing a block
+    breaks everything after it (move the changing blocks last), and a **forgetting curve** on the Review tab with spaced reviews. They animate on appear and
+    on Replay and show the end state at once for reduced motion. Elsewhere: numbers count up on finished screens, the XP bar slides from its last value, a
+    chest opens, a right answer floats its XP, meters glide in missions, and Zed reacts to each call.
+19. **Glossary and Prompt Doctor.** The glossary lists 175 terms built from the study-sheet tables, searchable, with a comparison for each. Each session's new
+    vocabulary is tap-to-define inside its lesson cards (+1 XP the first time, Word nerd badge). The **Prompt Doctor** (Sheets tab) checks your own prompt for
+    eight habits from sessions 4 and 5 plus two bonus ones as you type, warns about negation-only and very short prompts, adds a skeleton for the gaps, and goes
+    into your playbook. It is a checker, not a judge, and says so.
+20. **Comfort and safety.**
     - The browser's Back button stays in the app: it closes a dialog, asks before quitting a question, and goes up one level
       (question, session, Learn). At the Learn screen it leaves the page as usual.
     - Dialogs trap keyboard focus, close on Escape, hide the page behind them and give focus back.
@@ -106,7 +125,8 @@ python3 build.py        # writes index.html from src/ and references/
   and exactly 4 questions per session, a diagram in each). `python3 src/field.py` checks them on its own.
 - `src/cards.py`: the 53 rule cards and their validator. `src/mission.py` with `src/missions_a.py`, `missions_b.py`, `missions_c.py`: the 24 field missions.
 - `src/game.js` (player level, Sparks, shop, cards, rewards, skill profile), `src/missions.js` (the mission player), `src/blitz.js`, `src/fx.js` (sound and
-  vibration) and `src/book.js` (playbook and certificate) are joined into the app by `build.py`.
+  vibration), `src/book.js` (playbook and certificate), `src/explore.js` (the four explorable diagrams), `src/science.js` (prediction and calibration),
+  `src/recall.js` (the card deck), `src/glossary.js`, `src/doctor.js` and `src/motion.js` (count-up, bar and chest animation) are joined into the app by `build.py`.
 - `src/diagrams.js`: 13 diagram types, including swim (sequence between actors), rings (defence in layers), delta (before and after),
   matrix, ladder and timeline.
 - `src/lc1.py` to `src/lc6.py`: the authored learning content for every session (guess-first, application scenarios,
@@ -125,7 +145,8 @@ tests/run.sh full 420 900     # all 24 sessions with their missions, gates, warm
 tests/run.sh full 1100 900    # same at desktop width
 tests/run.sh extras           # quit, keyboard, replay XP, save, search, reset
 tests/run.sh quest            # sources step in every session, no web address in the data, notes read in the app, diagrams, phases, chests, trail, daily quests, library,
-                              # focus trap, Back, backup, theme, field missions, Blitz, sound and touch, playbook
+                              # focus trap, Back, backup, theme, field missions, Blitz, sound and touch, playbook, explorable diagrams, learning science,
+                              # card recall, glossary, Prompt Doctor
 tests/run.sh onboard          # set-up, placement (pass and fail), start point, situations, debrief, use-it-today, real task
 tests/run.sh duetest          # spaced review: due, answer, reschedule
 tests/run.sh shot dg_loop 420 900          # screenshot of a scene (see scenes in tests/test_driver.js)
