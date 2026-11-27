@@ -69,15 +69,13 @@ Progress is saved in the browser (`localStorage`), per device.
     vocabulary is tap-to-define inside its lesson cards (+1 XP the first time, Word nerd badge). The **Prompt Doctor** (Sheets tab) checks your own prompt for
     eight habits from sessions 4 and 5 plus two bonus ones as you type, warns about negation-only and very short prompts, adds a skeleton for the gaps, and goes
     into your playbook. It is a checker, not a judge, and says so.
-20. **Paper look.** A warm cream page, lighter cream cards with thin tan borders, IBM Plex Mono type (embedded, SIL Open Font License), pastel colours
-    for the five levels, and chunky controls: buttons, answer options and the step track have a dark outline and a hard offset shadow, and press down
-    when tapped. Light and dark both follow it. Each session header shows pastel pills for time, level and number of steps.
-21. **Scene walkthroughs.** Six sessions (1, 8, 13, 14, 20 and 22) have a step-by-step picture instead of a still diagram: one isometric scene where each step
+20. **Scene walkthroughs.** Six sessions (1, 8, 13, 14, 20 and 22) have a step-by-step picture instead of a still diagram: one isometric scene where each step
     adds something (a node, an arrow with a travelling dot, a label), a row of stat cards whose numbers change with the step, and a numbered step track you
     can tap to jump forward or back. The bar at the bottom reads Back and "Next: step name" while there are steps left, and turns into Continue on the
-    last one. The camera glides to frame what is on screen. Replay plays the story, Pause stops the movement and Expand fills the screen. Each step has a
-    plain-text caption, so the picture is never the only source. Reduced motion shows no travelling dots and no gliding, and stepping still works.
-22. **Comfort and safety.**
+    last one. The camera glides to frame what is on screen. Zed tells each step in a caption under the picture (the picture is never the only source), and
+    cheers on the last. Replay plays the story, Pause stops the movement and Expand fills the screen. Session headers show small chips for time, level and
+    number of steps. It uses the app's own colours, with the level colour on the step track. Reduced motion shows no travelling dots and no gliding, and stepping still works.
+21. **Comfort and safety.**
     - The browser's Back button stays in the app: it closes a dialog, asks before quitting a question, and goes up one level
       (question, session, Learn). At the Learn screen it leaves the page as usual.
     - Dialogs trap keyboard focus, close on Escape, hide the page behind them and give focus back.
@@ -144,8 +142,7 @@ python3 build.py        # writes index.html from src/ and references/
   mastery-check items, teach-back, diagram). `python3 src/learn_content.py` validates it.
 - `src/method.py`: turns each session into the learning loop.
 - `src/app.js`: the app (screens, spaced-review engine, mastery gating). `src/chars.js`: the Zed characters.
-  `src/diagrams.js` and `src/diagrams.css`: the animated diagrams. `src/scene.css`: the scene walkthroughs. `src/style.css`: the colour tokens (light and dark)
-  and base components. `src/theme.css`: the paper look, loaded last. `src/fonts/plexmono-*.woff2`: the embedded type.
+  `src/diagrams.js` and `src/diagrams.css`: the animated diagrams. `src/scene.css`: the scene walkthroughs. `src/style.css`: theme (GUC colours, light and dark).
 - Set `Z100_REFERENCES=/path` to build from another copy of the references.
 
 ## Test

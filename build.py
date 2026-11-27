@@ -10,7 +10,7 @@ def b64(*p): return base64.b64encode(open(os.path.join(SRC, *p), 'rb').read()).d
 
 d = course.build()
 blob = json.dumps(d, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-css = rd('style.css') + rd('diagrams.css') + rd('scene.css') + rd('theme.css')
+css = rd('style.css') + rd('diagrams.css') + rd('scene.css')
 js = rd('app.js').replace('/*CHARS*/', rd('chars.js')).replace('/*DIAGRAMS*/', rd('diagrams.js').replace('/*EXPLORE*/', rd('explore.js') + rd('scene.js'))).replace('/*GAME*/', rd('game.js')).replace('/*MISSIONS*/', rd('missions.js')).replace('/*BLITZ*/', rd('blitz.js')).replace('/*FX*/', rd('fx.js')).replace('/*BOOK*/', rd('book.js')).replace('/*SCIENCE*/', rd('science.js')).replace('/*RECALL*/', rd('recall.js')).replace('/*GLOSS*/', rd('glossary.js')).replace('/*DOCTOR*/', rd('doctor.js')).replace('/*MOTION*/', rd('motion.js'))
 assert '</script' not in js.lower()
 ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23C00000'/%3E%3Ccircle cx='16' cy='16' r='8.2' fill='none' stroke='white' stroke-width='4.2'/%3E%3Ccircle cx='13.3' cy='14.6' r='1.7' fill='white'/%3E%3Ccircle cx='18.7' cy='14.6' r='1.7' fill='white'/%3E%3C/svg%3E"
@@ -22,9 +22,8 @@ head = '''<!DOCTYPE html>
 <title>Zero to 100 Practice</title>
 <link rel="icon" href="''' + ICON + '''">
 <style>
-@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url(data:font/woff2;base64,''' + b64('fonts', 'plexmono-400.woff2') + ''') format('woff2')}
-@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:500;font-display:swap;src:url(data:font/woff2;base64,''' + b64('fonts', 'plexmono-500.woff2') + ''') format('woff2')}
-@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:700;font-display:swap;src:url(data:font/woff2;base64,''' + b64('fonts', 'plexmono-700.woff2') + ''') format('woff2')}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,''' + b64('fonts', 'outfit.woff2') + ''') format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,''' + b64('fonts', 'inter.woff2') + ''') format('woff2')}
 ''' + css + '''
 </style>
 </head>

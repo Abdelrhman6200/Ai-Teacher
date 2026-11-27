@@ -74,11 +74,12 @@ function scNode(n){
   return {html:s, bb:[bb[0]-4,bb[1]-4,bb[2]+4,bb[3]+4], col:col};
 }
 function scPill(p, x, y){
-  var t=String(p.text), w=Math.round(t.length*6.6+16+(p.icon?14:0)+(p.bar!=null?36:0)), hh=20, x0=x-w/2, y0=y-hh/2, tx=x0+w/2+(p.icon?7:0)+(p.bar!=null?-18:0);
+  // icon and text are centred together as one unit, so the pill hugs them whichever font the text lands in
+  var t=String(p.text), tw=t.length*5.9, ic=p.icon?17:0, bw=p.bar!=null?36:0, hh=20, cw=ic+tw+bw, w=Math.round(cw+18), x0=x-w/2, y0=y-hh/2, sx=x0+(w-cw)/2;
   var s='<g class="sc-pill'+(p.tone?' '+p.tone:'')+'"><rect x="'+x0.toFixed(1)+'" y="'+y0.toFixed(1)+'" width="'+w+'" height="'+hh+'" rx="10"/>';
-  if(p.icon) s+=scIc(p.icon,x0+12,y,12);
-  if(p.bar!=null){ var bx=x0+w-44; s+='<rect class="sc-pb" x="'+bx.toFixed(1)+'" y="'+(y-3).toFixed(1)+'" width="30" height="6" rx="3"/><rect class="sc-pf" x="'+bx.toFixed(1)+'" y="'+(y-3).toFixed(1)+'" width="'+(30*Math.max(0,Math.min(100,p.bar))/100).toFixed(1)+'" height="6" rx="3"/>'; }
-  s+='<text class="sc-pt" x="'+(p.bar!=null?x0+(w-44)/2+3:tx).toFixed(1)+'" y="'+(y+3.8).toFixed(1)+'" text-anchor="middle">'+esc(t)+'</text></g>';
+  if(p.icon) s+=scIc(p.icon,sx+6,y,12);
+  if(p.bar!=null){ var bx=sx+ic+tw+6; s+='<rect class="sc-pb" x="'+bx.toFixed(1)+'" y="'+(y-3).toFixed(1)+'" width="30" height="6" rx="3"/><rect class="sc-pf" x="'+bx.toFixed(1)+'" y="'+(y-3).toFixed(1)+'" width="'+(30*Math.max(0,Math.min(100,p.bar))/100).toFixed(1)+'" height="6" rx="3"/>'; }
+  s+='<text class="sc-pt" x="'+(sx+ic+tw/2).toFixed(1)+'" y="'+(y+3.8).toFixed(1)+'" text-anchor="middle">'+esc(t)+'</text></g>';
   return {html:s, bb:[x0-2,y0-2,x0+w+2,y0+hh+2]};
 }
 function scBuild(b){
@@ -148,6 +149,7 @@ function scVals(b,n){
   var v={}, ch={}; for(var i=0;i<n;i++){ var sv=b.steps[i].v||{}; for(var k in sv){ v[k]=sv[k]; if(i===n-1) ch[k]=1; } }
   return {v:v, ch:ch};
 }
+function scZed(done){ var lv=(typeof L!=='undefined'&&L&&L.node&&L.node.level)||zLv(); return zed(lv,done?'cheer':'think',48); }
 function scNext(b,n){ return n<b.steps.length ? '<span class="sc-nl">Next: '+esc(b.steps[n].t)+'</span>'+ic('arrow') : 'Continue'; }
 function sceneBlock(it){ var r=null; (it.blocks||[]).forEach(function(b){ if(b.t==='diagram'&&b.kind==='scene') r=b; }); return r; }
 function sceneFoot(b){
@@ -167,7 +169,7 @@ function sceneHTML(b){
     +'<button type="button" data-sc="full" aria-label="Expand the picture" aria-pressed="false">'+scIcon('expand')+'</button></div></div></div>';
   h+='<div class="sc-tk"><div class="sc-th"><span>In this walkthrough</span><span class="sc-sn">Step '+n+' of '+N+'</span></div><ol class="sc-tr">'
     +b.steps.map(function(st,i){ return '<li><button type="button" class="sc-b" data-i="'+(i+1)+'" aria-label="Step '+(i+1)+': '+esc(st.t)+'">'+(i+1)+'</button></li>'; }).join('')+'</ol><p class="sc-lbl" aria-hidden="true">'+esc(b.steps[n-1].t)+'</p></div>';
-  h+='<div class="sc-cap" aria-live="polite"><p class="sc-ct">'+esc(b.steps[n-1].t)+'</p><p class="sc-cd">'+inl(b.steps[n-1].d||'')+'</p></div>';
+  h+='<div class="sc-cap" aria-live="polite"><span class="sc-z" aria-hidden="true">'+scZed(n>=N)+'</span><div><p class="sc-ct">'+esc(b.steps[n-1].t)+'</p><p class="sc-cd">'+inl(b.steps[n-1].d||'')+'</p></div></div>';
   h+='<div class="sc-nav"><button type="button" class="btn ghost small" data-sc="prev"'+(n<=1?' disabled':'')+'>'+ic('back')+'Back</button><button type="button" class="btn small" data-sc="next">'+scNext(b,n)+'</button></div>';
   if(b.note) h+='<p class="dg-note">'+inl(b.note)+'</p>';
   return h+'</figure>';
@@ -193,6 +195,7 @@ function scSet(f,n,instant){
   var cb=$('.sc-b.cur',f), lb=$('.sc-lbl',f), tr=$('.sc-tr',f); lb.textContent=st.t;
   if(cb&&tr){ var tw=tr.offsetWidth, lw=lb.offsetWidth||60, cx=cb.parentNode.offsetLeft+cb.parentNode.offsetWidth/2; lb.style.left=Math.max(0,Math.min(tw-lw,cx-lw/2))+'px'; }
   $('.sc-ct',f).textContent=st.t; $('.sc-cd',f).innerHTML=inl(st.d||'');
+  var zz=$('.sc-z',f); if(zz&&zz._last!==(n>=N)){ zz.innerHTML=scZed(n>=N); zz._last=(n>=N); }   // Zed thinks through the steps and cheers at the end
   scTween($('.sc-svg',f), G.R.cams[n-1], (instant||motionOff())?0:520);
   var p=$('#primary'), bk=$('#sback'); if(p&&f.classList.contains('hasfoot')){ p.innerHTML=scNext(b,n); } if(bk) bk.disabled=n<=1;
   var pv=$('[data-sc="prev"]',f), nx=$('[data-sc="next"]',f); if(pv) pv.disabled=n<=1; if(nx) nx.innerHTML=f.classList.contains('sc-full')&&n>=N?'Close':scNext(b,n);
