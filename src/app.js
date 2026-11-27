@@ -638,12 +638,17 @@ function bindChests(rerender){
 }
 
 /* ================= SESSION ================= */
+function metaPills(s,ns,lv){
+  var mins=ns.filter(function(n){ return n.kind!=='gate'; }).reduce(function(a,n){ return a+estMin(n); },0);
+  var tm=mins>=60?Math.floor(mins/60)+' h '+(mins%60?' '+(mins%60)+' min':''):mins+' min';
+  return '<ul class="metas" aria-label="About this session"><li class="mt tan">'+ic('warmup')+tm+'</li><li class="mt grn">'+scIcon('signal')+esc(lv.name)+'</li><li class="mt lav">'+scIcon('list')+ns.length+' steps</li></ul>';
+}
 function sessionView(){
   settleWarm(SBY[view.sid]);
   var s=SBY[view.sid], ns=sessNodes(s.id), p=sessProg(s), firstOpen=ns.filter(function(n){ return !isDone(n.id); })[0];
   var lv=LEVELS[s.level-1], stars=ns.reduce(function(a,n){ return a+starsOf(n.id); },0), maxStars=ns.filter(function(n){ return STAR_KINDS[n.kind]; }).length*3;
   var h='<div class="narrow"><button class="back" id="back">'+ic('back')+'<span>All sessions</span></button>'
-    +'<header class="s-head" data-lv="'+s.level+'"><div class="s-top"><span class="lv-chip">Level '+s.level+' · Session '+s.n+'</span>'+ring(p.pct,64,8,p.done+'/'+p.total)+'</div><h1>'+esc(s.title)+'</h1>'
+    +'<header class="s-head" data-lv="'+s.level+'"><div class="s-top"><span class="lv-chip">Level '+s.level+' · Session '+s.n+'</span>'+ring(p.pct,64,8,p.done+'/'+p.total)+'</div><h1>'+esc(s.title)+'</h1>'+metaPills(s,ns,lv)
     +'<p class="deliv"><b>Deliverable.</b> '+esc(s.deliverable)+' <span class="pts">('+esc(s.points)+')</span></p>'
     +'<div class="s-act"><button class="btn ghost" id="sheet">'+ic('doc')+'Study sheet</button>'+(maxStars?'<span class="starsum">'+ic('star','on')+' '+stars+' of '+maxStars+'</span>':'')+masteryChip(s)+'</div></header>'
     +((sessComplete(s)||(S.mast[s.id]&&S.mast[s.id].passed))&&!S.today[s.id]?todayCard(s):'')

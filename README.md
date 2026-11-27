@@ -69,7 +69,15 @@ Progress is saved in the browser (`localStorage`), per device.
     vocabulary is tap-to-define inside its lesson cards (+1 XP the first time, Word nerd badge). The **Prompt Doctor** (Sheets tab) checks your own prompt for
     eight habits from sessions 4 and 5 plus two bonus ones as you type, warns about negation-only and very short prompts, adds a skeleton for the gaps, and goes
     into your playbook. It is a checker, not a judge, and says so.
-20. **Comfort and safety.**
+20. **Paper look.** A warm cream page, lighter cream cards with thin tan borders, IBM Plex Mono type (embedded, SIL Open Font License), pastel colours
+    for the five levels, and chunky controls: buttons, answer options and the step track have a dark outline and a hard offset shadow, and press down
+    when tapped. Light and dark both follow it. Each session header shows pastel pills for time, level and number of steps.
+21. **Scene walkthroughs.** Six sessions (1, 8, 13, 14, 20 and 22) have a step-by-step picture instead of a still diagram: one isometric scene where each step
+    adds something (a node, an arrow with a travelling dot, a label), a row of stat cards whose numbers change with the step, and a numbered step track you
+    can tap to jump forward or back. The bar at the bottom reads Back and "Next: step name" while there are steps left, and turns into Continue on the
+    last one. The camera glides to frame what is on screen. Replay plays the story, Pause stops the movement and Expand fills the screen. Each step has a
+    plain-text caption, so the picture is never the only source. Reduced motion shows no travelling dots and no gliding, and stepping still works.
+22. **Comfort and safety.**
     - The browser's Back button stays in the app: it closes a dialog, asks before quitting a question, and goes up one level
       (question, session, Learn). At the Learn screen it leaves the page as usual.
     - Dialogs trap keyboard focus, close on Escape, hide the page behind them and give focus back.
@@ -126,14 +134,18 @@ python3 build.py        # writes index.html from src/ and references/
 - `src/cards.py`: the 53 rule cards and their validator. `src/mission.py` with `src/missions_a.py`, `missions_b.py`, `missions_c.py`: the 24 field missions.
 - `src/game.js` (player level, Sparks, shop, cards, rewards, skill profile), `src/missions.js` (the mission player), `src/blitz.js`, `src/fx.js` (sound and
   vibration), `src/book.js` (playbook and certificate), `src/explore.js` (the six explorable diagrams), `src/science.js` (prediction and calibration),
-  `src/recall.js` (the card deck), `src/glossary.js`, `src/doctor.js` and `src/motion.js` (count-up, bar and chest animation) are joined into the app by `build.py`.
+  `src/recall.js` (the card deck), `src/glossary.js`, `src/doctor.js`, `src/motion.js` (count-up, bar and chest animation) and `src/scene.js` (the scene
+  walkthroughs) are joined into the app by `build.py`.
+- `src/scene.js`: the scene walkthrough. A diagram of kind `scene` lists `nodes`, `edges`, `pills`, `zones`, `stats` and `steps`; each item says the step it
+  appears at (`s`) and optionally the step it goes at (`x`), and `sp` spreads the grid out. `field.py` and `learn_content.py` validate the kind.
 - `src/diagrams.js`: 13 diagram types, including swim (sequence between actors), rings (defence in layers), delta (before and after),
   matrix, ladder and timeline.
 - `src/lc1.py` to `src/lc6.py`: the authored learning content for every session (guess-first, application scenarios,
   mastery-check items, teach-back, diagram). `python3 src/learn_content.py` validates it.
 - `src/method.py`: turns each session into the learning loop.
 - `src/app.js`: the app (screens, spaced-review engine, mastery gating). `src/chars.js`: the Zed characters.
-  `src/diagrams.js` and `src/diagrams.css`: the animated diagrams. `src/style.css`: theme (GUC colours, light and dark).
+  `src/diagrams.js` and `src/diagrams.css`: the animated diagrams. `src/scene.css`: the scene walkthroughs. `src/style.css`: the colour tokens (light and dark)
+  and base components. `src/theme.css`: the paper look, loaded last. `src/fonts/plexmono-*.woff2`: the embedded type.
 - Set `Z100_REFERENCES=/path` to build from another copy of the references.
 
 ## Test
@@ -146,7 +158,7 @@ tests/run.sh full 1100 900    # same at desktop width
 tests/run.sh extras           # quit, keyboard, replay XP, save, search, reset
 tests/run.sh quest            # sources step in every session, no web address in the data, notes read in the app, diagrams, phases, chests, trail, daily quests, library,
                               # focus trap, Back, backup, theme, field missions, Blitz, sound and touch, playbook, explorable diagrams, learning science,
-                              # card recall, glossary, Prompt Doctor
+                              # card recall, glossary, Prompt Doctor, scene walkthrough (steps add to the picture, numbers change, Back, track, Expand, Continue)
 tests/run.sh onboard          # set-up, placement (pass and fail), start point, situations, debrief, use-it-today, real task
 tests/run.sh duetest          # spaced review: due, answer, reschedule
 tests/run.sh shot dg_loop 420 900          # screenshot of a scene (see scenes in tests/test_driver.js)

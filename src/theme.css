@@ -123,3 +123,14 @@ body{font-size:15px;line-height:1.6}
   .tab span:not(.sr){font-size:12.5px}
   .ph{font-size:24px}
 }
+
+/* ---------- meta pills: time, level, steps ---------- */
+:root{--mt:55%}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--mt:30%} }
+:root[data-theme="dark"]{--mt:30%}
+.metas{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:2px 0;padding:0}
+.mt{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:2px solid var(--edge);border-radius:99px;font-size:12.5px;font-weight:500;color:var(--ink);background:var(--surface)}
+.mt .i{width:15px;height:15px}
+.mt.tan{background:color-mix(in srgb,var(--line-2) var(--mt),var(--surface))}
+.mt.grn{background:color-mix(in srgb,var(--l2) var(--mt),var(--surface))}
+.mt.lav{background:color-mix(in srgb,var(--l5) var(--mt),var(--surface))}

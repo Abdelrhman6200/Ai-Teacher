@@ -12,7 +12,7 @@ figure.dg.dg-scene{padding:0;border:0;background:none;gap:12px;border-radius:0}
 .sc-st.chg{border-color:var(--edge);box-shadow:-5px 0 0 var(--lv)}
 .sc-sl{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
 .sc-sl .i{width:15px;height:15px}
-.sc-st b{font-size:20px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.sc-st b{font-size:18px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
 
 .sc-stage{position:relative;border:1.5px solid var(--line-2);border-radius:18px;background:var(--bg);overflow:hidden}
 .sc-svg{display:block;width:100%;height:auto;aspect-ratio:6/5}

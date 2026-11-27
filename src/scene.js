@@ -82,18 +82,21 @@ function scPill(p, x, y){
   return {html:s, bb:[x0-2,y0-2,x0+w+2,y0+hh+2]};
 }
 function scBuild(b){
-  var by={}, N=b.steps.length, items=[], I=function(kind,html,bb,o){ o=o||{}; items.push({k:kind,s:o.s||1,x:o.x||0,html:html,bb:bb,id:o.id||'',d:o.d||0,live:o.live||0}); };
-  (b.nodes||[]).forEach(function(n){ by[n.id]=n; });
+  var by={}, N=b.steps.length, items=[], I=function(kind,html,bb,o){ o=o||{}; items.push({k:kind,s:o.s||1,x:o.x||0,html:html,bb:bb,id:o.id||'',d:o.d||0,live:o.live||0,q:o.q||0}); };
+  // sp spreads the grid out (1 = as authored), so nodes do not crowd each other
+  var SP=b.sp||1, spz=function(a){ return [a[0]*SP,a[1]*SP].concat(a.slice(2)); };
+  var NS=(b.nodes||[]).map(function(n){ return Object.assign({},n,{at:spz(n.at)}); }), PS=(b.pills||[]).map(function(p){ return Object.assign({},p,{at:spz(p.at)}); }), ZS=(b.zones||[]).map(function(z){ return Object.assign({},z,{at:spz(z.at),size:[z.size[0]*SP,z.size[1]*SP]}); });
+  NS.forEach(function(n){ by[n.id]=n; });
   var ex=[1e9,1e9,-1e9,-1e9];
-  (b.nodes||[]).forEach(function(n){ ex[0]=Math.min(ex[0],n.at[0]); ex[1]=Math.min(ex[1],n.at[1]); ex[2]=Math.max(ex[2],n.at[0]); ex[3]=Math.max(ex[3],n.at[1]); });
-  (b.zones||[]).forEach(function(z){ ex[0]=Math.min(ex[0],z.at[0]); ex[1]=Math.min(ex[1],z.at[1]); ex[2]=Math.max(ex[2],z.at[0]+z.size[0]); ex[3]=Math.max(ex[3],z.at[1]+z.size[1]); });
+  NS.forEach(function(n){ ex[0]=Math.min(ex[0],n.at[0]); ex[1]=Math.min(ex[1],n.at[1]); ex[2]=Math.max(ex[2],n.at[0]); ex[3]=Math.max(ex[3],n.at[1]); });
+  ZS.forEach(function(z){ ex[0]=Math.min(ex[0],z.at[0]); ex[1]=Math.min(ex[1],z.at[1]); ex[2]=Math.max(ex[2],z.at[0]+z.size[0]); ex[3]=Math.max(ex[3],z.at[1]+z.size[1]); });
   var actIds={}; b.steps.forEach(function(st){ (st.act||[]).forEach(function(id){ actIds[id]=1; }); });
-  (b.zones||[]).forEach(function(z){
+  ZS.forEach(function(z){
     var a=z.at, w=z.size, pts=[scP(a[0],a[1],0),scP(a[0]+w[0],a[1],0),scP(a[0]+w[0],a[1]+w[1],0),scP(a[0],a[1]+w[1],0)];
     I('z','<polygon class="sc-zone'+(z.tone?' '+z.tone:'')+'" points="'+scPts(pts)+'"/>',scBB(pts),{s:z.s,x:z.x});
     if(z.label){ var lp=scP(a[0]+w[0]/2,a[1]+w[1],0), pl=scPill({text:z.label,icon:z.icon,tone:z.tone},lp[0]-w[0]*SC_X*.45,lp[1]-w[0]*SC_Y*.45+6); I('l',pl.html,pl.bb,{s:z.s,x:z.x}); }
   });
-  (b.nodes||[]).forEach(function(n){
+  NS.forEach(function(n){
     if(!actIds[n.id]) return;
     var q=(n.sz||.9)/2+.24, g=n.at, pts=[scP(g[0]-q,g[1]-q,0),scP(g[0]+q,g[1]-q,0),scP(g[0]+q,g[1]+q,0),scP(g[0]-q,g[1]+q,0)];
     I('a','<polygon class="sc-act" data-n="'+esc(n.id)+'" points="'+scPts(pts)+'"/>',scBB(pts),{s:n.s,x:n.x,d:g[0]+g[1]-.5});
@@ -104,11 +107,12 @@ function scBuild(b){
     if(a[0]===c[0]||a[1]===c[1]) pts=[[a[0],a[1]],[c[0],c[1]]]; else pts=(e.via==='y')?[[a[0],a[1]],[a[0],c[1]],[c[0],c[1]]]:[[a[0],a[1]],[c[0],a[1]],[c[0],c[1]]];
     function sh(i,j,d){ var dx=pts[j][0]-pts[i][0], dy=pts[j][1]-pts[i][1], L=Math.hypot(dx,dy)||1, m=Math.min(d,L*.45); pts[i]=[pts[i][0]+dx/L*m, pts[i][1]+dy/L*m]; }
     sh(0,1,e.g0==null?.6:e.g0); sh(pts.length-1,pts.length-2,e.g1==null?.6:e.g1);
-    var sp=pts.map(function(p){ return scP(p[0],p[1],e.z==null?3:e.z); }), d='M'+sp.map(function(p){ return p[0]+','+p[1]; }).join(' L');
+    var eo=e.off||[0,0];   // a few pixels sideways, so a return arrow does not sit on top of the outward one
+    var sp=pts.map(function(p){ var q=scP(p[0],p[1],e.z==null?3:e.z); return [q[0]+eo[0],q[1]+eo[1]]; }), d='M'+sp.map(function(p){ return p[0]+','+p[1]; }).join(' L');
     var L1=sp[sp.length-1], L0=sp[sp.length-2], dx=L1[0]-L0[0], dy=L1[1]-L0[1], dl=Math.hypot(dx,dy)||1, ux=dx/dl, uy=dy/dl;
     var ah=scPts([[L1[0],L1[1]],[L1[0]-ux*10-uy*5,L1[1]-uy*10+ux*5],[L1[0]-ux*10+uy*5,L1[1]-uy*10-ux*5]]);
     var dot=''; if(e.k==='req'||e.k==='res'){ var dur=Math.max(1.6,Math.min(3.4,dl/60+1.2)).toFixed(1); dot='<circle class="sc-dot '+(e.k==='req'?'rq':'rs')+'" r="4.6">'+(motionOff()?'':'<animateMotion dur="'+dur+'s" repeatCount="indefinite" path="'+d+'"/>')+'</circle>'; }
-    I('e','<path class="sc-ed'+(e.dash?' dash':'')+'" d="'+d+'" pathLength="1"/><polygon class="sc-ah" points="'+ah+'"/>'+dot,scBB(sp),{s:e.s,x:e.x,id:e.id||'',live:1});
+    I('e','<path class="sc-ed'+(e.dash?' dash':'')+'" d="'+d+'" pathLength="1"/><polygon class="sc-ah" points="'+ah+'"/>'+dot,scBB(sp),{s:e.s,x:e.x,id:e.id||'',live:1,q:e.q?1:0});
     if(e.label){
       // on the corner of an L-shaped route, otherwise halfway along
       var lo=e.lo||[0,0], mx, my;
@@ -116,10 +120,10 @@ function scBuild(b){
       var pl=scPill({text:e.label,icon:e.icon,tone:e.tone},mx,my); I('l',pl.html,pl.bb,{s:e.s,x:e.x});
     }
   });
-  var ns=(b.nodes||[]).filter(function(n){ return n.type!=='plate'; }).slice().sort(function(p,q){ return (p.at[0]+p.at[1]+(p.z||0)/90)-(q.at[0]+q.at[1]+(q.z||0)/90) || p.at[0]-q.at[0]; });
+  var ns=NS.filter(function(n){ return n.type!=='plate'; }).slice().sort(function(p,q){ return (p.at[0]+p.at[1]+(p.z||0)/90)-(q.at[0]+q.at[1]+(q.z||0)/90) || p.at[0]-q.at[0]; });
   ns.forEach(function(n){ var r=scNode(n); I('n','<g class="sc-c-'+r.col+'">'+r.html+'</g>',r.bb,{s:n.s,x:n.x,d:n.at[0]+n.at[1]});
     if(n.label){ var g=scP(n.at[0],n.at[1],0), pl=scPill({text:n.label,icon:n.licon},g[0]+(n.lo?n.lo[0]:0),g[1]+(n.type==='laptop'?30:(n.type==='db'?24:22))+(n.lo?n.lo[1]:0)); I('l',pl.html,pl.bb,{s:n.s,x:n.x}); } });
-  (b.pills||[]).forEach(function(p){ var g=scP(p.at[0],p.at[1],p.at[2]||0), pl=scPill(p,g[0],g[1]); I('l',pl.html,pl.bb,{s:p.s,x:p.x}); });
+  PS.forEach(function(p){ var g=scP(p.at[0],p.at[1],p.at[2]||0), pl=scPill(p,g[0],g[1]); I('l',pl.html,pl.bb,{s:p.s,x:p.x}); });
   // camera per step
   var cams=[], A=1.2;
   for(var n=1;n<=N;n++){
@@ -156,7 +160,7 @@ function sceneHTML(b){
   var h='<figure class="dg dg-scene sc'+(SC_FOOT?' hasfoot':'')+(motionOff()?' sc-nomo':'')+'" data-dg data-scene data-sid="'+sid+'"><figcaption class="dg-t"><span>'+esc(b.title||'')+'</span></figcaption>';
   if((b.stats||[]).length) h+='<div class="sc-stats" role="group" aria-label="Numbers for this step" tabindex="0">'+b.stats.map(function(s){ return '<div class="sc-st'+(sv.ch[s.id]?' chg':'')+'" data-k="'+esc(s.id)+'"><span class="sc-sl">'+scIcon(s.icon||'clock')+esc(s.label)+'</span><b>'+esc(sv.v[s.id]==null?'—':sv.v[s.id])+'</b></div>'; }).join('')+'</div>';
   h+='<div class="sc-stage"><svg class="sc-svg" viewBox="'+R.cams[n-1].join(' ')+'" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'+scGrid(R,sid);
-  R.items.forEach(function(it){ h+='<g class="sc-i sc-k-'+it.k+(it.live?' sc-e':'')+'" data-s="'+it.s+'"'+(it.x?' data-x="'+it.x+'"':'')+(it.id?' data-id="'+esc(it.id)+'"':'')+'>'+it.html+'</g>'; });
+  R.items.forEach(function(it){ h+='<g class="sc-i sc-k-'+it.k+(it.live?' sc-e':'')+'" data-s="'+it.s+'"'+(it.x?' data-x="'+it.x+'"':'')+(it.id?' data-id="'+esc(it.id)+'"':'')+(it.q?' data-q="1"':'')+'>'+it.html+'</g>'; });
   h+='</svg><div class="sc-bar"><ul class="sc-leg">'+leg.map(function(l){ return '<li><i class="'+l[0]+'"></i>'+esc(l[1])+'</li>'; }).join('')+'</ul><div class="sc-ctl">'
     +'<button type="button" data-sc="replay" aria-label="Replay the walkthrough from step 1">'+scIcon('refresh')+'</button>'
     +'<button type="button" data-sc="pause" aria-label="Pause the movement" aria-pressed="false">'+scIcon('pause')+'</button>'
@@ -180,7 +184,7 @@ function scSet(f,n,instant){
   var G=SCREG[f.getAttribute('data-sid')]; if(!G) return; var b=G.b, N=G.R.N; n=Math.max(1,Math.min(N,n)); f._n=n; b._st=n;
   $$('[data-s]',f).forEach(function(g){ var s=+g.getAttribute('data-s'), x=+(g.getAttribute('data-x')||0); g.classList.toggle('on', n>=s&&!(x&&n>=x)); });
   var st=b.steps[n-1], live={}; live[''] = 0; (st.flow||[]).forEach(function(id){ live[id]=1; });
-  $$('.sc-e',f).forEach(function(g){ var s=+g.getAttribute('data-s'), id=g.getAttribute('data-id'); g.classList.toggle('live', n===s||(id&&live[id]===1)); });
+  $$('.sc-e',f).forEach(function(g){ var s=+g.getAttribute('data-s'), id=g.getAttribute('data-id'); g.classList.toggle('live', (n===s&&!g.hasAttribute('data-q'))||(id&&live[id]===1)); });
   var act={}; (st.act||[]).forEach(function(id){ act[id]=1; }); $$('.sc-act',f).forEach(function(p){ p.classList.toggle('on', !!act[p.getAttribute('data-n')]); });
   var sv=scVals(b,n); $$('.sc-st',f).forEach(function(c){ var k=c.getAttribute('data-k'); $('b',c).textContent=sv.v[k]==null?'—':sv.v[k]; c.classList.toggle('chg',!!sv.ch[k]); });
   var chg=$('.sc-st.chg',f), row=$('.sc-stats',f); if(chg&&row){ var off=chg.offsetLeft-row.offsetLeft-8; try{ row.scrollTo({left:Math.max(0,off),behavior:(instant||motionOff())?'auto':'smooth'}); }catch(e){ row.scrollLeft=Math.max(0,off); } }
@@ -198,7 +202,7 @@ function scStop(f){ if(f._tm){ clearInterval(f._tm); f._tm=0; } f.classList.remo
 function scPlay(f){
   var G=SCREG[f.getAttribute('data-sid')]; scStop(f); scSet(f,1);
   if(motionOff()) return;
-  f.classList.add('sc-play'); f._tm=setInterval(function(){ if(f.classList.contains('sc-paused')) return; if(f._n>=G.R.N){ scStop(f); return; } scSet(f,f._n+1); },2600);
+  f.classList.add('sc-play'); f._tm=setInterval(function(){ if(!document.body.contains(f)){ scStop(f); return; } if(f.classList.contains('sc-paused')) return; if(f._n>=G.R.N){ scStop(f); return; } scSet(f,f._n+1); },2600);
 }
 function sceneAdvance(){
   var f=window.SCENE_CUR; if(!f||!document.body.contains(f)) return false;
