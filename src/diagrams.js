@@ -61,7 +61,7 @@ function dgHTML(b){
   } else if(k==='delta'){
     h+='<div class="dg-delta">'+b.rows.map(function(r,i){ return '<div class="dgd'+(r.bad?' bad':'')+'" style="--i:'+i+'"><span class="dgd-l">'+esc(r.h)+'</span><div class="dgd-v"><b class="from">'+esc(r.from)+'</b><span class="dgd-a" aria-hidden="true">'+ic('arrow')+'</span><b class="to">'+esc(r.to)+'</b></div>'+(r.s?'<span class="dgd-n">'+esc(r.s)+'</span>':'')+'</div>'; }).join('')+'</div>';
   } else if(k==='matrix'){
-    h+='<div class="tbl dg-mxw" tabindex="0" role="region" aria-label="'+esc(b.title||'Matrix')+'"><table class="dg-mx"><thead><tr><th scope="col"></th>'+b.cols.map(function(c){ return '<th scope="col">'+esc(c)+'</th>'; }).join('')+'</tr></thead><tbody>'
+    h+='<div class="tbl dg-mxw" tabindex="0" role="region" aria-label="'+esc(b.title||'Matrix')+'"><table class="dg-mx"><thead><tr><th scope="col"><span class="sr">Option</span></th>'+b.cols.map(function(c){ return '<th scope="col">'+esc(c)+'</th>'; }).join('')+'</tr></thead><tbody>'
       +b.rows.map(function(r,ri){ return '<tr><th scope="row">'+esc(r.h)+'</th>'+r.v.map(function(v,ci){ return '<td style="--i:'+(ri*b.cols.length+ci)+'"><span class="mxd m'+v+'" role="img" aria-label="'+esc((b.legend||['No','Possible','Best fit'])[v])+'"></span></td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>'
       +'<p class="dg-key"><span class="mxd m0"></span>'+esc((b.legend||['No','Possible','Best fit'])[0])+' <span class="mxd m1"></span>'+esc((b.legend||['No','Possible','Best fit'])[1])+' <span class="mxd m2"></span>'+esc((b.legend||['No','Possible','Best fit'])[2])+'</p>';
   } else if(k==='ladder'){
@@ -70,7 +70,7 @@ function dgHTML(b){
       +(b.axis?'<p class="dg-total">'+esc(b.axis)+'</p>':'');
   } else if(k==='timeline'){
     h+='<ol class="dg-tl">'+b.events.map(function(e,i){ return '<li'+(e.warn?' class="warn"':'')+' style="--i:'+i+'"><span class="dgt-dot"></span><span class="dgt-b"><b>'+esc(e.h)+'</b>'+(e.s?'<span>'+esc(e.s)+'</span>':'')+'</span></li>'; }).join('')+'</ol>';
-  } else if(k==='tokens'||k==='window'||k==='cache'||k==='curve'||k==='cost'||k==='trifecta'){
+  } else if(k==='tokens'||k==='window'||k==='cache'||k==='curve'||k==='cost'||k==='trifecta'||PLAYH[k]){
     h+=exploreHTML(b);
   }
   if(b.note) h+='<p class="dg-note">'+inl(b.note)+'</p>';
@@ -81,6 +81,7 @@ function bindDiagrams(){
   $$('[data-dg]').forEach(function(f){
     if(f.hasAttribute('data-scene')){ sceneBind(f); return; }
     var bt=$('.dg-re',f); if(!bt) return;
+    if($('.dg-mx',f)) mxBind(f);
     if(!f._xb && $('[data-xid]',f)){ f._xb=1; exploreBind(f); }
     bt.onclick=function(){ f.classList.remove('play'); void f.offsetWidth; f.classList.add('play'); var a=$('animateMotion',f); try{ if(a&&a.beginElement) a.beginElement(); }catch(e){} var xe=$('[data-xid]',f); if(xe&&xe._replay) xe._replay(); };
   });

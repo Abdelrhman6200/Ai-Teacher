@@ -156,9 +156,13 @@ Q[2] = dict(
      "I name the job first, then pick the surface that needs the least engineering: the Claude app for asking, writing and documents; delegated tasks for work across several files or apps; Claude Code for work in a codebase; the Platform when I am building Claude into my own product. Anything new or plan-limited I confirm in the release notes before promising it.",
      ["Starts from the job, not the product", "Maps at least three surfaces to jobs", "Uses the least engineering that meets the need", "Checks the release notes for new or plan-limited features"]),
  dg=[
-  dict(kind='tree', title='Name the job, then pick the surface', root='What is the job?',
+  dict(kind='pick', title='Name the job, then pick the surface', root='What is the job?',
        kids=[dict(h='Claude app', s='Ask, write, analyse, make documents'), dict(h='Delegated task', s='Several files or apps, runs a while'),
-             dict(h='Claude Code', s='Work inside a codebase'), dict(h='Claude Platform', s='Build Claude into your own product')]),
+             dict(h='Claude Code', s='Work inside a codebase'), dict(h='Claude Platform', s='Build Claude into your own product')],
+       cases=[dict(t='A developer wants Claude to find a bug across a repository, edit the files and run the tests.', to=2, why='Claude Code reads a codebase, edits files and runs commands.'),
+              dict(t='A support team wants Claude answering customers inside their own company app, with their own login and logging.', to=3, why='The Claude Platform is how you build Claude into your own product.'),
+              dict(t='You want this week\'s report compiled from several files and apps, while you get on with something else.', to=1, why='A delegated task spans several files or apps and runs for a while.'),
+              dict(t='Draft a polite reply to a client email and tighten the wording.', to=0, why='Everyday asking, writing and analysing is what the Claude app is for.')]),
   dict(kind='flow', title='Three routes on the Platform, from most control to least to run',
        steps=[dict(h='Client SDK', s='You write the tool loop.'), dict(h='Agent SDK', s="Claude Code's agent inside your own app."), dict(h='Managed Agents', s='Anthropic hosts the loop.')]),
  ])

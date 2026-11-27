@@ -69,7 +69,7 @@ Q[15] = dict(steps=[
       paras=['Agents behave differently from run to run, so each task has its own success rate. Anthropic gives two metrics. pass@k is the chance of at least one success in k tries. pass^k is the chance that all k tries succeed, which matters for customer-facing agents. At 75 percent per trial, three trials all pass only about 42 percent of the time.',
              'Capability evals should start at a low pass rate, giving you a hill to climb. Regression evals should sit near 100 percent, and a drop signals something broke. A capability eval that reaches a high pass rate can graduate into the regression suite.'],
       stats=[('42%', 'chance of passing all 3 runs at 75% per run')],
-      viz=dict(kind='delta', title='Reliability compounds', rows=[dict(h='Per run', **{'from': '75%'}, to='42%', bad=True, s='All three of three runs pass (0.75 cubed)')]),
+      viz=dict(kind='compound', title='Reliability compounds', p=75, n=3, unit='run', max=10),
       src=('Demystifying evals for AI agents', A + 'engineering/demystifying-evals-for-ai-agents')),
  ('An agent passes any single run 75% of the time. About how likely is it to pass all three of three runs?',
   ['About 42 percent, because 0.75 cubed is about 0.42', 'Still 75 percent, because the runs are the same', 'About 90 percent, because three tries is plenty', 'About 25 percent, the chance of failing one run'],

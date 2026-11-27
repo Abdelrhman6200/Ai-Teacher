@@ -113,6 +113,15 @@ Q[13] = dict(
               dict(t='Stop checks the work', d='A Stop hook runs when Claude finishes. Put the tests there.', v=dict(hook='Stop'), act=['stp']),
               dict(t='Exit 2 sends it back', d='Exit code 2 from a Stop hook sends Claude back to work, so done only comes after the check passes.', v=dict(exit='Back to work'), act=['cl'])],
        note='A picture of the idea. Check the current hook events and settings in the Claude Code documentation.'),
+  dict(kind='sorter', title='Advice or enforced?',
+       buckets=[dict(h='Advice', s='Claude decides whether to follow it'), dict(h='Enforced', s='Holds whatever Claude decides')],
+       cards=[dict(t='A line in CLAUDE.md', to=0, why='CLAUDE.md is advice: Claude reads it and decides.'),
+              dict(t='The instructions inside a skill', to=0, why='A skill is how-to that Claude may follow. That is advice.'),
+              dict(t='A polite sentence in your prompt', to=0, why='A prompt is advice, however firmly it is worded.'),
+              dict(t='A PreToolUse hook that exits with code 2', to=1, why='The hook blocks the action before the tool runs, whatever the model decides.'),
+              dict(t='A deny rule', to=1, why='Deny rules are hard allow and deny.'),
+              dict(t='The sandbox network allowlist', to=1, why='The sandbox enforces what can be reached, whatever the model decides.')],
+       note='A rule that must always hold needs a hook, a deny rule or the sandbox. Advice is for how Claude should work when it can use judgement.'),
  ])
 
 Q[14] = dict(

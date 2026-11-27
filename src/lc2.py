@@ -115,8 +115,15 @@ Q[5] = dict(
      ["Asks for a quote and location per claim", "Opens the source instead of trusting the citation", "Records claim, source, checked by and status", "Flags or removes unsourced claims"]),
  dg=[
   dict(kind='flow', title='Verify one claim', steps=[dict(h='Quote first', s='Claim plus quote plus location.'), dict(h='Open the source', s='Go to that page yourself.'), dict(h='Compare', s='The whole sentence, not just the number.'), dict(h='Set a status', s='Confirmed, unsourced or not found.')]),
-  dict(kind='tree', title='Sort every sentence in the brief', root='A sentence in the brief',
-       kids=[dict(h='The source says', s='Has a quote and a location'), dict(h='Claude infers', s='Marked as inference'), dict(h='Outside the sources', s='Flag or remove')]),
+  dict(kind='sorter', title='Sort every sentence in the brief',
+       buckets=[dict(h='The source says', s='Has a quote and a location'), dict(h='Claude infers', s='Marked as inference'), dict(h='Outside the sources', s='Flag or remove')],
+       cards=[dict(t='"Churn fell to 4%", with the quote and page 12', to=0, why='It has a quote and a location, so a reader can check it.'),
+              dict(t='So the new onboarding probably caused the drop (marked as inference)', to=1, why='That is Claude\'s own reasoning, and it is marked as inference rather than passed off as fact.'),
+              dict(t='Competitors are expected to follow with the same discount (no source)', to=2, why='Nothing in the sources supports it, so it gets flagged or removed.'),
+              dict(t='"Support tickets doubled in March", quoted from the log, section 3', to=0, why='A quote with a location can be checked against the page.'),
+              dict(t='Customers likely value speed over price (marked as inference)', to=1, why='A reasoned guess, labelled as one, is an inference.'),
+              dict(t='The market will grow 20 percent next year (no source)', to=2, why='A confident figure with no source behind it does not belong in the brief.')],
+       note='Every sentence in a brief lands in one of these three boxes. Only the first is a claim you can check.'),
  ])
 
 Q[6] = dict(
@@ -222,7 +229,13 @@ Q[7] = dict(
      "Standing facts and rules go in Project instructions and files. A one-off input is attached to a single chat. Memory builds up across chats under Settings, so I read it and correct it, and I check each Project's memory setting. I start a new chat per task and carry state in a short summary, and I keep secrets out of memory and Project files.",
      ["Puts standing context in the Project", "Keeps one-off inputs in one chat", "Reviews and corrects memory", "Resets long chats with a summary"]),
  dg=[
-  dict(kind='tree', title='Where does it belong?', root='A piece of information',
-       kids=[dict(h='Chat', s='One task'), dict(h='Instructions', s='Standing rules'), dict(h='Project files', s='Reference docs'), dict(h='Memory', s='Builds up, set in Settings'), dict(h='Attached file', s='One-off input')]),
+  dict(kind='pick', title='Where does it belong?', root='A piece of information',
+       kids=[dict(h='Chat', s='One task'), dict(h='Instructions', s='Standing rules'), dict(h='Project files', s='Reference docs'),
+             dict(h='Memory', s='Builds up, set in Settings'), dict(h='Attached file', s='One-off input')],
+       cases=[dict(t='Always answer in British English and keep replies short.', to=1, why='A standing rule that applies every time belongs in instructions.'),
+              dict(t='The 40-page style guide the team checks every week.', to=2, why='Reference documents the work keeps coming back to belong in project files.'),
+              dict(t='The one contract you want summarised today.', to=4, why='One-off input belongs in an attached file.'),
+              dict(t='Brainstorm names for next week\'s launch.', to=0, why='A single task belongs in one chat.'),
+              dict(t='Your preference for short bullet summaries, which Claude should pick up over time.', to=3, why='Memory builds up over time and is managed in Settings.')]),
   dict(kind='flow', title='The reset drill', steps=[dict(h='Summarise', s='State in 10 lines.'), dict(h='Fix', s='Correct anything wrong.'), dict(h='New chat', s='Paste the summary.'), dict(h='Test', s='Ask about an early detail.')]),
  ])

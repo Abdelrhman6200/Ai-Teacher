@@ -34,6 +34,7 @@ function exploreHTML(b){
     h+='<svg class="cv-svg" viewBox="0 0 320 204" role="img" aria-label="Memory strength over 30 days, with and without spaced review"></svg>'
       +'<div class="cv-ctl"><label for="'+id+'r">Days since you learned it: <b class="cv-d"></b></label><input id="'+id+'r" type="range" min="0" max="30" value="'+(b.day||10)+'"></div>'
       +'<p class="cv-read" role="status" aria-live="polite"></p><ul class="dg-leg"><li><span class="sw c3"></span><span><b>Learn once, never review.</b></span></li><li><span class="sw c0"></span><span><b>Reviews on days 1, 3, 7 and 14,</b> each one just before it fades.</span></li></ul>';
+  } else if(PLAYH[k]){ h+=PLAYH[k](b,id);
   }
   return h+'</div>';
 }
@@ -41,7 +42,7 @@ function exploreBind(f){
   var x=$('[data-xid]',f); if(!x) return;
   var b=XREG[x.getAttribute('data-xid')], k=b.kind;
   x._run=(x._run||0)+1;
-  if(k==='tokens') tokBind(x,b); else if(k==='window') wnBind(x,b); else if(k==='cache') chBind(x,b); else if(k==='curve') cvBind(x,b); else if(k==='cost') csBind(x,b); else if(k==='trifecta') tfBind(x,b);
+  if(k==='tokens') tokBind(x,b); else if(k==='window') wnBind(x,b); else if(k==='cache') chBind(x,b); else if(k==='curve') cvBind(x,b); else if(k==='cost') csBind(x,b); else if(k==='trifecta') tfBind(x,b); else if(PLAYB[k]) PLAYB[k](x,b);
 }
 
 /* the Review tab explains why reviews are spaced, with the curve to scrub */

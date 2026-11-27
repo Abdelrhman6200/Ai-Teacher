@@ -638,6 +638,59 @@ async function quest(){
   await click('#quit'); if($('#quitok')) await click('#quitok');
   log('scene walkthrough ok: 8 steps add to the picture, numbers change, Back and the track go backwards, Continue on the last step');
 
+  // ---- more ways to play: slide, sort, switch, choose, click
+  const leaveDg=async()=>{ await click('#quit'); if($('#quitok')) await click('#quitok'); };
+  await openDg('compound','s15');
+  if($('.cp-res').textContent!=='42%') throw new Error('0.75 cubed should read 42%: '+$('.cp-res').textContent);
+  const cpN=$('.dg-x-compound input[id$="n"]'), cpP=$('.dg-x-compound input[id$="p"]');
+  setv(cpN,'1'); await sleep(5); if($('.cp-res').textContent!=='75%') throw new Error('one run keeps its own 75%');
+  setv(cpP,'90'); setv(cpN,'10'); await sleep(5); if($('.cp-res').textContent!=='35%') throw new Error('0.9 to the tenth should read 35%: '+$('.cp-res').textContent);
+  await click('[data-x="sim"]'); if(!/of 100 attempts/.test($('.cp-sim').textContent)) throw new Error('simulation line');
+  await leaveDg();
+  await openDg('noise','s19');
+  if(!/overlap/.test($('.ns-read').textContent)||/no longer/.test($('.ns-read').textContent)) throw new Error('twenty cases cannot separate a 3-point lead: '+$('.ns-read').textContent);
+  await click('[data-xs="4"]'); if(!/no longer overlap/.test($('.ns-read').textContent)) throw new Error('thousands of cases should separate it: '+$('.ns-read').textContent);
+  await click('[data-x="rerun"]'); if(!/Rerun 1 time/.test($('.ns-tally').textContent)) throw new Error('rerun tally: '+$('.ns-tally').textContent);
+  await click('[data-xs="0"]'); if(/Rerun \d+ time/.test($('.ns-tally').textContent)) throw new Error('changing the size should reset the tally');
+  await leaveDg();
+  const sf=await openDg('sorter','s13'), sb=sf.item.blocks.find(b=>b.kind==='sorter'), cardEl=tx=>$$('.so-card').find(c=>c.textContent===tx);
+  await click(cardEl(sb.cards[3].t)); await click('.so-bk[data-to="0"]'); if(!/Not that one/.test($('.so-read').textContent)) throw new Error('a wrong box should say so');
+  await click('.so-bk[data-to="1"]'); if($$('.so-bk[data-to="1"] .so-in li').length!==1) throw new Error('the card should land in the right box after a miss');
+  for(const c of sb.cards){ if(!cardEl(c.t)) continue; await click(cardEl(c.t)); await click('.so-bk[data-to="'+c.to+'"]'); }
+  if(!/All sorted\. 5 of 6/.test($('.so-read').textContent)) throw new Error('sorter summary: '+$('.so-read').textContent);
+  await click('[data-x="again"]'); if($$('.so-card').length!==sb.cards.length) throw new Error('start again returns every card');
+  await leaveDg();
+  const swc=()=>$$('.sw-t').map(e=>e.className.replace('sw-t ','')).join(',');
+  await openDg('switch','s22');
+  if(swc()!=='bad,bad,bad,good') throw new Error('nothing on: attacks get through and the real work runs: '+swc());
+  await click('[data-xs="2"]'); if(swc()!=='good,good,good,mid'||!/All 4 tests/.test($('.sw-score').textContent)) throw new Error('layers: '+swc());
+  await click('[data-c="0"][data-s="1"]'); if(!$$('.sw-t')[3].classList.contains('bad')) throw new Error('a blanket deny rule blocks the real work');
+  await click('[data-xs="1"]'); if(swc()!=='good,bad,bad,bad') throw new Error('only the fetch deny rule: '+swc());
+  await leaveDg();
+  await openDg('switch','s08');
+  if(swc()!=='good,bad') throw new Error('everything open: '+swc());
+  await click('[data-xs="2"]'); if(swc()!=='mid,good') throw new Error('reads easy, writes asked, risky blocked: '+swc());
+  await click('[data-xs="1"]'); if(swc()!=='bad,good') throw new Error('everything blocked stops the real work: '+swc());
+  await leaveDg();
+  const pf=await openDg('pick','s02'), pb=pf.item.blocks.find(b=>b.kind==='pick');
+  for(let i=0;i<pb.cases.length;i++){
+    const c=pb.cases[i], wi=(c.to+1)%pb.kids.length;
+    if(i===0){ await click($$('.pk-k')[wi]); if(!$$('.pk-k')[wi].classList.contains('no')) throw new Error('a wrong option should be marked'); }
+    await click($$('.pk-k')[c.to]); if(!$$('.pk-k')[c.to].classList.contains('ok')) throw new Error('the right option should be marked');
+    if(i<pb.cases.length-1){ if($('[data-x="again"]').hidden===false) throw new Error('Go again should wait for the end'); await click('[data-x="next"]'); if(!new RegExp('Scenario '+(i+2)+' of').test($('.pk-n').textContent)) throw new Error('next scenario'); }
+  }
+  if(!/3 right first time/.test($('.pk-read').textContent)||$('[data-x="again"]').hidden) throw new Error('pick summary: '+$('.pk-read').textContent);
+  await leaveDg();
+  await openDg('disclose','s09'); const dsl=()=>$$('.ds-leg li.on').length;
+  if(dsl()!==1) throw new Error('only the name and description load at first'); await click('[data-xs="2"]'); if(dsl()!==3||$$('.ds-s.on').length!==3) throw new Error('a step that needs a reference loads everything'); await click('[data-xs="1"]'); if(dsl()!==2) throw new Error('the body loads when the task fits');
+  await leaveDg();
+  await openDg('matrix','s02','.dg-mx');
+  await click($$('.dg-mx thead .mx-hb')[0]); if(!/Best fit: CLI/.test($('.mx-read').textContent)||!$('.dg-mx td.mx-on')) throw new Error('column focus: '+$('.mx-read').textContent);
+  await click($$('.dg-mx tbody .mx-hb')[0]); if(!/CLI: Best fit: Scripting and SDK/.test($('.mx-read').textContent)) throw new Error('row focus: '+$('.mx-read').textContent);
+  await click($$('.dg-mx tbody .mx-hb')[0]); if($('.dg-mx .mx-on')) throw new Error('a second tap clears the focus');
+  await leaveDg();
+  log('interactive diagrams ok: compound 42 percent, eval noise, sorter, permission and layer switchboards, pick, skill loading, matrix focus');
+
   // ---- learning science: a prediction before the mastery check, the surprise cue for a confident miss, a missed question that returns after three others
   await openNodeById('s01-CK'); if(!$('.predc')) throw new Error('the mastery intro should ask for a prediction');
   await click('[data-pred="2"]'); if($('[data-pred="2"]').getAttribute('aria-pressed')!=='true') throw new Error('the prediction chip did not take');
@@ -755,6 +808,7 @@ async function playFirst(sid,count,wrongFirst){
 }
 async function preview(){ await click('[data-tab="you"]'); await click('#prev'); await click('[data-tab="learn"]'); }
 function findTeach(pred){ for(const s of D.sessions) for(const n of s.nodes) for(const i of (n.items||[])) if(i.type==='teach'&&pred(i,n,s)) return {item:i,node:n,s}; return null; }
+async function openDg(kind,sid,css){ const f=findTeach((i,n,s)=>s.id===sid&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind===kind)); if(!f) throw new Error('no '+kind+' diagram in '+sid); await toSession(sid); await openNodeById(f.node.id); await advanceUntil(()=>screen()==='teach'&&!!$(css||'.dg-x-'+kind),120); return f; }
 function findItem(type,pred){ for(const s of D.sessions) for(const n of s.nodes) for(const i of (n.items||[])) if(i.type===type&&(!pred||pred(i,n,s))) return {item:i,node:n,s}; return null; }
 const scenes={
   learn0:async()=>{},
@@ -822,6 +876,13 @@ scenes.cp_q=async()=>{ await scenes.cp(); await click('#primary'); };
 scenes.cp_done=async()=>{ await preview(); await openNodeById('s03-CP'); await playLesson(true); };
 scenes.scene1=async()=>{ const f=findTeach((i,n,s)=>s.id==='s01'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind==='scene')); await openNodeById(f.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.dg-scene'),60); await click('.sc-b[data-i="5"]'); };
 scenes.scene_full=async()=>{ await scenes.scene1(); await click('[data-sc="full"]'); };
+scenes.play_compound=async()=>{ await openDg('compound','s15'); setv($('.dg-x-compound input[id$="n"]'),'6'); await click('[data-x="sim"]'); };
+scenes.play_noise=async()=>{ await openDg('noise','s19'); await click('[data-xs="3"]'); await click('[data-x="rerun"]'); };
+scenes.play_sorter=async()=>{ const f=await openDg('sorter','s13'); const c=f.item.blocks.find(b=>b.kind==='sorter').cards[0]; await click($$('.so-card').find(e=>e.textContent===c.t)); await click('.so-bk[data-to="1"]'); };
+scenes.play_switch=async()=>{ await openDg('switch','s22'); await click('[data-xs="2"]'); };
+scenes.play_pick=async()=>{ await openDg('pick','s02'); await click($$('.pk-k')[0]); await click($$('.pk-k')[2]); };
+scenes.play_disclose=async()=>{ await openDg('disclose','s09'); await click('[data-xs="2"]'); };
+scenes.play_matrix=async()=>{ await openDg('matrix','s02','.dg-mx'); await click($$('.dg-mx thead .mx-hb')[0]); };
 scenes.you2=async()=>{ await playFirst('s01',12,true); window.__skew+=DAY; await playFirst('s02',10,false); window.__skew+=2*DAY; await click('[data-tab="you"]'); const lh=$('.lh'); log('lh top='+(lh?Math.round(lh.getBoundingClientRect().top+scrollY):'none')); };
 scenes.session2=async()=>{ await playFirst('s01',12,true); window.__skew+=DAY; await toSession('s02'); };
 scenes.session_mid=async()=>{ await first9('s01',false); await toSession('s01'); };

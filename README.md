@@ -75,7 +75,18 @@ Progress is saved in the browser (`localStorage`), per device.
     last one. The camera glides to frame what is on screen. Zed tells each step in a caption under the picture (the picture is never the only source), and
     cheers on the last. Replay plays the story, Pause stops the movement and Expand fills the screen. Session headers show small chips for time, level and
     number of steps. It uses the app's own colours, with the level colour on the step track. Reduced motion shows no travelling dots and no gliding, and stepping still works.
-21. **Comfort and safety.**
+21. **Seven more ways to play with an idea.** Different ideas get different interactions, and each says what it is (maths, or illustrative):
+    - **Slide:** *Reliability compounds* (session 15): how often a chain of runs that each work 75 percent of the time all work, with a 100-attempt simulation.
+      *What a 3-point lead is worth* (session 19): rough 95 percent ranges at 20 to 3000 test cases, and reruns where the winner flips.
+    - **Sort:** *Advice or enforced?* (session 13) and *Sort every sentence in the brief* (session 5): drag a card into a box (mouse), or tap a card and then a box
+      (touch and keyboard). A box says at once whether it fits.
+    - **Switch:** *Set the permissions, then test them* (session 8) and *What actually stops it?* (session 22): change the controls and watch tests such as a planted
+      email or a README that says to use curl turn green, amber or red. Blocking everything fails the real work too.
+    - **Choose:** *Which one fits?* (sessions 2, 7 and 20): a scenario, and the option it points to, with the reason.
+    - **Load:** *What loads when* (session 9): what is in context while a skill is unused, matched, or needs a reference.
+    - **Click:** every matrix diagram: tap a row or column heading to focus on it and read the summary.
+    - **Step:** the scene walkthroughs (item 20).
+22. **Comfort and safety.**
     - The browser's Back button stays in the app: it closes a dialog, asks before quitting a question, and goes up one level
       (question, session, Learn). At the Learn screen it leaves the page as usual.
     - Dialogs trap keyboard focus, close on Escape, hide the page behind them and give focus back.
@@ -133,7 +144,7 @@ python3 build.py        # writes index.html from src/ and references/
 - `src/game.js` (player level, Sparks, shop, cards, rewards, skill profile), `src/missions.js` (the mission player), `src/blitz.js`, `src/fx.js` (sound and
   vibration), `src/book.js` (playbook and certificate), `src/explore.js` (the six explorable diagrams), `src/science.js` (prediction and calibration),
   `src/recall.js` (the card deck), `src/glossary.js`, `src/doctor.js`, `src/motion.js` (count-up, bar and chest animation) and `src/scene.js` (the scene
-  walkthroughs) are joined into the app by `build.py`.
+  walkthroughs) and `src/play.js` (the sliders, sorter, switchboards, picker and matrix focus) are joined into the app by `build.py`.
 - `src/scene.js`: the scene walkthrough. A diagram of kind `scene` lists `nodes`, `edges`, `pills`, `zones`, `stats` and `steps`; each item says the step it
   appears at (`s`) and optionally the step it goes at (`x`), and `sp` spreads the grid out. `field.py` and `learn_content.py` validate the kind.
 - `src/diagrams.js`: 13 diagram types, including swim (sequence between actors), rings (defence in layers), delta (before and after),
@@ -142,7 +153,7 @@ python3 build.py        # writes index.html from src/ and references/
   mastery-check items, teach-back, diagram). `python3 src/learn_content.py` validates it.
 - `src/method.py`: turns each session into the learning loop.
 - `src/app.js`: the app (screens, spaced-review engine, mastery gating). `src/chars.js`: the Zed characters.
-  `src/diagrams.js` and `src/diagrams.css`: the animated diagrams. `src/scene.css`: the scene walkthroughs. `src/style.css`: theme (GUC colours, light and dark).
+  `src/diagrams.js` and `src/diagrams.css`: the animated diagrams. `src/scene.css` and `src/play.css`: the scene walkthroughs and the interactive diagrams. `src/style.css`: theme (GUC colours, light and dark).
 - Set `Z100_REFERENCES=/path` to build from another copy of the references.
 
 ## Test
@@ -155,7 +166,7 @@ tests/run.sh full 1100 900    # same at desktop width
 tests/run.sh extras           # quit, keyboard, replay XP, save, search, reset
 tests/run.sh quest            # sources step in every session, no web address in the data, notes read in the app, diagrams, phases, chests, trail, daily quests, library,
                               # focus trap, Back, backup, theme, field missions, Blitz, sound and touch, playbook, explorable diagrams, learning science,
-                              # card recall, glossary, Prompt Doctor, scene walkthrough (steps add to the picture, numbers change, Back, track, Expand, Continue)
+                              # card recall, glossary, Prompt Doctor, scene walkthrough (steps add to the picture, numbers change, Back, track, Expand, Continue), sliders, sorter, switchboards, picker, skill loading, matrix focus
 tests/run.sh onboard          # set-up, placement (pass and fail), start point, situations, debrief, use-it-today, real task
 tests/run.sh duetest          # spaced review: due, answer, reschedule
 tests/run.sh shot dg_loop 420 900          # screenshot of a scene (see scenes in tests/test_driver.js)

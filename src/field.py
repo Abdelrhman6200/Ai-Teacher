@@ -8,7 +8,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import refs as RF
 
-DG_KINDS = {'flow', 'loop', 'stack', 'compare', 'bars', 'tree', 'quad', 'swim', 'rings', 'delta', 'matrix', 'ladder', 'timeline', 'tokens', 'window', 'cache', 'curve', 'cost', 'trifecta', 'scene'}
+DG_KINDS = {'flow', 'loop', 'stack', 'compare', 'bars', 'tree', 'quad', 'swim', 'rings', 'delta', 'matrix', 'ladder', 'timeline', 'tokens', 'window', 'cache', 'curve', 'cost', 'trifecta', 'scene', 'compound', 'noise', 'sorter', 'switch', 'pick', 'disclose'}
 
 
 def _load(name):
@@ -32,7 +32,7 @@ def _dg(n, v, errs):
     if k not in DG_KINDS: errs.append('S%d: diagram kind %s' % (n, k)); return
     need = {'swim': ('lanes', 'msgs'), 'rings': ('layers',), 'delta': ('rows',), 'matrix': ('cols', 'rows'), 'ladder': ('steps',), 'timeline': ('events',),
             'flow': ('steps',), 'loop': ('steps',), 'stack': ('parts',), 'compare': ('left', 'right'), 'bars': ('rows',), 'tree': ('root', 'kids'), 'quad': ('cells',),
-            'tokens': ('prompt', 'variants'), 'window': ('fixed', 'turn'), 'cache': ('blocks', 'scenarios'), 'curve': ('title',), 'cost': ('models',), 'trifecta': ('legs', 'presets'), 'scene': ('nodes', 'steps')}[k]
+            'tokens': ('prompt', 'variants'), 'window': ('fixed', 'turn'), 'cache': ('blocks', 'scenarios'), 'curve': ('title',), 'cost': ('models',), 'trifecta': ('legs', 'presets'), 'scene': ('nodes', 'steps'), 'compound': ('p', 'n'), 'noise': ('a', 'b'), 'sorter': ('buckets', 'cards'), 'switch': ('controls', 'tests'), 'pick': ('root', 'kids', 'cases'), 'disclose': ('layers', 'tasks')}[k]
     for f in need:
         if not v.get(f): errs.append('S%d: %s diagram missing %s' % (n, k, f))
     if k == 'swim':
@@ -43,6 +43,18 @@ def _dg(n, v, errs):
     if k == 'matrix':
         for r in v['rows']:
             if len(r['v']) != len(v['cols']) or any(x not in (0, 1, 2) for x in r['v']): errs.append('S%d: matrix row %s' % (n, r['h']))
+    if k == 'sorter':
+        for c in v['cards']:
+            if not 0 <= c['to'] < len(v['buckets']): errs.append('S%d: sorter card %s points at no box' % (n, c['t']))
+    if k == 'pick':
+        for c in v['cases']:
+            if not 0 <= c['to'] < len(v['kids']): errs.append('S%d: pick scenario %s points at no option' % (n, c['t']))
+    if k == 'switch':
+        ids = {c['id'] for c in v['controls']}
+        for t in v['tests']:
+            if t.get('want') not in ('stop', 'run'): errs.append('S%d: switch test %s needs want stop or run' % (n, t['h']))
+            for s in t['steps']:
+                if not set(s.get('by', [])) <= ids: errs.append('S%d: switch step %s uses an unknown control' % (n, s['t']))
     if k == 'ladder' and 'mark' in v and not 0 <= v['mark'] < len(v['steps']): errs.append('S%d: ladder mark' % n)
 
 

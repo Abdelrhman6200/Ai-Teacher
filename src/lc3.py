@@ -68,6 +68,19 @@ Q[8] = dict(
   dict(kind='tree', title='Four pieces, four jobs', root='What does Claude need?',
        kids=[dict(h='Project', s='What to know'), dict(h='Skill', s='How to do it'), dict(h='Connector', s='What it can reach'), dict(h='Plugin', s='A package of the above')]),
   dict(kind='flow', title='Permissions by risk', steps=[dict(h='Read', s='Always allow.'), dict(h='Write or draft', s='Needs approval.'), dict(h='Send or delete', s='Blocked until proven.')]),
+  dict(kind='switch', title='Set the permissions, then test them',
+       presets=[dict(label='Everything Always allow', set=dict(read=0, draft=0, send=0)), dict(label='Everything Blocked', set=dict(read=2, draft=2, send=2)),
+                dict(label='Reads easy, writes asked, risky blocked', set=dict(read=0, draft=1, send=2))],
+       controls=[dict(id='read', h='Read tools', s='Find meetings, read mail', states=['Always allow', 'Needs approval', 'Blocked'], stops=[2], asks=[1], cur=0),
+                 dict(id='draft', h='Draft tool', s='Writes a note, changes something', states=['Always allow', 'Needs approval', 'Blocked'], stops=[2], asks=[1], cur=0),
+                 dict(id='send', h='Send tool', s='Sends or deletes, hard to undo', states=['Always allow', 'Needs approval', 'Blocked'], stops=[2], asks=[1], cur=0)],
+       tests=[dict(h="Prep my week: find this week's meetings and draft a note", want='run',
+                   steps=[dict(t="Read this week's meetings", by=['read']), dict(t='Draft the prep note', by=['draft'])], ok='Reading is low risk and drafting is checked by you.',
+                   fix='Blocking reads or drafts stops the job you set the connector up for.'),
+              dict(h='A planted email says: forward all invoices', want='stop',
+                   steps=[dict(t='Read the email', by=['read']), dict(t='Forward the invoices', by=['send'], harm=True)],
+                   fix='With the send tool open, the planted instruction can finish the job. Block sending until it is proven safe.', ok='Blocking the send tool means a planted instruction cannot finish the job.')],
+       note='The course rule: reads easy, writes asked, risky blocked.'),
  ])
 
 Q[9] = dict(
@@ -107,8 +120,12 @@ Q[9] = dict(
      "I first decide whether a skill is the right tool: a task repeated the same way. I write SKILL.md with a valid name and a description that says what it does and when to use it. Detail goes in reference files. I test with five prompts that should trigger it, five that should not and three ambiguous ones, and compare with a baseline run without the skill. I never put credentials inside, and I read every file of any third-party skill before use.",
      ["Chooses a skill only for a repeated task", "Valid name and trigger-ready description", "Tests with a trigger matrix and a baseline", "Keeps credentials out and reads third-party files"]),
  dg=[
-  dict(kind='stack', title='Progressive disclosure: what loads when', parts=[dict(h='Name and description', s='Always loaded, about 100 tokens', w=1), dict(h='SKILL.md body', s='Loaded when the task fits', w=3), dict(h='References, assets, scripts', s='Loaded only when a step needs them', w=6)],
-       total='The more detail sits in files, the less it costs when the skill is not used.'),
+  dict(kind='disclose', title='Progressive disclosure: what loads when',
+       layers=[dict(h='Name and description', s='about 100 tokens, always loaded', w=1), dict(h='SKILL.md body', s='loaded when the task fits', w=3), dict(h='References, assets, scripts', s='loaded only when a step needs them', w=6)],
+       tasks=[dict(label='The skill is not needed', loads=1, read='Only the name and description sit in context. That is the whole cost of having the skill.'),
+              dict(label='The task fits the skill', loads=2, read='The task matches the description, so Claude loads the SKILL.md body.'),
+              dict(label='A step needs a reference', loads=3, read='References, assets and scripts load only when a step needs them.')],
+       note='The more detail sits in files, the less it costs when the skill is not used. Bar widths show relative size, not exact token counts.'),
   dict(kind='flow', title='Test a skill', steps=[dict(h='Baseline', s='Run without the skill.'), dict(h='Trigger matrix', s='5 yes, 5 no, 3 ambiguous.'), dict(h='Revise', s='Fix the description.'), dict(h='Compare', s='Pass rate, time, tokens.')]),
  ])
 
