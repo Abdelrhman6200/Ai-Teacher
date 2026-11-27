@@ -8,7 +8,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import refs as RF
 
-DG_KINDS = {'flow', 'loop', 'stack', 'compare', 'bars', 'tree', 'quad', 'swim', 'rings', 'delta', 'matrix', 'ladder', 'timeline', 'tokens', 'window', 'cache', 'curve', 'cost', 'trifecta'}
+DG_KINDS = {'flow', 'loop', 'stack', 'compare', 'bars', 'tree', 'quad', 'swim', 'rings', 'delta', 'matrix', 'ladder', 'timeline', 'tokens', 'window', 'cache', 'curve', 'cost', 'trifecta', 'scene'}
 
 
 def _load(name):
@@ -32,7 +32,7 @@ def _dg(n, v, errs):
     if k not in DG_KINDS: errs.append('S%d: diagram kind %s' % (n, k)); return
     need = {'swim': ('lanes', 'msgs'), 'rings': ('layers',), 'delta': ('rows',), 'matrix': ('cols', 'rows'), 'ladder': ('steps',), 'timeline': ('events',),
             'flow': ('steps',), 'loop': ('steps',), 'stack': ('parts',), 'compare': ('left', 'right'), 'bars': ('rows',), 'tree': ('root', 'kids'), 'quad': ('cells',),
-            'tokens': ('prompt', 'variants'), 'window': ('fixed', 'turn'), 'cache': ('blocks', 'scenarios'), 'curve': ('title',), 'cost': ('models',), 'trifecta': ('legs', 'presets')}[k]
+            'tokens': ('prompt', 'variants'), 'window': ('fixed', 'turn'), 'cache': ('blocks', 'scenarios'), 'curve': ('title',), 'cost': ('models',), 'trifecta': ('legs', 'presets'), 'scene': ('nodes', 'steps')}[k]
     for f in need:
         if not v.get(f): errs.append('S%d: %s diagram missing %s' % (n, k, f))
     if k == 'swim':

@@ -1,41 +1,42 @@
 /* Zero to 100 practice app. Course platform with game layers: XP, stars, streak, badges, review.
-   GUC palette: neutral grey paper, one GUC colour per level (blue, green, yellow, red, black), green and orange only for right and wrong, gold only for stars. */
+   Paper theme: warm cream page, lighter cream cards with thin tan borders, monospace type, chunky outlined controls with a hard offset shadow.
+   One pastel colour per level (blue, green, yellow, coral, lavender); green and orange only for right and wrong; gold only for stars. */
 :root{
-  /* GUC house palette: red C00000, yellow FFC000, black, grey BFBFBF, blue 0070C0, green E2EFDA / 70AD47, body 262626 */
-  --bg:#F3F3F3; --surface:#FFFFFF; --ink:#262626; --ink-2:#595959; --ink-3:#616161; --line:#E2E2E2; --line-2:#BFBFBF;
-  --brand:#C00000;
-  --l1:#0070C0; --l1s:#E1EFFA; --l1i:#00528F;
-  --l2:#437D1F; --l2s:#E2EFDA; --l2i:#2F5C14;
-  --l3:#FFC000; --l3s:#FFF3CC; --l3i:#7A5800;
-  --l4:#C00000; --l4s:#FBE4E4; --l4i:#9C0000;
-  --l5:#262626; --l5s:#E9E9E9; --l5i:#262626;
-  --on-lv:#FFFFFF;
-  --good:#0F7544; --good-bg:#E1F5EA; --bad:#B53A09; --on-sig:#FFFFFF; --bad-bg:#FDEBE2; --gold:#FFC000; --flame:#E8590C; --xp:#8A6100;
-  --font-display:'Outfit','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  --r:14px; color-scheme:light;
+  --bg:#F3EEE2; --surface:#FBF8F0; --ink:#2A251D; --ink-2:#58503F; --ink-3:#6B6250; --line:#E2D9C4; --line-2:#C9BEA5;
+  --edge:#2A251D; --brand:#B3261E;
+  --l1:#A8CBF0; --l1s:#E4EEF8; --l1i:#1D5A9E;
+  --l2:#B4DCA0; --l2s:#E6F1DC; --l2i:#2D6A1A;
+  --l3:#F5D26A; --l3s:#FBF0C6; --l3i:#755200;
+  --l4:#F2A99D; --l4s:#FADFD9; --l4i:#A02A1B;
+  --l5:#C9B8EC; --l5s:#ECE6F8; --l5i:#54368F;
+  --on-lv:#2A251D;
+  --good:#1E6B3C; --good-bg:#DDF0D6; --good-fill:#B4DCA0; --bad:#A63D14; --bad-bg:#F9DFD2; --bad-fill:#F5B49A; --on-sig:#FFFFFF;
+  --gold:#F5B800; --flame:#B4470A; --xp:#7A5600;
+  --font-display:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font-body:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:16px; --sh:4px; color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#121212; --surface:#1D1D1F; --ink:#EDEDED; --ink-2:#BDBDBD; --ink-3:#9A9A9A; --line:#2E2E31; --line-2:#474749; --brand:#FF6B6B;
-    --l1:#4DA6EC; --l1s:#0F2B42; --l1i:#9CCDF5; --l2:#8CCB5E; --l2s:#1B2E12; --l2i:#BFE3A2; --l3:#FFC000; --l3s:#3A2D00; --l3i:#FFD966;
-    --l4:#FF6B6B; --l4s:#45171A; --l4i:#FFA3A3; --l5:#D4D4D4; --l5s:#2A2A2A; --l5i:#EDEDED;
-    --on-lv:#121212; --good:#3DD68C; --good-bg:#0F3626; --bad:#FF8A5C; --on-sig:#121212; --bad-bg:#43210F; --gold:#FFC000; --flame:#FF8A47; --xp:#FFC000; color-scheme:dark;
+    --bg:#1B1813; --surface:#26221B; --ink:#F2EBDB; --ink-2:#CFC5AE; --ink-3:#A89E88; --line:#3A342A; --line-2:#554D3E; --edge:#EDE4D0; --brand:#FF8A7A;
+    --l1:#6FA8E0; --l1s:#1F3347; --l1i:#A9CDF3; --l2:#8FCB78; --l2s:#243420; --l2i:#BDE5AA; --l3:#E9C04A; --l3s:#3B3014; --l3i:#F3D98A;
+    --l4:#EE8F82; --l4s:#44211D; --l4i:#F8B8AE; --l5:#AE98E0; --l5s:#2E2745; --l5i:#CDBDF2;
+    --on-lv:#1B1813; --good:#6FD08F; --good-bg:#1B3524; --good-fill:#8FCB78; --bad:#FF9A70; --bad-bg:#432617; --bad-fill:#EE9A74; --on-sig:#1B1813;
+    --gold:#F0BF2E; --flame:#FF9A57; --xp:#F0C24B; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#121212; --surface:#1D1D1F; --ink:#EDEDED; --ink-2:#BDBDBD; --ink-3:#9A9A9A; --line:#2E2E31; --line-2:#474749; --brand:#FF6B6B;
-  --l1:#4DA6EC; --l1s:#0F2B42; --l1i:#9CCDF5; --l2:#8CCB5E; --l2s:#1B2E12; --l2i:#BFE3A2; --l3:#FFC000; --l3s:#3A2D00; --l3i:#FFD966;
-  --l4:#FF6B6B; --l4s:#45171A; --l4i:#FFA3A3; --l5:#D4D4D4; --l5s:#2A2A2A; --l5i:#EDEDED;
-  --on-lv:#121212; --good:#3DD68C; --good-bg:#0F3626; --bad:#FF8A5C; --on-sig:#121212; --bad-bg:#43210F; --gold:#FFC000; --flame:#FF8A47; --xp:#FFC000; color-scheme:dark;
+  --bg:#1B1813; --surface:#26221B; --ink:#F2EBDB; --ink-2:#CFC5AE; --ink-3:#A89E88; --line:#3A342A; --line-2:#554D3E; --edge:#EDE4D0; --brand:#FF8A7A;
+  --l1:#6FA8E0; --l1s:#1F3347; --l1i:#A9CDF3; --l2:#8FCB78; --l2s:#243420; --l2i:#BDE5AA; --l3:#E9C04A; --l3s:#3B3014; --l3i:#F3D98A;
+  --l4:#EE8F82; --l4s:#44211D; --l4i:#F8B8AE; --l5:#AE98E0; --l5s:#2E2745; --l5i:#CDBDF2;
+  --on-lv:#1B1813; --good:#6FD08F; --good-bg:#1B3524; --good-fill:#8FCB78; --bad:#FF9A70; --bad-bg:#432617; --bad-fill:#EE9A74; --on-sig:#1B1813;
+  --gold:#F0BF2E; --flame:#FF9A57; --xp:#F0C24B; color-scheme:dark;
 }
 :root,[data-lv="1"]{--lv:var(--l1);--lv-soft:var(--l1s);--lv-ink:var(--l1i)}
 [data-lv="2"]{--lv:var(--l2);--lv-soft:var(--l2s);--lv-ink:var(--l2i)}
 [data-lv="3"]{--lv:var(--l3);--lv-soft:var(--l3s);--lv-ink:var(--l3i)}
 [data-lv="4"]{--lv:var(--l4);--lv-soft:var(--l4s);--lv-ink:var(--l4i)}
 [data-lv="5"]{--lv:var(--l5);--lv-soft:var(--l5s);--lv-ink:var(--l5i)}
-:root:not([data-theme="dark"]) [data-lv="3"]{--on-lv:#1F1F1F}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) [data-lv="3"]{--on-lv:#121212} }
 
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}

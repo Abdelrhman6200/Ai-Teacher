@@ -981,8 +981,10 @@ function lessonView(){
 }
 function scrTeach(c){
   var it=c.item, kick=L.node.kind==='demo'?'See it':L.node.kind==='field'?'From the sources':'Learn';
-  var b='<p class="kicker">'+kick+'</p><h1 class="bigt">'+esc(it.title)+'</h1>';
-  if(it.blocks) b+='<div class="rich">'+it.blocks.map(blockHTML).join('')+'</div>';
+  var b='<p class="kicker">'+kick+'</p><h1 class="bigt">'+esc(it.title)+'</h1>', sc=sceneBlock(it);
+  if(sc&&!c.scInit){ sc._st=1; c.scInit=1; }
+  SC_FOOT=sc?1:0;
+  if(it.blocks){ b+='<div class="rich">'+it.blocks.map(blockHTML).join('')+'</div>'; SC_FOOT=0; }
   else {
     if(it.paras) b+='<div class="paras">'+it.paras.map(function(p){ return '<p>'+termize(inl(p))+'</p>'; }).join('')+'</div>';
     if(it.flow) b+='<ol class="flow">'+it.flow.map(function(f){ return '<li>'+inl(f)+'</li>'; }).join('')+'</ol>';
@@ -992,7 +994,7 @@ function scrTeach(c){
     if(it.callout) b+='<p class="callout">'+inl(it.callout)+'</p>';
     if(it.tag) b+='<p class="tagnote">'+inl(it.tag)+'</p>';
   }
-  return {body:b, foot:'<button class="btn wide" id="primary">Continue</button>'};
+  return {body:b, foot:sc?sceneFoot(sc):'<button class="btn wide" id="primary">Continue</button>'};
 }
 function fbz(ok){
   var lvl=(L&&L.node&&L.node.level)||zLv();
@@ -1067,7 +1069,7 @@ function scrFlash(c){
 function bindLesson(){
   bindRefs();
   var c=L.cur, it=c.item, p=$('#primary');
-  if(it.type==='teach' && p) p.onclick=function(){ L.correct[c.id]=1; nextItem(); };
+  if(it.type==='teach' && p) p.onclick=function(){ if(sceneAdvance()) return; L.correct[c.id]=1; nextItem(); };
   if(it.type==='mcq'){
     if(p) p.onclick=function(){ if(c.checked) nextItem(); else check(); };
     if(!c.checked){

@@ -1,8 +1,8 @@
 
 /* ================= diagrams and motion ================= */
-:root{--c0:#0070C0;--c1:#70AD47;--c2:#FFC000;--c3:#C00000;--c4:#595959;--c5:#7A3E9D}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--c0:#4DA6EC;--c1:#8CCB5E;--c2:#FFC000;--c3:#FF6B6B;--c4:#BDBDBD;--c5:#C79CE0} }
-:root[data-theme="dark"]{--c0:#4DA6EC;--c1:#8CCB5E;--c2:#FFC000;--c3:#FF6B6B;--c4:#BDBDBD;--c5:#C79CE0}
+:root{--c0:#7FB2E5;--c1:#9CCB82;--c2:#F1C84C;--c3:#EE8F80;--c4:#8D8470;--c5:#A790DD}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--c0:#6FA8E0;--c1:#8FCB78;--c2:#E9C04A;--c3:#EE8F82;--c4:#B7AD96;--c5:#AE98E0} }
+:root[data-theme="dark"]{--c0:#6FA8E0;--c1:#8FCB78;--c2:#E9C04A;--c3:#EE8F82;--c4:#B7AD96;--c5:#AE98E0}
 .dg{margin:6px 0;padding:14px 14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface);display:grid;gap:12px}
 .dg-t{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:var(--font-display);font-weight:800;font-size:15px;color:var(--lv-ink)}
 .dg-re{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 10px;border:1px solid var(--line-2);border-radius:99px;background:var(--bg);font-size:13px;font-weight:700;color:var(--ink-2)}

@@ -8,6 +8,7 @@ function dgWrap(t, x, y, maxc, lh){
 }
 function dgNum(i){ return '<span class="dgn">'+(i+1)+'</span>'; }
 function dgHTML(b){
+  if(b.kind==='scene') return sceneHTML(b);
   var k=b.kind, h='<figure class="dg dg-'+k+' play" data-dg><figcaption class="dg-t"><span>'+esc(b.title||'')+'</span><button class="dg-re" type="button" aria-label="Replay the animation">'+ic('refresh')+'<span>Replay</span></button></figcaption>';
   if(k==='flow'){
     h+='<ol class="dg-flowl">';
@@ -76,7 +77,9 @@ function dgHTML(b){
   return h+'</figure>';
 }
 function bindDiagrams(){
+  $$('body > .dg-scene.sc-full').forEach(function(x){ if(x._rel) x._rel(); x.parentNode.removeChild(x); });   // an expanded picture does not outlive a re-render
   $$('[data-dg]').forEach(function(f){
+    if(f.hasAttribute('data-scene')){ sceneBind(f); return; }
     var bt=$('.dg-re',f); if(!bt) return;
     if(!f._xb && $('[data-xid]',f)){ f._xb=1; exploreBind(f); }
     bt.onclick=function(){ f.classList.remove('play'); void f.offsetWidth; f.classList.add('play'); var a=$('animateMotion',f); try{ if(a&&a.beginElement) a.beginElement(); }catch(e){} var xe=$('[data-xid]',f); if(xe&&xe._replay) xe._replay(); };

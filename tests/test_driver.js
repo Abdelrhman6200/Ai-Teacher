@@ -618,6 +618,26 @@ async function quest(){
   await click('#quit'); if($('#quitok')) await click('#quitok');
   log('explorables 5 and 6 ok: cost calculator matches the lesson table, remove-a-leg security explorer');
 
+  // ---- scene walkthrough: every step adds to one picture, with a step track, Back and Next
+  const scn=findTeach((i,n,s)=>s.id==='s01'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind==='scene')); if(!scn) throw new Error('no scene walkthrough in session 1');
+  await toSession('s01'); await openNodeById(scn.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.dg-scene'),60);
+  const scOn=()=>$$('.dg-scene [data-s].on').length, scStep=()=>+$('.sc-b.cur').dataset.i, scVal=k=>$('.sc-st[data-k="'+k+'"] b').textContent;
+  if(scStep()!==1) throw new Error('a walkthrough starts at step 1');
+  if(!$('#sback')||!$('#sback').disabled) throw new Error('Back is off on the first step');
+  if(!/^Next: It reads/.test($('#primary').textContent)) throw new Error('the bar names the next step: '+$('#primary').textContent);
+  if($$('.sc-b').length!==8||$$('.sc-b[aria-label]').length!==8) throw new Error('eight numbered steps, each with a name');
+  const sc1=scOn(); if(scVal('src')!=='None') throw new Error('source starts as None');
+  await click('#primary'); if(scStep()!==2||scOn()<=sc1||$('.sc-cap .sc-ct').textContent!=='It reads') throw new Error('Next should add to the picture: step '+scStep());
+  if(screen()!=='teach'||!$('.dg-scene')) throw new Error('Next stays on the same card until the last step');
+  await click('.sc-b[data-i="6"]'); if(scVal('src')!=='Contract'||scVal('inv')!=='Less likely') throw new Error('numbers change with the step: '+scVal('src')+' / '+scVal('inv'));
+  const sc6=scOn(); await click('.sc-b[data-i="3"]'); if(scOn()>=sc6||scVal('src')!=='None') throw new Error('going back takes things away again');
+  await click('#primary'); await click('#sback'); if(scStep()!==3) throw new Error('Back goes one step back');
+  await click('[data-sc="full"]'); if(!$('.sc-full')||!$('.sc-nav')||getComputedStyle($('.sc-nav')).display==='none') throw new Error('Expand should fill the screen and show its own Back and Next'); await click('[data-sc="full"]'); if($('.sc-full')) throw new Error('Expand toggles');
+  await click('.sc-b[data-i="8"]'); if($('#primary').textContent.trim()!=='Continue') throw new Error('the last step offers Continue: '+$('#primary').textContent);
+  const scTitle=$('h1.bigt').textContent; await click('#primary'); if($('.dg-scene')&&$('h1.bigt').textContent===scTitle) throw new Error('Continue should move on from the walkthrough');
+  await click('#quit'); if($('#quitok')) await click('#quitok');
+  log('scene walkthrough ok: 8 steps add to the picture, numbers change, Back and the track go backwards, Continue on the last step');
+
   // ---- learning science: a prediction before the mastery check, the surprise cue for a confident miss, a missed question that returns after three others
   await openNodeById('s01-CK'); if(!$('.predc')) throw new Error('the mastery intro should ask for a prediction');
   await click('[data-pred="2"]'); if($('[data-pred="2"]').getAttribute('aria-pressed')!=='true') throw new Error('the prediction chip did not take');
@@ -800,6 +820,8 @@ scenes.warm_q=async()=>{ await playFirst('s01',12,true); window.__skew+=DAY; awa
 scenes.cp=async()=>{ await preview(); await openNodeById('s03-CP'); };
 scenes.cp_q=async()=>{ await scenes.cp(); await click('#primary'); };
 scenes.cp_done=async()=>{ await preview(); await openNodeById('s03-CP'); await playLesson(true); };
+scenes.scene1=async()=>{ const f=findTeach((i,n,s)=>s.id==='s01'&&(i.blocks||[]).some(b=>b.t==='diagram'&&b.kind==='scene')); await openNodeById(f.node.id); await advanceUntil(()=>screen()==='teach'&&!!$('.dg-scene'),60); await click('.sc-b[data-i="5"]'); };
+scenes.scene_full=async()=>{ await scenes.scene1(); await click('[data-sc="full"]'); };
 scenes.you2=async()=>{ await playFirst('s01',12,true); window.__skew+=DAY; await playFirst('s02',10,false); window.__skew+=2*DAY; await click('[data-tab="you"]'); const lh=$('.lh'); log('lh top='+(lh?Math.round(lh.getBoundingClientRect().top+scrollY):'none')); };
 scenes.session2=async()=>{ await playFirst('s01',12,true); window.__skew+=DAY; await toSession('s02'); };
 scenes.session_mid=async()=>{ await first9('s01',false); await toSession('s01'); };

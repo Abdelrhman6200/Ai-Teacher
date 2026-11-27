@@ -14,7 +14,7 @@ def load():
             Q[k] = v
     return Q
 
-KINDS = {'flow', 'loop', 'stack', 'compare', 'bars', 'tree', 'quad', 'tokens', 'window', 'cache', 'curve', 'cost', 'trifecta'}
+KINDS = {'flow', 'loop', 'stack', 'compare', 'bars', 'tree', 'quad', 'tokens', 'window', 'cache', 'curve', 'cost', 'trifecta', 'scene'}
 
 def validate(Q, outcome_counts):
     """outcome_counts: {session_number: number_of_outcomes}"""
@@ -43,7 +43,7 @@ def validate(Q, outcome_counts):
             if it[3] != i: errs.append('S%d check%d: outcome %s should be %d' % (s, i, it[3], i))
         tb = q['tb']
         if len(tb) != 3 or len(tb[2]) < 3: errs.append('S%d: teach-back shape' % s)
-        if not (1 <= len(q['dg']) <= 3): errs.append('S%d: diagram count' % s)
+        if not (1 <= len(q['dg']) <= 4): errs.append('S%d: diagram count' % s)
         for d in q['dg']:
             if d['kind'] not in KINDS: errs.append('S%d: diagram kind %s' % (s, d['kind']))
     return errs
